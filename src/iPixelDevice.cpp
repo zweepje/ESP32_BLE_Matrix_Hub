@@ -172,19 +172,11 @@ void iPixelDevice::setSpeed(int speed) {
     queuePush(command);
 }
 
-void iPixelDevice::ledOff() {
-    std::vector<uint8_t> command = iPixelCommands::ledOff();
+void iPixelDevice::setLED(boolean on) {
+    std::vector<uint8_t> command = iPixelCommands::setLED(on);
     printPrefix();
-    Serial.print("LED: Off");
-    Serial.println();
-    queuePush(command);
-}
-
-void iPixelDevice::ledOn() {
-    std::vector<uint8_t> command = iPixelCommands::ledOn();
-    printPrefix();
-    Serial.print("LED: On");
-    Serial.println();
+    Serial.print("LED: ");
+    Serial.println(on ? "On" : "Off");
     queuePush(command);
 }
 

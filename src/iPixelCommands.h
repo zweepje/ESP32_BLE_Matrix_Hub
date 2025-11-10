@@ -20,8 +20,7 @@ namespace iPixelCommands {
     std::vector<uint8_t> clear();
     std::vector<uint8_t> setBrightness(int brightness);
     std::vector<uint8_t> setSpeed(int speed);
-    std::vector<uint8_t> ledOff();
-    std::vector<uint8_t> ledOn();
+    std::vector<uint8_t> setLED(boolean on);
     std::vector<uint8_t> deleteScreen(int screen);
     std::vector<uint8_t> setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b);
     std::vector<uint8_t> setClockMode(int style, int dayOfWeek, int year, int month, int day, bool showDate, bool format24);

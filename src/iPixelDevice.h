@@ -37,8 +37,7 @@ public:
     void clear();
     void setBrightness(int brightness);
     void setSpeed(int speed);
-    void ledOff();
-    void ledOn();
+    void setLED(boolean on);
     void deleteScreen(int screen);
     void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b);
     void setClockMode(int style, int dayOfWeek, int year, int month, int day, bool showDate, bool format24);

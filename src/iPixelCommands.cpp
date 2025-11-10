@@ -95,24 +95,13 @@ namespace iPixelCommands {
         return frame;
     }
 
-    std::vector<uint8_t> ledOff() {
+    std::vector<uint8_t> setLED(boolean on) {
         std::vector<uint8_t> frame(5);
         frame[0] = 0x05;
         frame[1] = 0x00;
         frame[2] = 0x07;
         frame[3] = 0x01;
-        frame[4] = 0x00;
-
-        return frame;
-    }
-
-    std::vector<uint8_t> ledOn() {
-        std::vector<uint8_t> frame(5);
-        frame[0] = 0x05;
-        frame[1] = 0x00;
-        frame[2] = 0x07;
-        frame[3] = 0x01;
-        frame[4] = 0x01;
+        frame[4] = on ? 0x01 : 0x00;
 
         return frame;
     }

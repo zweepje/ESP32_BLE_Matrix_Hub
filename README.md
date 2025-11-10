@@ -5,6 +5,10 @@ It exposes the device’s functionality via a **REST API** served by a built-in 
 
 ---
 
+> [!CAUTION]  
+> This docuementation is outdated as a rewrite of the webserver is going on!  
+> Please use this work-tree for testing: https://github.com/ToBiDi0410/iPixel-ESP32/tree/0602925e64fb0f41a694e3bdc56e55c945941ec6
+
 # ⚠️⚠️⚠️ UNSTABLE
 This is currently only work-in-progress with the only supported device beeing the ESP32-S3 (SuperMicro).  
 Support for further ESP32 boards is planned.  

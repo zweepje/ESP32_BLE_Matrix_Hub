@@ -2,7 +2,9 @@
 #include <ImprovWiFiLibrary.h>
 #include <Preferences.h>
 #include "Bluetooth.h"
-#include "Webserver.h"
+#include "iPixelDeviceRegistry.h"
+#include "web/Webserver.h"
+#include <LittleFS.h>
 
 Preferences preferences;
 ImprovWiFi improvSerial(&Serial);
@@ -76,6 +78,10 @@ void setup() {
   delay(2000);
   Serial.begin(115200);
   Serial.println("[Setup] Hello World! Let's hope we can pixel together!");
+  if (!LittleFS.begin()) {
+    Serial.println("LittleFS mount failed");
+    return;
+  }
   setup_wifi_pre();
   setup_improv();
   setup_wifi_post();

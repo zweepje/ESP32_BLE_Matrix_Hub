@@ -20,4 +20,5 @@ void GFXTextElement::render(int depth) {
     canvas.setTextColor(rgb565_color);
     canvas.print(text);
     std::copy(canvas.framebuffer.begin(), canvas.framebuffer.end(), framebuffer.begin());
+    //TO FIX: ACTUALLY DRAW ONLY THE TEXT, KEEPING THE REST TRANSPARENT?!
 }
