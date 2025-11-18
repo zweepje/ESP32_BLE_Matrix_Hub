@@ -3,11 +3,20 @@
 #include <Arduino.h>
 #include <vector>
 #include <NimBLEDevice.h>
+#include <string>
+#include <ArduinoJson.h> // Nodig voor het parsen van de JSON commando's
+#include <cstdint>
+#include <map>
+#include <queue>
+
 
 extern NimBLEUUID serviceUUID;
 extern NimBLEUUID charUUID;
 
 class iPixelDevice : public NimBLEClientCallbacks {
+
+private:
+    std::queue<std::string> commandQueue; // De queue is hier gedeclareerd
 public:
     NimBLEAddress address;
     NimBLEClient *client = nullptr;
@@ -17,6 +26,9 @@ public:
 
     iPixelDevice(NimBLEAddress pAddress) : address(pAddress) {}
     void printPrefix();
+
+    // queue with received commands
+    void enqueueCommand(const JsonDocument& doc);
 
     //BLEClientCallbacks
     void onConnect(NimBLEClient *pClient);
@@ -29,6 +41,9 @@ public:
     std::vector<std::vector<uint8_t>> queue;
     void queueTick();
     void queuePush(std::vector<uint8_t> command);
+
+    // command queue
+    void processQueue() ;
 
     //Commands
     void setTime(int hour, int minute, int second);
