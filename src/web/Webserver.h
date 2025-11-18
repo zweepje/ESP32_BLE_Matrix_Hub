@@ -5,7 +5,6 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
-#include "web/Endpoint.h"
 
 extern AsyncWebServer server;
 
