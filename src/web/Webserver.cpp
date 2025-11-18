@@ -47,8 +47,15 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
             AwsFrameInfo *info = (AwsFrameInfo*)arg;
             if (info->opcode != WS_TEXT) return;
 
-            // JSON Parsen met ArduinoJson
-            StaticJsonDocument<256> doc;
+#pragma GCC diagnostic push
+            // 2. Schakel de specifieke waarschuwing uit voor de volgende regels
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+            // 3. De regel die de waarschuwing veroorzaakt:
+            // JsonDocument heeft geen vooraf reservatie oid.
+            StaticJsonDocument<256> doc; // of StaticJsonDocument<CAPACITY> doc;
+            // 4. Herstel de oorspronkelijke waarschuwingsstatus
+#pragma GCC diagnostic pop
+
             DeserializationError error = deserializeJson(doc, (char*)data, len);
 
             if (error) {
