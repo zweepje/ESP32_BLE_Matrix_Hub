@@ -1,4 +1,5 @@
 #include "main.h"
+#include "global.h"
 #include <Arduino.h>
 #include <ImprovWiFiLibrary.h>
 #include <Preferences.h>
@@ -8,6 +9,8 @@
 #include <LittleFS.h>
 #include <map>
 #include <string>
+
+#include "png/pngmaker.h"
 
 Preferences preferences;
 ImprovWiFi improvSerial(&Serial);
@@ -25,13 +28,22 @@ void loop_connected();
 void setup_connected();
 void setup_wifi_post();
 
+
+uint8_t g_debugFlags = DEBUG_BLE | DEBUG_QUEUE;
+// Initialisatie
+bool g_isBleBusy = false;
+
+
+
+
+
 void onImprovWiFiErrorCb(ImprovTypes::Error err) {
   Serial.println("[Improv] WiFi failed! Reconnecting to saved one...");
   setup_wifi_post();
 }
 
 void onImprovWiFiConnectedCb(const char *ssid, const char *password) {
-  Serial.println("[Improv] Got WiFi credentials! (no, we won't leak them here :/)");
+  DBG_PRINTF( DEBUG_WIFI,"[Improv] Got WiFi credentials! (no, we won't leak them here :/)");
   preferences.begin("wifi", false); // namespace "wifi"
   preferences.putString("ssid", ssid);
   preferences.putString("pass", password);
@@ -47,13 +59,14 @@ bool connectWifi(const char *ssid, const char *password) {
 
 void setup_wifi_pre() {
   WiFi.mode(WIFI_STA);
-  Serial.println("[WiFi] Mode is now 'STATION'!");
+  DBG_PRINTF( DEBUG_WIFI,"[WiFi] Mode is now 'STATION'!");
 
   WiFi.disconnect();
-  Serial.println("[WiFi] Disconnected after startup!");
+  DBG_PRINTF( DEBUG_WIFI,"[WiFi] Disconnected after startup!");
 }
 
 void setup_wifi_post() {
+  //
   preferences.begin("wifi", false);
   preferences.putString( "ssid", "Palamedes_ExtraWiFi2G");
   preferences.putString( "pass", "Poetiniseenlul");
@@ -64,7 +77,7 @@ void setup_wifi_post() {
   String pass = preferences.getString("pass", "");
   preferences.end();
   if(ssid.equals("")) {
-    Serial.println("[WiFi] No credentials set! Not connecting!");
+    DBG_PRINTF( DEBUG_WIFI,"[WiFi] No credentials set! Not connecting!");
     return;
   }
 
@@ -95,6 +108,45 @@ void setup() {
   delay(2000);
   Serial.begin(115200);
   Serial.println("[Setup] Hello World! Let's hope we can pixel together!");
+  delay(1000); // Wacht even op de seriële monitor
+  Serial.println("\n--- PSRAM/Geheugen Status ---");
+
+  // 1. Controleer de totale beschikbare DRAM (interne heap)
+  size_t dram_heap = heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+  Serial.printf("Interne DRAM Heap: %u bytes\n", dram_heap);
+
+  // 2. Controleer de totale beschikbare PSRAM (externe heap)
+  size_t psram_size = heap_caps_get_free_size(MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  Serial.printf("Externe PSRAM Heap: %u bytes\n", psram_size);
+
+  // -----------------------------------------------------
+
+  if (psram_size > 0) {
+    // 3. PSRAM is gedetecteerd, probeer een grote buffer toe te wijzen
+    const size_t TEST_SIZE = 1024 * 512; // 512 KB, dit past NIET in interne DRAM
+
+    Serial.printf("\nProbeer %u KB toe te wijzen in PSRAM...", TEST_SIZE / 1024);
+
+    // Gebruik MALLOC_CAP_SPIRAM om te garanderen dat het geheugen van de PSRAM komt
+    uint8_t *large_buffer = (uint8_t *)heap_caps_malloc(TEST_SIZE, MALLOC_CAP_SPIRAM);
+
+    if (large_buffer != NULL) {
+      // Allocatie gelukt! Schrijf wat data om te controleren
+      memset(large_buffer, 0xAA, TEST_SIZE);
+      Serial.println("✅ Succesvol toegewezen en getest! PSRAM werkt.");
+
+      // Belangrijk: Geef geheugen vrij
+      heap_caps_free(large_buffer);
+    } else {
+      Serial.println("❌ Fout: Allocatie mislukt, ondanks gemelde vrije PSRAM.");
+    }
+  } else {
+    Serial.println("❌ PSRAM is niet gedetecteerd (gemelde grootte is 0).");
+  }
+  Serial.println("-------------------------------------");
+
+
+
 
   // Probeer LittleFS te mounten
   if (!LittleFS.begin()) {
@@ -111,6 +163,9 @@ void setup() {
   } else {
     Serial.println("LittleFS succesvol gemount.");
     // Normaal programma gaat hier verder...
+
+
+
   }
 
 
@@ -131,6 +186,8 @@ void loop_connected() {
     // 1. WebSocket onderhoud
     // Nodig om client time-outs af te handelen
     ws.cleanupClients();
+
+
 
     // 2. Queue Verwerking
     // Loop door alle geregistreerde Matrix Controllers

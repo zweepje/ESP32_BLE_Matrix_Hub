@@ -14,6 +14,7 @@ namespace iPixelCommands {
 
     bool checkRange(const char* name, int value, int minVal, int maxVal);
 
+    std::vector<uint8_t> sendImage();
     std::vector<uint8_t> setTime(int hour, int minute, int second);
     std::vector<uint8_t> setFunMode(bool value);
     std::vector<uint8_t> setOrientation(int orientation);

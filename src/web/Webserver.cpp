@@ -20,6 +20,16 @@ extern  std::map<uint32_t, ClientState> clientStates; // Key is client ID
 
 
 
+char * socketData;
+int currSocketBufferIndex = 0;
+void setupBuffer() {
+    // allocate memory for socketData in PSRAM if you have.
+    socketData  = (char *) malloc (4096);
+    if ( socketData == NULL ) {
+        Serial.printf("Malloc socket buffer failed\n");
+    }
+}
+
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
 
     switch (type) {
@@ -42,23 +52,51 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 
         case WS_EVT_DATA: {
 
-            Serial.printf("Data ontvangen client: #%u\n", client->id());
+            Serial.printf("Data ontvangen client: #%u, lengte %d\n", client->id(), len );
             // Controleer of het tekstdata is (JSON)
             AwsFrameInfo *info = (AwsFrameInfo*)arg;
             if (info->opcode != WS_TEXT) return;
+            //
+            // copy what we got
+            for (size_t i = 0; i < len; i++){
+                socketData[currSocketBufferIndex] = data[i];
+                currSocketBufferIndex++;
+            }
+            if( currSocketBufferIndex >= info->len ){
+                    socketData[currSocketBufferIndex] = '\0';
+                    Serial.printf("Data compleet: #%u, lengte %d\n", client->id(), currSocketBufferIndex );
+
+                     len = currSocketBufferIndex ;
+                     currSocketBufferIndex = 0;
+                    // do the normal stuff
+            } else {
+                // wait for more data
+                return ;
+            }
+
+            //for ( int i=0 ; i<bufzize)
+
+
 
 #pragma GCC diagnostic push
             // 2. Schakel de specifieke waarschuwing uit voor de volgende regels
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
             // 3. De regel die de waarschuwing veroorzaakt:
             // JsonDocument heeft geen vooraf reservatie oid.
-            StaticJsonDocument<256> doc; // of StaticJsonDocument<CAPACITY> doc;
+
+            // dynamic maken!!!
+            StaticJsonDocument<4096> doc; // of StaticJsonDocument<CAPACITY> doc
+            //SpiRamJsonDocument doc(SOCKET_DATA_SIZE);
+            //JsonDocument doc ;
             // 4. Herstel de oorspronkelijke waarschuwingsstatus
 #pragma GCC diagnostic pop
 
-            DeserializationError error = deserializeJson(doc, (char*)data, len);
+            DeserializationError error = deserializeJson(doc, (char*)socketData, len);
+
+
 
             if (error) {
+                Serial.printf("JSON error: %d\n", error );
                 Serial.printf("Data ontvangen Ongeldig JSON-formaat\n", client->id());
                 client->text("ERROR: Ongeldig JSON-formaat.");
                 return;
@@ -162,6 +200,9 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 void init_webserver() {
 
     Serial.println("[Webserver] Initializing webserver...");
+
+    setupBuffer() ; // reserve socket buffer
+
     // Registreer de event handler bij de WebSockets server
     ws.onEvent(onWsEvent);
     // Voeg de WebSockets handler toe aan de HTTP server

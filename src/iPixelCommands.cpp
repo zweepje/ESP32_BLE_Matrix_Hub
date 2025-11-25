@@ -18,6 +18,14 @@ namespace iPixelCommands {
         return true;
     }
 
+    std::vector<uint8_t> sendImage() {
+
+        std::vector<uint8_t> frame(8);
+        return frame;
+    }
+
+
+
     std::vector<uint8_t> setTime(int hour, int minute, int second) {
         checkRange("Hour", hour, 0, 23);
         checkRange("Minute", minute, 0, 59);

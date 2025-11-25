@@ -5,10 +5,15 @@ set(CMAKE_CXX_STANDARD 14)
 
 add_executable(myipixel
         src/main.cpp
-        src/web/device/raw/setLED.h
         src/iPixelDeviceRegistry.cpp
         .pio/libdeps/esp32s3dev/AsyncTCP/src/AsyncTCP.cpp
         src/web/Webserver.cpp
-        src/web/device/raw/clear.h
         src/main.h
-        src/iPixelDevice.cpp)
+        src/iPixelDevice.cpp
+        src/global.h
+        src/png/pngmaker.h
+        src/png/pngmaker.cpp
+        lib/PNGenc/PNGenc.cpp
+        src/png/cBitmap.cpp
+        src/png/cBitmap.h
+        src/cgif/cgif.c)

@@ -46,6 +46,7 @@ public:
     void processQueue() ;
 
     //Commands
+    void sendImage();
     void setTime(int hour, int minute, int second);
     void setFunMode(bool value);
     void setOrientation(int orientation);
