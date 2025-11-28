@@ -5,6 +5,6 @@
 #ifndef MYIPIXEL_PNGMAKER_H
 #define MYIPIXEL_PNGMAKER_H
 
-void setuppng() ;
+String setuppng() ;
 
 #endif //MYIPIXEL_PNGMAKER_H

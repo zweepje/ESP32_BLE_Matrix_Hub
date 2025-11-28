@@ -67,6 +67,9 @@ cgif_result cgif_rgb_close     (CGIFrgb* pGIF);
 // CGIF_Config type (parameters passed by user)
 // note: must stay AS IS for backward compatibility
 struct st_gifconfig {
+
+
+
   uint8_t*    pGlobalPalette;                            // global color table of the GIF
   const char* path;                                      // path of the GIF to be created, mutually exclusive with pWriteFn
   uint32_t    attrFlags;                                 // fixed attributes of the GIF (e.g. whether it is animated or not)
@@ -109,6 +112,17 @@ struct st_cgif_rgb_frameconfig {
   uint32_t genFlags;    // TBD
   uint16_t delay;
 };
+
+
+
+
+  uint8_t* getFileBuffer(CGIF* pGIF) ;
+  uint32_t  getFileCount(CGIF* pGIF) ;
+
+
+
+
+
 
 #ifdef __cplusplus
 }

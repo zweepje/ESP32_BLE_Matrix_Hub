@@ -1,0 +1,33 @@
+c:\Espressif\tools\openocd-esp32\v0.12.0-esp32-20250707\openocd-esp32\bin\openocd.exe -f board/esp32s3-builtin.cfg -c "adapter speed 2000
+
+
+void setup() {
+    Serial.begin(115200);
+    delay(100);
+
+    // Optioneel: Wis opgeslagen NVS-gegevens voor een schone lei (zie eerdere antwoorden)
+    // WiFi.disconnect(true);
+
+    // 1. Configureer het netwerk (Statisch IP instellen)
+    if (!WiFi.config(staticIP, gateway, subnet, dns1)) {
+        Serial.println("FATALE FOUT: Statische Wi-Fi configuratie mislukt!");
+    }
+
+    // 2. Start de Wi-Fi verbinding
+    Serial.print("Verbinden met Wi-Fi...");
+    WiFi.begin(ssid, password);
+
+    // Wacht tot de verbinding tot stand is gebracht
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+
+    Serial.println("\nVerbonden!");
+    Serial.print("Statisch IP-adres ingesteld op: ");
+    Serial.println(WiFi.localIP());
+}
+
+void loop() {
+    // ...
+}

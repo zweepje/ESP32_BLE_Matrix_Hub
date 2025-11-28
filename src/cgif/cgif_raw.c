@@ -432,6 +432,11 @@ CGIFRaw* cgif_raw_newgif(const CGIFRaw_Config* pConfig) {
   if(!pGIF) {
     return NULL;
   }
+
+  // copy pConfig into pGif->config \n",g)
+  printf("Copy pConfig %p  into pGif->config %p\n", pConfig, &(pGIF->config));
+  printf("Sizes %llu, %llu ", sizeof( CGIF_Config ), sizeof(CGIFRaw_Config) ) ;
+
   memcpy(&(pGIF->config), pConfig, sizeof(CGIFRaw_Config));
   // initiate all sections we can at this stage:
   // - main GIF header

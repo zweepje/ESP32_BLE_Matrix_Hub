@@ -12,6 +12,10 @@
 
 #include "png/pngmaker.h"
 
+extern "C" {
+void initfs(void);
+}
+
 Preferences preferences;
 ImprovWiFi improvSerial(&Serial);
 
@@ -61,12 +65,15 @@ void setup_wifi_pre() {
   WiFi.mode(WIFI_STA);
   DBG_PRINTF( DEBUG_WIFI,"[WiFi] Mode is now 'STATION'!");
 
+  delay(500);
+
   WiFi.disconnect();
   DBG_PRINTF( DEBUG_WIFI,"[WiFi] Disconnected after startup!");
 }
 
 void setup_wifi_post() {
   //
+  /*
   preferences.begin("wifi", false);
   preferences.putString( "ssid", "Palamedes_ExtraWiFi2G");
   preferences.putString( "pass", "Poetiniseenlul");
@@ -80,13 +87,21 @@ void setup_wifi_post() {
     DBG_PRINTF( DEBUG_WIFI,"[WiFi] No credentials set! Not connecting!");
     return;
   }
+*/
+  String ssid = "Palamedes_ExtraWiFi2G" ;
+  String pass = "Poetiniseenlul" ;
 
   Serial.print("[WiFi] Connecting to SSID: " + ssid);
   WiFi.begin(ssid, pass);
+  Serial.print("aap");
+  delay(5000);
+  Serial.print("noot");
+
   while(!WiFi.isConnected()) {
     Serial.print(".");
     delay(500);
   }
+  delay(2000); // wacht 2 seconden
   Serial.println("OK");
   Serial.println("[WiFi] Connected!");
 
@@ -96,21 +111,26 @@ void setup_wifi_post() {
 }
 
 void setup_improv() {
+/*
   Serial.println("[Improv] Setting up...");
   improvSerial.setDeviceInfo(ImprovTypes::ChipFamily::CF_ESP32, "iPixel-Server", "1.0.0", "ESP32", "http://{LOCAL_IPV4}?name=Guest");
   improvSerial.onImprovError(onImprovWiFiErrorCb);
   improvSerial.onImprovConnected(onImprovWiFiConnectedCb);
   improvSerial.setCustomConnectWiFi(connectWifi);
   Serial.println("[Improv] Ready!");
+*/
 }
 
-void setup() {
-  delay(2000);
-  Serial.begin(115200);
-  Serial.println("[Setup] Hello World! Let's hope we can pixel together!");
-  delay(1000); // Wacht even op de seriële monitor
-  Serial.println("\n--- PSRAM/Geheugen Status ---");
 
+void setup() {
+
+  Serial.begin(115200);
+  delay(500); // Wacht even op de seriële monitor
+  Serial.println("[Setup] Hello World! Let's hope we can pixel together!");
+  delay(500); // for debug
+
+
+  Serial.println("\n--- PSRAM/Geheugen Status ---");
   // 1. Controleer de totale beschikbare DRAM (interne heap)
   size_t dram_heap = heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
   Serial.printf("Interne DRAM Heap: %u bytes\n", dram_heap);
@@ -146,7 +166,7 @@ void setup() {
   Serial.println("-------------------------------------");
 
 
-
+/*
 
   // Probeer LittleFS te mounten
   if (!LittleFS.begin()) {
@@ -165,10 +185,18 @@ void setup() {
     // Normaal programma gaat hier verder...
 
 
+    File f = LittleFS.open("/test.txt", "w");
+    if ( !f ) {
+      Serial.println("openen van file ging fout.");
+    } else {
+      Serial.println("openen van file ging goed.");
+      f.close();
+    }
+
 
   }
-
-
+*/
+ // initfs() ;
   setup_wifi_pre();
   setup_improv();
   setup_wifi_post();
@@ -177,8 +205,10 @@ void setup() {
 }
 
 void loop() {
-  improvSerial.handleSerial();
-  if (improvSerial.isConnected()) loop_connected();
+
+  //improvSerial.handleSerial();
+  //if (improvSerial.isConnected()) loop_connected();
+  loop_connected();
 }
 
 void loop_connected() {

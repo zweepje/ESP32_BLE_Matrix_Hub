@@ -1,10 +1,13 @@
+#include <Arduino.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
+#include <fcntl.h>
 #include "cgif.h"
 #include "cgif_raw.h"
+#include "esp_heap_caps.h"
+
 
 #define MULU16(a, b) (((uint32_t)a) * ((uint32_t)b)) // helper macro to correctly multiply two U16's without default signed int promotion
 #define SIZE_FRAME_QUEUE (3)
@@ -23,7 +26,10 @@ struct st_gif {
   CGIF_Frame*        aFrames[SIZE_FRAME_QUEUE]; // (internal) we need to keep the last three frames in memory.
   CGIF_Config        config;                    // (internal) configuration parameters of the GIF
   CGIFRaw*           pGIFRaw;                   // (internal) raw GIF stream
-  FILE*              pFile;
+
+  uint8_t*    pFileBuffer;                              // buffer waarin ik de gif opsla
+  uint32_t    FileCount;
+  FILE*              pFile;       // weggooien
   cgif_result        curResult;
   int                iHEAD;                     // (internal) index to current HEAD frame in aFrames queue
 };
@@ -34,7 +40,40 @@ typedef struct {
   uint16_t height;
   uint16_t top;
   uint16_t left;
+
 } DimResult;
+
+
+
+uint8_t *FileBuffer ;
+uint32_t FileCount ;
+// helpers
+uint8_t* getFileBuffer(CGIF* pGIF) {
+  return FileBuffer;
+}
+
+uint32_t  getFileCount(CGIF* pGIF) {
+  return FileCount;
+}
+
+
+void CreateFileBuffer() {
+
+    printf("allocating buffer for file" );
+    uint8_t *ptr = heap_caps_malloc(2048, MALLOC_CAP_SPIRAM);
+    if ( ptr==NULL ) {
+      printf("psmalloc failed\n" );
+      FileBuffer = NULL ;
+    }
+    FileBuffer = ptr ;
+    FileCount = 0 ;
+}
+
+
+
+
+
+
 
 /* calculate next power of two exponent of given number (n MUST be <= 256) */
 static uint8_t calcNextPower2Ex(uint16_t n) {
@@ -50,14 +89,18 @@ static int writecb(void* pContext, const uint8_t* pData, const size_t numBytes) 
   size_t r;
 
   pGIF = (CGIF*)pContext;
-  if(pGIF->pFile) {
-    r = fwrite(pData, 1, numBytes, pGIF->pFile);
-    if(r == numBytes) return 0;
-    else return -1;
-  } else if(pGIF->config.pWriteFn) {
-    return pGIF->config.pWriteFn(pGIF->config.pContext, pData, numBytes);
+  if( FileBuffer != NULL ) {
+    for ( int i=0 ; i<numBytes ; i++ ) {
+      FileBuffer[FileCount] = pData[i];
+      printf("%02x ",  FileBuffer[FileCount] );
+      FileCount++;
+    }
+    printf("\nGiffile is now %d bytes\n",   FileCount);
+  }else {
+    printf( "FileBuffer was NULL\n") ;
+    return -1 ;
   }
-  return 0;
+  return 0; // flag success
 }
 
 /* free space allocated for CGIF struct */
@@ -74,28 +117,33 @@ CGIF* cgif_newgif(CGIF_Config* pConfig) {
   CGIF*          pGIF;
   CGIFRaw*       pGIFRaw; // raw GIF stream
   CGIFRaw_Config rawConfig = {0};
+
+
+  printf("inside cgif_newgif\n" );
+
   // width or heigth cannot be zero
   if(!pConfig->width || !pConfig->height) {
     return NULL;
   }
   pFile = NULL;
-  // open output file (if necessary)
-  if(pConfig->path) {
-    pFile = fopen(pConfig->path, "wb");
-    if(pFile == NULL) {
-      return NULL; // error: fopen failed
-    }
-  }
+
   // allocate space for CGIF context
   pGIF = malloc(sizeof(CGIF));
   if(pGIF == NULL) {
     if(pFile) {
-      fclose(pFile);
+      printf("malloc failed\n" );
     }
     return NULL; // error -> malloc failed
   }
-
   memset(pGIF, 0, sizeof(CGIF));
+
+
+  // open output file (if necessary)
+  CreateFileBuffer() ;
+
+
+
+
   pGIF->pFile = pFile;
   pGIF->iHEAD = 1;
   memcpy(&(pGIF->config), pConfig, sizeof(CGIF_Config));
@@ -120,9 +168,11 @@ CGIF* cgif_newgif(CGIF_Config* pConfig) {
   // check for errors
   if(pGIFRaw == NULL) {
     if(pFile) {
-      fclose(pFile);
+      //fclose(pFile);
     }
     freeCGIF(pGIF);
+    printf("pGIFRaw failed\n" );
+
     return NULL;
   }
 

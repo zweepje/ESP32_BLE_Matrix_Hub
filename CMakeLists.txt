@@ -1,7 +1,11 @@
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 3.16)
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+# "Trim" the build. Include the minimal set of components, main, and anything it depends on.
+idf_build_set_property(MINIMAL_BUILD ON)
+
 project(myipixel)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 add_executable(myipixel
         src/main.cpp
@@ -16,4 +20,6 @@ add_executable(myipixel
         lib/PNGenc/PNGenc.cpp
         src/png/cBitmap.cpp
         src/png/cBitmap.h
-        src/cgif/cgif.c)
+        src/cgif/cgif.c
+        src/initfs.c
+        src/cgif/cgif_raw.c)

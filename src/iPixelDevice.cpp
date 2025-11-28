@@ -50,10 +50,6 @@ void iPixelDevice::processQueue() {
         DBG_PRINTF( DEBUG_QUEUE, "JSON Command: %s\n", cmd );
         if ( strcmp( cmd, "ASSIGN" ) == 0 ) {
 
-            //
-            // mijn gehakt
-            //
-            setuppng() ;
 
 
             //
@@ -113,16 +109,31 @@ void iPixelDevice::processQueue() {
 
             //String text_str = "Jezus is een vriend van mij.";
             // sendText( text_str, 1, 1, 20, 0,0,99, 0, 16 );
-        } else if  ( strcmp( cmd, "send_png" ) == 0 ) {
+        } else if  ( strcmp( cmd, "send_gif" ) == 0 ) {
 
-            DBG_PRINTF( DEBUG_QUEUE, "Decoded send_png commando");
+            DBG_PRINTF( DEBUG_QUEUE, "Decoded send_gif commando");
 
-            String paramStr = params[0].as<String>();
+            //String paramStr = params[0].as<String>();
+            //this->sendPNG( Helpers::hexStringToVector(paramStr) );
 
+            //
+            // mijn gehakt
+            //
+            String aap = setuppng() ;
+            Serial.print("setuppng De lengte van de String is: ");
+            Serial.println(aap.length());  // print de lengte van de String als getal
 
-            //std::vector<uint8_t>  aap = hexStringToVector(paramStr);
+            std::vector<uint8_t> binaryDataVector;
+            size_t len = aap.length();
+            binaryDataVector.resize(len);
+            memcpy(binaryDataVector.data(), aap.c_str(), len);
 
-            this->sendPNG( Helpers::hexStringToVector(paramStr) );
+            this->sendGIF( binaryDataVector );
+            //this->sendPNG( (aap) );
+
+            //
+            // original:
+            //            this->sendPNG( Helpers::hexStringToVector(paramStr) );
 
         }
     }
@@ -494,8 +505,9 @@ void iPixelDevice::sendPNG(const std::vector<uint8_t> &pngData) {
     queuePush(command);
 }
 
+
 void iPixelDevice::sendGIF(const std::vector<uint8_t> &gifData) {
-    std::vector<uint8_t> command = iPixelCommands::sendPNG(gifData);
+    std::vector<uint8_t> command = iPixelCommands::sendGIF(gifData);
     printPrefix();
     Serial.print("GIF with ");
     Serial.print(gifData.size());
