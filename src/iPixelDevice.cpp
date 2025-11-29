@@ -6,6 +6,7 @@
 #include "iPixelCommands.h"
 #include "Helpers.h"
 #include "png/pngmaker.h"
+#include "functions/temperature.h"
 
 NimBLEUUID serviceUUID("000000fa-0000-1000-8000-00805f9b34fb");
 NimBLEUUID charUUID("0000fa02-0000-1000-8000-00805f9b34fb");
@@ -119,8 +120,9 @@ void iPixelDevice::processQueue() {
             //
             // mijn gehakt
             //
-            String aap = setuppng() ;
-            Serial.print("setuppng De lengte van de String is: ");
+            String aap;
+            make_temperature( aap, 12.3, "boven" ) ;
+            Serial.print("make_temperature De lengte van de String is: ");
             Serial.println(aap.length());  // print de lengte van de String als getal
 
             std::vector<uint8_t> binaryDataVector;

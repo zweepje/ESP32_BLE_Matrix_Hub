@@ -9,12 +9,42 @@
 #include <cstring>
 #include <memory>
 
-#include "cBitmap.h"
+#include "IndexedBitmap.h"
 #include "cgif/cgif.h"
+#include <Adafruit_GFX.h>
+#include <Fonts/FreeSans9pt7b.h> // Voorbeeld font
 
 // --- 1. CONFIGURATIE ---
 const unsigned int WIDTH = 32;
 const unsigned int HEIGHT = 32;
+
+// De bridge-klasse erft van Adafruit_GFX
+class BitmapGFX : public Adafruit_GFX {
+public:
+    // Wijst naar je IndexedBitmap
+    IndexedBitmap& bitmap;
+
+    // Constructor van de GFX-klasse aanroepen
+    BitmapGFX(IndexedBitmap& bmp)
+        : Adafruit_GFX(bmp.getWidth(), bmp.getHeight()), bitmap(bmp) {}
+
+    // 1. De verplichte drawPixel() functie
+    // Deze vertelt GFX hoe het een pixel op jouw bitmap moet tekenen
+    void drawPixel(int16_t x, int16_t y, uint16_t colorIndex) override {
+        // We gaan ervan uit dat de colorIndex die GFX doorgeeft,
+        // direct de 8 BPP kleurindex is die jouw bitmap verwacht.
+        // We gebruiken uint16_t cast omdat GFX dat vereist.
+        bitmap.setPixel(x, y, (uint8_t)colorIndex);
+    }
+
+    // 2. De verplichte drawFastVLine() functie (optioneel, maar aanbevolen voor snelheid)
+    void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color) override {
+        for (int16_t i = 0; i < h; i++) {
+            drawPixel(x, y + i, color);
+        }
+    }
+} ; // BitmapGFX
+
 
 static void initGIFConfig(CGIF_Config* pConfig, char* path, uint16_t width, uint16_t height, uint8_t* pPalette, uint16_t numColors) {
 
@@ -31,17 +61,22 @@ static void initFrameConfig(CGIF_FrameConfig* pConfig, uint8_t* pImageData) {
     pConfig->pImageData = pImageData;
 }
 
-uint8_t       aPalette[] = {0xFF, 0x00, 0x00,                 // red
+uint8_t       aPalette[] = {0x00, 0x00, 0x00,                 // black
+                            0xFF, 0x00, 0x00,                 // red
                             0x00, 0xFF, 0x00,                 // green
-                            0x00, 0x00, 0xFF};                // blue
-uint16_t numColors = 3;                                        // number of colors in aPalette (up to 256 possible)
+                            0xFF, 0x00, 0xFF                  // blue
+                };                // blue
+uint16_t numColors = 4;                                        // number of colors in aPalette (up to 256 possible)
+
+CGIF*          pGIF;                                          // struct containing the GIF
+
 
 // --- 3. HOOFDLOGICA ---
 bool generateAndSavePng(String& resultString, const char* filename) {
 
-    cBitmap *bmp;
+    //cBitmap *bmp;
     Serial.printf("in generateAndSavePng\n" );
-     bmp = new cBitmap(WIDTH, HEIGHT);
+    auto *bmp = new IndexedBitmap(WIDTH, HEIGHT, 8);
     Serial.printf("image allocated\n" );
     if ( bmp==NULL ) {
         Serial.printf("bmp alloc failed\n" );
@@ -73,9 +108,46 @@ bool generateAndSavePng(String& resultString, const char* filename) {
     Serial.printf("lijn gemaakt\n" );
 
 
+    // ------------------------ Adafruit gedonder ---------------------------------------
+    BitmapGFX canvas( *bmp);
+
+    // 2. Clear de bitmap eerst
+    canvas.fillScreen(0); // Index 0 is zwart/achtergrond
+
+    // 3. Configureer de tekst
+    canvas.setFont(&FreeSans9pt7b); // Gebruik een ingesloten lettertype
+    canvas.setTextColor(2);         // Stel de tekstkleur in op Index 1 (bijv. wit)
+    canvas.setFont(NULL); // Gebruik het standaard 5x7 font
+    canvas.setTextSize(1);  // 5x7 pixels
+
+    // 4. Bepaal waar de tekst moet beginnen
+    int16_t x1, y1;
+    uint16_t w, h;
+
+    String textToPrint="Binnen";
+    // Met getTextBounds kun je de positie centreren
+    canvas.getTextBounds(textToPrint, 0, 0, &x1, &y1, &w, &h);
+
+    // Stel de cursor in om de tekst te centreren (of op een vaste positie)
+    canvas.setCursor(
+        (canvas.width() - w) / 2, // X-coördinaat (gecentreerd)
+        (canvas.height() + h) / 2 // Y-coördinaat (gecentreerd)
+    );
+    canvas.setCursor( 2, 21 ) ;
+
+    canvas.print(textToPrint);
 
 
 
+
+
+
+
+
+
+
+
+    // --------------------- gif encodign --------------------------
 
     CGIF_Config     gConfig;                                        // global configuration parameters for the GIF
     CGIF*          pGIF;                                          // struct containing the GIF
@@ -88,14 +160,16 @@ bool generateAndSavePng(String& resultString, const char* filename) {
     char* mutable_path = const_cast<char*>(path_str.c_str());
 
 
-    initGIFConfig(&gConfig, mutable_path, WIDTH, HEIGHT, aPalette, numColors);
+    initGIFConfig(&gConfig, mutable_path, WIDTH, HEIGHT, aPalette, 4);
     Serial.printf("initGIFConfig\n" );
 
     pGIF = cgif_newgif(&gConfig);
     Serial.printf("cgif_newgif\n" );
 
     // add frame to GIF
-    initFrameConfig(&fConfig, bmp->bitmap);                         // initialize the frame-configuration
+    initFrameConfig(&fConfig, bmp->getData() );                         // initialize the frame-configuration
+    Serial.printf("read data at: %d\n", bmp->getData() );
+
     Serial.printf("initFrameConfig\n" );
 
     if ( pGIF==NULL ) {
@@ -142,7 +216,7 @@ bool generateAndSavePng(String& resultString, const char* filename) {
  //   } else {
  //       Serial.printf("Succesvol opgeslagen als %s (%u x %u pixels).\n", filename, WIDTH, HEIGHT);
  //   }
-    return true ;
+    return resultString ;
 
 }
 
