@@ -541,6 +541,9 @@ int cgif_addframe(CGIF* pGIF, CGIF_FrameConfig* pConfig) {
     return CGIF_ERROR; // invalid config
   }
 
+
+  printf("---- Frame delay is %d\n", pConfig->delay );
+
   // if frame matches previous frame, drop it completely and sum the frame delay
   if(pGIF->aFrames[pGIF->iHEAD] != NULL) {
     const uint32_t frameDelay = pConfig->delay + pGIF->aFrames[pGIF->iHEAD]->config.delay;
@@ -632,6 +635,7 @@ int cgif_close(CGIF* pGIF) {
   // check for previous errors
   if(pGIF->curResult != CGIF_OK) {
     goto CGIF_CLOSE_Cleanup;
+    printf("Close - result was not ok\n");
   }
 
   // flush all remaining frames in queue

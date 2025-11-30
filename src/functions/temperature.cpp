@@ -8,7 +8,10 @@
 #include <algorithm> // Voor std::min en std::max
 #include "cgif/cgif.h"
 #include <Adafruit_GFX.h>
+#include <vector>
 #include <Fonts/FreeSans9pt7b.h> // Voorbeeld font
+#include "png/GifMaker.h"
+#include "temperature.h"
 
 
 const int    BLACK = 0 ;
@@ -24,7 +27,6 @@ extern uint16_t      numColors;                                        // number
 const unsigned int WIDTH = 32;
 const unsigned int HEIGHT = 32;
 
-extern CGIF*          pGIF;                                          // struct containing the GIF
 
 
 
@@ -56,71 +58,15 @@ public:
 
 
 
-static void initGIFConfig(CGIF_Config* pConfig, char* path, uint16_t width, uint16_t height, uint8_t* pPalette, uint16_t numColors) {
-
-    memset(pConfig, 0, sizeof(CGIF_Config));
-    pConfig->width                   = width;
-    pConfig->height                  = height;
-    pConfig->pGlobalPalette          = pPalette;
-    pConfig->numGlobalPaletteEntries = numColors;
-    pConfig->path                    = path;
-}
-
-static void initFrameConfig(CGIF_FrameConfig* pConfig, uint8_t* pImageData) {
-    memset(pConfig, 0, sizeof(CGIF_FrameConfig));
-    pConfig->pImageData = pImageData;
-}
 
 
-bool creategif( IndexedBitmap *bmp ) {
-
-
-    CGIF_Config     gConfig;                                        // global configuration parameters for the GIF
-    CGIF_FrameConfig   fConfig;
-
-
-    // nu naar gif converteren
-    // path niet meer nodig!!!!
-    std::string path_str = "example_cgif.gif";
-    char* mutable_path = const_cast<char*>(path_str.c_str());
-
-
-    initGIFConfig(&gConfig, mutable_path, WIDTH, HEIGHT, aPalette, 4);
-    Serial.printf("initGIFConfig\n" );
-
-    pGIF = cgif_newgif(&gConfig);
-    Serial.printf("cgif_newgif\n" );
-
-    // add frame to GIF
-    initFrameConfig(&fConfig, bmp->getData() );                         // initialize the frame-configuration
-    Serial.printf("read data at: %d\n", bmp->getData() );
-
-    Serial.printf("initFrameConfig\n" );
-
-    if ( pGIF==NULL ) {
-        Serial.printf("pGIF = NULL\n" );
-        return false ;
-    }
-
-
-    cgif_addframe(pGIF, &fConfig);                                 // add a new frame to the GIF
-    Serial.printf("cgif_addframe called.\n" );
-
-
-    cgif_close(pGIF);
-    Serial.printf("cgif_close(pGIF) called.\n" );
-
-    return true ;
-
-}
-
-
-
-
-bool make_temperature( String& resultString, float temperature, String title ) {
+bool orgmake_temperature( std::vector<uint8_t>& binaryDataVector, float temperature, String title ) {
 
     auto *bmp = new IndexedBitmap(WIDTH, HEIGHT, 8);
     BitmapGFX canvas( *bmp);
+
+    //GifMaker gifMaker ;    //
+
 
     canvas.setFont(&FreeSans9pt7b); // Gebruik een ingesloten lettertype
     canvas.setTextSize(1);
@@ -146,10 +92,50 @@ bool make_temperature( String& resultString, float temperature, String title ) {
     canvas.print(title);
 
 
-    creategif( bmp );
+    GifMaker gifEngine ;
+    gifEngine.MakeGif( bmp->getData(), aPalette, numColors );
+    gifEngine.CloseGif();
+    gifEngine.GetResults(binaryDataVector);
+    return true ;
+
+}
+
+bool make_temperature( std::vector<uint8_t>& binaryDataVector, float temperature, String title ) {
 
 
+    GifMaker gifEngine ;
 
+for ( int i=0; i<4 ; i++ ) {
+    auto *bmp = new IndexedBitmap(WIDTH, HEIGHT, 8);
+    BitmapGFX canvas( *bmp);
+
+    canvas.setFont(&FreeSans9pt7b); // Gebruik een ingesloten lettertype
+    canvas.setTextSize(1);
+
+    canvas.setFont(&FreeSans9pt7b); // Gebruik een ingesloten lettertype
+    canvas.setTextSize(1);  // 5x7 pixels
+    canvas.setTextColor(RED);         // Stel de tekstkleur in op Index 1 (bijv. wit)
+    canvas.setCursor( i*2, 14) ;
+    canvas.print("abc");
+
+
+    Serial.printf("adding gif number %d\n", i );
+
+    if ( i==0 ) {
+        gifEngine.MakeGif( bmp->getData(), aPalette, numColors );
+    }
+    else {
+        gifEngine.AddGif( bmp->getData() );
+    }
+}
+
+    gifEngine.CloseGif();
+    gifEngine.GetResults(binaryDataVector);
+
+//    creategif( bmp );
+
+
+/*
     unsigned char* data_ptr = getFileBuffer(pGIF); // De unsigned char pointer
     size_t len = getFileCount(pGIF);               // De lengte van de data
 
@@ -171,9 +157,28 @@ bool make_temperature( String& resultString, float temperature, String title ) {
     //Serial.println("het resultaat is\n");
     //Serial.println(resultString );
     //free(pImageData);                                              // free image data when frame is added
+*/
+/*
+
+    //
+    // return the result
+    //
+    unsigned char* received_data = getFileBuffer(pGIF); // De unsigned char pointer
+    size_t received_len = getFileCount(pGIF);               // De lengte van de data
+
+    if (fillVectorFromCharPtr(binaryDataVector, received_data, received_len)) {
+        // De vector is nu gevuld met de bytes
+        Serial.printf("Vector succesvol gevuld, grootte: %u bytes\n", binaryDataVector.size());
+
+        // Roep de functie aan die de vector nodig heeft:
+        // this->sendPNG(binaryDataVector);
+    } else {
+        Serial.println("Fout bij vullen van de vector.");
+    }
+
+
+*/
 
     return true ;
-
-
 
 }

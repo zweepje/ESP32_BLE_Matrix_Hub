@@ -576,6 +576,9 @@ cgif_result cgif_raw_addframe(CGIFRaw* pGIF, const CGIFRaw_FrameConfig* pConfig)
   int needsGraphicCtrlExt = (pGIF->config.attrFlags & CGIF_RAW_ATTR_IS_ANIMATED) | (pConfig->attrFlags & CGIF_RAW_FRAME_ATTR_HAS_TRANS);
   // do things for animation / transparency, if required.
   if(needsGraphicCtrlExt) {
+
+    printf("Graphics Extension is needed\n");
+
     memset(aGraphicExt, 0, SIZE_GRAPHIC_EXT);
     aGraphicExt[0] = 0x21;
     aGraphicExt[1] = 0xF9;
@@ -585,8 +588,14 @@ cgif_result cgif_raw_addframe(CGIFRaw* pGIF, const CGIFRaw_FrameConfig* pConfig)
     if(pConfig->attrFlags & CGIF_RAW_FRAME_ATTR_HAS_TRANS) {
       aGraphicExt[3] |= 0x01;
       aGraphicExt[6]  = pConfig->transIndex;
+    } else {
+
+      printf("Graphics Extension is not needed\n");
+
     }
     // set delay (LE ordering)
+    printf("---- raw Frame delay is %d\n", pConfig->delay );
+
     const uint16_t delayLE = hU16toLE(pConfig->delay);
     memcpy(aGraphicExt + GEXT_OFFSET_DELAY, &delayLE, sizeof(uint16_t));
     // write Graphic Control Extension

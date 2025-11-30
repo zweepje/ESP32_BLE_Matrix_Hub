@@ -120,15 +120,27 @@ void iPixelDevice::processQueue() {
             //
             // mijn gehakt
             //
-            String aap;
-            make_temperature( aap, 12.3, "boven" ) ;
-            Serial.print("make_temperature De lengte van de String is: ");
+            std::vector<uint8_t> binaryDataVector;
+       //     String aap;
+       //     make_temperature( aap, 12.3, "boven" ) ;
+            make_temperature( binaryDataVector, 12.3, "boven" ) ;
+       /*     Serial.print("make_temperature De lengte van de String is: ");
             Serial.println(aap.length());  // print de lengte van de String als getal
 
             std::vector<uint8_t> binaryDataVector;
             size_t len = aap.length();
             binaryDataVector.resize(len);
             memcpy(binaryDataVector.data(), aap.c_str(), len);
+        */
+            Serial.print("make_temperature De lengte van de String is: ");
+            Serial.println(binaryDataVector.size());  // print de lengte van de String als getal
+
+            // printout string
+            for ( int i=0 ; i<binaryDataVector.size() ; i++ ) {
+
+                Serial.printf("%02x", binaryDataVector[i]);
+            }
+
 
             this->sendGIF( binaryDataVector );
             //this->sendPNG( (aap) );

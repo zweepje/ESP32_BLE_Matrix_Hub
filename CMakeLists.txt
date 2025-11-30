@@ -17,7 +17,6 @@ add_executable(myipixel
         src/global.h
         src/png/pngmaker.h
         src/png/pngmaker.cpp
-        lib/PNGenc/PNGenc.cpp
         src/cgif/cgif.c
         src/initfs.c
         src/cgif/cgif_raw.c
@@ -25,4 +24,9 @@ add_executable(myipixel
         src/png/IndexedBitmap.h
         src/functions/temperature.cpp
         src/functions/temperature.cpp
-        src/functions/temperature.h)
+        src/functions/temperature.h
+        src/png/GifMaker.cpp
+        src/png/GifMaker.h
+        src/png/GifMaker.h
+        src/functions/temperature.cpp
+        src/png/GifMaker.cpp)
