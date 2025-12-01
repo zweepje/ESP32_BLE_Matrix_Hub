@@ -19,8 +19,8 @@ class GifMaker {
 public:
         GifMaker();
         ~GifMaker();
-        bool MakeGif( uint8_t *bmp, uint8_t palette[], int numberofcolors ) ;
-        bool AddGif( uint8_t *data );
+        bool MakeGif( uint8_t *data, uint8_t palette[], int numcol, bool animated=false, int delay=500 ) ;
+        bool AddGif( uint8_t *data, int delay=500 );
         void CloseGif();
         bool GetResults( std::vector<uint8_t>& binaryDataVector );
 

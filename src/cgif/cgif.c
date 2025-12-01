@@ -60,7 +60,7 @@ uint32_t  getFileCount(CGIF* pGIF) {
 void CreateFileBuffer() {
 
     printf("allocating buffer for file" );
-    uint8_t *ptr = heap_caps_malloc(2048, MALLOC_CAP_SPIRAM);
+    uint8_t *ptr = heap_caps_malloc(4096, MALLOC_CAP_SPIRAM);
     if ( ptr==NULL ) {
       printf("psmalloc failed\n" );
       FileBuffer = NULL ;

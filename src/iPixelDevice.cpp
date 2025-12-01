@@ -123,7 +123,10 @@ void iPixelDevice::processQueue() {
             std::vector<uint8_t> binaryDataVector;
        //     String aap;
        //     make_temperature( aap, 12.3, "boven" ) ;
-            make_temperature( binaryDataVector, 12.3, "boven" ) ;
+            //make_temperature( binaryDataVector, 12.3, "boven" ) ;
+            make_animated_temperature( binaryDataVector, 12.3, "boven" ) ;
+
+
        /*     Serial.print("make_temperature De lengte van de String is: ");
             Serial.println(aap.length());  // print de lengte van de String als getal
 

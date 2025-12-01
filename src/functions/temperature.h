@@ -6,5 +6,5 @@
 #define MYIPIXEL_TEMPERATURE_H
 
 //bool make_temperature( String& resultString, float temperature, String title ) ;
-bool make_temperature( std::vector<uint8_t>& binaryDataVector, float temperature, String title );
+bool make_animated_temperature( std::vector<uint8_t>& binaryDataVector, float temperature, String title );
 #endif //MYIPIXEL_TEMPERATURE_H

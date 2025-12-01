@@ -13,6 +13,8 @@
 #include "png/GifMaker.h"
 #include "temperature.h"
 
+#include "../png/IndexedBitmap.h"
+
 
 const int    BLACK = 0 ;
 const int    RED = 1 ;
@@ -56,20 +58,23 @@ public:
     }
 } ; // BitmapGFX
 
+void putin( IndexedBitmap *target, IndexedBitmap *src1, IndexedBitmap *src2, int places ) {
+
+
+    src1->copyTo( *target, 0, places, 0, 0, 32, 32-places);
+    src2->copyTo( *target, 0, 0, 0, 32-places, 32, places);
+}
 
 
 
-
-bool orgmake_temperature( std::vector<uint8_t>& binaryDataVector, float temperature, String title ) {
+IndexedBitmap startBitmap = IndexedBitmap(WIDTH, HEIGHT, 8);
+//
+// Maakt een animated gif van een temperatuur die naar een vol scherm scrollt
+//
+bool make_animated_temperature( std::vector<uint8_t>& binaryDataVector, float temperature, String title ) {
 
     auto *bmp = new IndexedBitmap(WIDTH, HEIGHT, 8);
     BitmapGFX canvas( *bmp);
-
-    //GifMaker gifMaker ;    //
-
-
-    canvas.setFont(&FreeSans9pt7b); // Gebruik een ingesloten lettertype
-    canvas.setTextSize(1);
 
     // String maken van temperature
     char tempBuffer[6]; // Buffer moet groot genoeg zijn voor "±XX.X\0"
@@ -91,21 +96,54 @@ bool orgmake_temperature( std::vector<uint8_t>& binaryDataVector, float temperat
     canvas.setCursor( 1, 21 ) ;
     canvas.print(title);
 
-
     GifMaker gifEngine ;
-    gifEngine.MakeGif( bmp->getData(), aPalette, numColors );
+    gifEngine.MakeGif( bmp->getData(), aPalette, numColors, true, 50 );
+
+
+    int stepsize = 2 ;
+    int steps = 32 / stepsize ;
+    int time = 1000 ;   // msec
+
+    int speed = ( time / steps ) ;  // in mSec
+    speed /= 10 ;   // adapt to gif standard of 10ms units
+    // start with oldbitmap
+    gifEngine.MakeGif( startBitmap.getData(), aPalette, numColors, true, speed );
+    auto *tmpbmp = new IndexedBitmap(WIDTH, HEIGHT, 8);
+
+
+    for ( int i=stepsize ; i<32 ; i+=stepsize ) {
+
+        int tspeed ;
+
+        putin( tmpbmp, &startBitmap, bmp, i );
+        if ( (i+stepsize)  >= 32 ) {
+            tspeed = 10000 ; // very long
+            Serial.printf("Temp, setting long time\n" );
+
+        } else {
+            tspeed = speed ;
+        }
+        gifEngine.AddGif( tmpbmp->getData(), tspeed );
+    }
+
     gifEngine.CloseGif();
     gifEngine.GetResults(binaryDataVector);
+
+    startBitmap = *bmp ; // copy the bitmap to startbitmap
     return true ;
 
 }
 
+
+
+
+
 bool make_temperature( std::vector<uint8_t>& binaryDataVector, float temperature, String title ) {
 
-
     GifMaker gifEngine ;
-
-for ( int i=0; i<4 ; i++ ) {
+    //
+    // create the temperature bitamp
+    //
     auto *bmp = new IndexedBitmap(WIDTH, HEIGHT, 8);
     BitmapGFX canvas( *bmp);
 
@@ -115,69 +153,14 @@ for ( int i=0; i<4 ; i++ ) {
     canvas.setFont(&FreeSans9pt7b); // Gebruik een ingesloten lettertype
     canvas.setTextSize(1);  // 5x7 pixels
     canvas.setTextColor(RED);         // Stel de tekstkleur in op Index 1 (bijv. wit)
-    canvas.setCursor( i*2, 14) ;
+    canvas.setCursor( 2, 14) ;
     canvas.print("abc");
 
-
-    Serial.printf("adding gif number %d\n", i );
-
-    if ( i==0 ) {
         gifEngine.MakeGif( bmp->getData(), aPalette, numColors );
-    }
-    else {
-        gifEngine.AddGif( bmp->getData() );
-    }
-}
+
 
     gifEngine.CloseGif();
     gifEngine.GetResults(binaryDataVector);
-
-//    creategif( bmp );
-
-
-/*
-    unsigned char* data_ptr = getFileBuffer(pGIF); // De unsigned char pointer
-    size_t len = getFileCount(pGIF);               // De lengte van de data
-
-    Serial.printf("there are %d bytes in file buffer\n", len );
-
-    for (int i=0; i<len ; i++ ) {
-        Serial.printf("%2x", data_ptr[i] ) ;
-    }
-
-    // 1. Cast de unsigned char* naar const char*
-    const char* char_data = (const char*)data_ptr;
-
-    // 2. Gebruik de String constructor
-    String result_string(char_data, len);
-    resultString = result_string;
-
-    Serial.print("De lengte van de String is: ");
-    Serial.println(resultString.length());  // print de lengte van de String als getal
-    //Serial.println("het resultaat is\n");
-    //Serial.println(resultString );
-    //free(pImageData);                                              // free image data when frame is added
-*/
-/*
-
-    //
-    // return the result
-    //
-    unsigned char* received_data = getFileBuffer(pGIF); // De unsigned char pointer
-    size_t received_len = getFileCount(pGIF);               // De lengte van de data
-
-    if (fillVectorFromCharPtr(binaryDataVector, received_data, received_len)) {
-        // De vector is nu gevuld met de bytes
-        Serial.printf("Vector succesvol gevuld, grootte: %u bytes\n", binaryDataVector.size());
-
-        // Roep de functie aan die de vector nodig heeft:
-        // this->sendPNG(binaryDataVector);
-    } else {
-        Serial.println("Fout bij vullen van de vector.");
-    }
-
-
-*/
 
     return true ;
 

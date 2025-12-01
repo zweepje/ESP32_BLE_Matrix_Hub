@@ -4,6 +4,8 @@
 
 #include "GifMaker.h"
 
+#include <string>
+
 
 const unsigned int WIDTH = 32;
 const unsigned int HEIGHT = 32;
@@ -33,8 +35,8 @@ static void initGIFConfig(CGIF_Config* pConfig, char* path, uint16_t width, uint
     pConfig->pGlobalPalette          = pPalette;
     pConfig->numGlobalPaletteEntries = numColors;
     pConfig->path                    = path;
-    pConfig->attrFlags               = CGIF_ATTR_IS_ANIMATED;
-
+    pConfig->attrFlags               = CGIF_ATTR_IS_ANIMATED | CGIF_ATTR_NO_LOOP ;
+    pConfig->numLoops                = 1 ;
 }
 
 static void initFrameConfig(CGIF_FrameConfig* pConfig, uint8_t* pImageData) {
@@ -62,7 +64,7 @@ static void initFrameConfig(CGIF_FrameConfig* pConfig, uint8_t* pImageData, uint
         Serial.printf("Destructor GifMaker\n" );
     }
 
-bool GifMaker::MakeGif( uint8_t *data, uint8_t palette[], int numcol ) {
+bool GifMaker::MakeGif( uint8_t *data, uint8_t palette[], int numcol, bool animated, int delay ) {
 
     aPalette = palette;
     numberofcolors = numcol ;
@@ -77,7 +79,11 @@ bool GifMaker::MakeGif( uint8_t *data, uint8_t palette[], int numcol ) {
     Serial.printf("cgif_newgif was called\n" );
 
     // add frame to GIF
-    initFrameConfig(&fConfig, data, 100 );                         // initialize the frame-configuration
+    if ( animated) {
+        initFrameConfig(&fConfig, data, delay );                         // initialize the frame-configuration
+    } else {
+        initFrameConfig(&fConfig, data );                         // initialize the frame-configuration
+    }
 
     Serial.printf("initFrameConfig was called\n" );
 
@@ -93,12 +99,10 @@ bool GifMaker::MakeGif( uint8_t *data, uint8_t palette[], int numcol ) {
     return true ;
 }
 
-bool GifMaker::AddGif( uint8_t *data ) {
+bool GifMaker::AddGif( uint8_t *data, int delay ) {
 
-    initFrameConfig(&fConfig, data, 100 );
+    initFrameConfig(&fConfig, data, delay );
     return cgif_addframe(pGIF, &fConfig );
-
-
 }
 
 
