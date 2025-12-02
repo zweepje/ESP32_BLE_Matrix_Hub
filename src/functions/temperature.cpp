@@ -10,9 +10,11 @@
 #include <Adafruit_GFX.h>
 #include <vector>
 #include <Fonts/FreeSans9pt7b.h> // Voorbeeld font
+
 #include "png/GifMaker.h"
 #include "temperature.h"
 
+#include "Animation.h"
 #include "../png/IndexedBitmap.h"
 
 
@@ -58,16 +60,36 @@ public:
     }
 } ; // BitmapGFX
 
-void putin( IndexedBitmap *target, IndexedBitmap *src1, IndexedBitmap *src2, int places ) {
-
-
-    src1->copyTo( *target, 0, places, 0, 0, 32, 32-places);
-    src2->copyTo( *target, 0, 0, 0, 32-places, 32, places);
-}
-
 
 
 IndexedBitmap startBitmap = IndexedBitmap(WIDTH, HEIGHT, 8);
+
+
+
+bool make_animated_time( std::vector<uint8_t>& binaryDataVector, String time) {
+
+    auto *bmp = new IndexedBitmap(WIDTH, HEIGHT, 8);
+    BitmapGFX canvas( *bmp);
+
+    Serial.printf("timestring is %s\n", time.c_str() );
+
+    // display temperature
+    //canvas.setFont(&FreeSans9pt7b); // Gebruik een ingesloten lettertype
+    canvas.setFont(NULL); // Gebruik een ingesloten lettertype
+    canvas.setTextSize(1);  // 5x7 pixels
+    canvas.setTextColor(RED);         // Stel de tekstkleur in op Index 1 (bijv. wit)
+    canvas.setCursor( 2, 8) ;
+    canvas.print(time);
+
+    Animation anim = Animation();
+    anim.MakeAnimation( binaryDataVector, &startBitmap, bmp ) ;
+
+    startBitmap = *bmp ; // copy the bitmap to startbitmap
+    return true ;
+
+}
+
+
 //
 // Maakt een animated gif van een temperatuur die naar een vol scherm scrollt
 //
@@ -82,11 +104,14 @@ bool make_animated_temperature( std::vector<uint8_t>& binaryDataVector, float te
     dtostrf(temperature, 4, 1, tempBuffer);
     String temperatureString = tempBuffer;
 
+    Serial.printf("Temperature is %f, string is %s\n", temperature, temperatureString.c_str() );
+
     // display temperature
-    canvas.setFont(&FreeSans9pt7b); // Gebruik een ingesloten lettertype
+    //canvas.setFont(&FreeSans9pt7b); // Gebruik een ingesloten lettertype
+    canvas.setFont(NULL); // Gebruik een ingesloten lettertype
     canvas.setTextSize(1);  // 5x7 pixels
     canvas.setTextColor(RED);         // Stel de tekstkleur in op Index 1 (bijv. wit)
-    canvas.setCursor( 0, 14) ;
+    canvas.setCursor( 4, 8) ;
     canvas.print(temperatureString);
 
     // display environment
@@ -96,38 +121,10 @@ bool make_animated_temperature( std::vector<uint8_t>& binaryDataVector, float te
     canvas.setCursor( 1, 21 ) ;
     canvas.print(title);
 
-    GifMaker gifEngine ;
-    gifEngine.MakeGif( bmp->getData(), aPalette, numColors, true, 50 );
+    Animation anim = Animation();
+    anim.MakeAnimation( binaryDataVector, &startBitmap, bmp ) ;
 
 
-    int stepsize = 2 ;
-    int steps = 32 / stepsize ;
-    int time = 1000 ;   // msec
-
-    int speed = ( time / steps ) ;  // in mSec
-    speed /= 10 ;   // adapt to gif standard of 10ms units
-    // start with oldbitmap
-    gifEngine.MakeGif( startBitmap.getData(), aPalette, numColors, true, speed );
-    auto *tmpbmp = new IndexedBitmap(WIDTH, HEIGHT, 8);
-
-
-    for ( int i=stepsize ; i<32 ; i+=stepsize ) {
-
-        int tspeed ;
-
-        putin( tmpbmp, &startBitmap, bmp, i );
-        if ( (i+stepsize)  >= 32 ) {
-            tspeed = 10000 ; // very long
-            Serial.printf("Temp, setting long time\n" );
-
-        } else {
-            tspeed = speed ;
-        }
-        gifEngine.AddGif( tmpbmp->getData(), tspeed );
-    }
-
-    gifEngine.CloseGif();
-    gifEngine.GetResults(binaryDataVector);
 
     startBitmap = *bmp ; // copy the bitmap to startbitmap
     return true ;

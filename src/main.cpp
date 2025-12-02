@@ -9,6 +9,7 @@
 #include <LittleFS.h>
 #include <map>
 #include <string>
+#include "clock/timefunctions.h"
 
 #include "png/pngmaker.h"
 
@@ -165,59 +166,32 @@ void setup() {
   }
   Serial.println("-------------------------------------");
 
-
-/*
-
-  // Probeer LittleFS te mounten
-  if (!LittleFS.begin()) {
-    Serial.println("LittleFS mount mislukt, proberen te formatteren...");
-
-    // Dwing de formatteer-actie af als het mounten faalt
-    if (LittleFS.format()) {
-      Serial.println("LittleFS succesvol geformatteerd. Opnieuw opstarten...");
-      // Herstart de chip om te proberen de schone partitie te mounten
-      ESP.restart();
-    } else {
-      Serial.println("FATALE FOUT: Formatteren mislukt.");
-    }
-  } else {
-    Serial.println("LittleFS succesvol gemount.");
-    // Normaal programma gaat hier verder...
-
-
-    File f = LittleFS.open("/test.txt", "w");
-    if ( !f ) {
-      Serial.println("openen van file ging fout.");
-    } else {
-      Serial.println("openen van file ging goed.");
-      f.close();
-    }
-
-
-  }
-*/
- // initfs() ;
   setup_wifi_pre();
   setup_improv();
   setup_wifi_post();
 
-
+  initTime();
 }
 
 void loop() {
 
   //improvSerial.handleSerial();
   //if (improvSerial.isConnected()) loop_connected();
+
+
   loop_connected();
+
 }
 
 void loop_connected() {
 
+    //String tstr = getCurrentTimeString(); // bijv. 12:41
+    //Serial.printf("Current time: %s\n", tstr.c_str() );
+
+
     // 1. WebSocket onderhoud
     // Nodig om client time-outs af te handelen
     ws.cleanupClients();
-
-
 
     // 2. Queue Verwerking
     // Loop door alle geregistreerde Matrix Controllers

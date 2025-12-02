@@ -92,10 +92,10 @@ static int writecb(void* pContext, const uint8_t* pData, const size_t numBytes) 
   if( FileBuffer != NULL ) {
     for ( int i=0 ; i<numBytes ; i++ ) {
       FileBuffer[FileCount] = pData[i];
-      printf("%02x ",  FileBuffer[FileCount] );
+      //printf("%02x ",  FileBuffer[FileCount] );
       FileCount++;
     }
-    printf("\nGiffile is now %d bytes\n",   FileCount);
+    //printf("\nGiffile is now %d bytes\n",   FileCount);
   }else {
     printf( "FileBuffer was NULL\n") ;
     return -1 ;

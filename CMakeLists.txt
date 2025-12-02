@@ -23,10 +23,11 @@ add_executable(myipixel
         src/png/IndexedBitmap.cpp
         src/png/IndexedBitmap.h
         src/functions/temperature.cpp
-        src/functions/temperature.cpp
-        src/functions/temperature.h
+         src/functions/temperature.h
         src/png/GifMaker.cpp
         src/png/GifMaker.h
-        src/png/GifMaker.h
-        src/functions/temperature.cpp
-        src/png/GifMaker.cpp)
+        src/clock/timefunctions.cpp
+        src/clock/timefunctions.h
+        src/functions/Animation.cpp
+        src/functions/Animation.h
+)

@@ -588,10 +588,6 @@ cgif_result cgif_raw_addframe(CGIFRaw* pGIF, const CGIFRaw_FrameConfig* pConfig)
     if(pConfig->attrFlags & CGIF_RAW_FRAME_ATTR_HAS_TRANS) {
       aGraphicExt[3] |= 0x01;
       aGraphicExt[6]  = pConfig->transIndex;
-    } else {
-
-      printf("Graphics Extension is not needed\n");
-
     }
     // set delay (LE ordering)
     printf("---- raw Frame delay is %d\n", pConfig->delay );
@@ -600,6 +596,10 @@ cgif_result cgif_raw_addframe(CGIFRaw* pGIF, const CGIFRaw_FrameConfig* pConfig)
     memcpy(aGraphicExt + GEXT_OFFSET_DELAY, &delayLE, sizeof(uint16_t));
     // write Graphic Control Extension
     rWrite |= pGIF->config.pWriteFn(pGIF->config.pContext, aGraphicExt, SIZE_GRAPHIC_EXT);
+  } else {
+
+    printf("Graphics Extension is not needed\n");
+
   }
 
   // write frame

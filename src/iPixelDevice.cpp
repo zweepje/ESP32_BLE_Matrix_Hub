@@ -7,6 +7,7 @@
 #include "Helpers.h"
 #include "png/pngmaker.h"
 #include "functions/temperature.h"
+#include "clock/timefunctions.h"
 
 NimBLEUUID serviceUUID("000000fa-0000-1000-8000-00805f9b34fb");
 NimBLEUUID charUUID("0000fa02-0000-1000-8000-00805f9b34fb");
@@ -104,26 +105,59 @@ void iPixelDevice::processQueue() {
             // 4. Roep de functie aan met de geparseerde/default waarden
             this->sendText(text_str, animation, save_slot, speed, colorR, colorG, colorB, rainbow_mode, matrix_height);
 
+        } else if  ( strcmp( cmd, "make_time_ani" ) == 0 ) {
+
+            DBG_PRINTF( DEBUG_QUEUE, "calling make_animated time\n");
+            std::vector<uint8_t> binaryDataVector;
+            String time = getCurrentTimeString();
+            make_animated_time( binaryDataVector, time ) ;
+            this->sendGIF( binaryDataVector );
+
+
+        } else if  ( strcmp( cmd, "make_temperature_ani" ) == 0 ) {
+            // parse parameters
+            const char* text_str = params[0];
+            // fill in defaults
+            float temperature = 10.0f;
+            String title = "wc";
+
+            // LETOP: begint hier met 0!!!
+            for (size_t i = 0; i < params.size(); i++) {
+                String paramStr = params[i].as<String>();
+                int equals_index = paramStr.indexOf('=');
+
+                Serial.printf("paramStr %s: ", paramStr.c_str() ) ;
 
 
 
+                if (equals_index > 0) {
+                    String key = paramStr.substring(0, equals_index);
+                    String value = paramStr.substring(equals_index + 1);
+                    Serial.printf("key %s: ", key.c_str() ) ;
 
-            //String text_str = "Jezus is een vriend van mij.";
-            // sendText( text_str, 1, 1, 20, 0,0,99, 0, 16 );
+                    if (key.equalsIgnoreCase("temperature")) {
+                        temperature = value.toFloat();
+                        Serial.printf("detected temp %f ", temperature ) ;
+
+                    } else if (key.equalsIgnoreCase("title")) {
+                        title = value;
+                    }
+                }
+            }
+            DBG_PRINTF( DEBUG_QUEUE, "calling make_animated temperature\n");
+            std::vector<uint8_t> binaryDataVector;
+            make_animated_temperature( binaryDataVector, temperature, title ) ;
+            this->sendGIF( binaryDataVector );
+
+
+
         } else if  ( strcmp( cmd, "send_gif" ) == 0 ) {
 
             DBG_PRINTF( DEBUG_QUEUE, "Decoded send_gif commando");
 
             //String paramStr = params[0].as<String>();
             //this->sendPNG( Helpers::hexStringToVector(paramStr) );
-
-            //
-            // mijn gehakt
-            //
             std::vector<uint8_t> binaryDataVector;
-       //     String aap;
-       //     make_temperature( aap, 12.3, "boven" ) ;
-            //make_temperature( binaryDataVector, 12.3, "boven" ) ;
             make_animated_temperature( binaryDataVector, 12.3, "boven" ) ;
 
 
