@@ -15,8 +15,6 @@ add_executable(myipixel
         src/main.h
         src/iPixelDevice.cpp
         src/global.h
-        src/png/pngmaker.h
-        src/png/pngmaker.cpp
         src/cgif/cgif.c
         src/initfs.c
         src/cgif/cgif_raw.c

@@ -519,12 +519,14 @@ static uint32_t quantize_and_dither(colHashTable* colhash, const uint8_t* pImage
 CGIFrgb* cgif_rgb_newgif(const CGIFrgb_Config* pConfig) {
   CGIF_Config idxConfig = {0};
   CGIFrgb* pGIFrgb;
-  
+
+  printf("++++ WARNING  buffer write not implemented yet\n");
+
   pGIFrgb = malloc(sizeof(CGIFrgb));
   memset(pGIFrgb, 0, sizeof(CGIFrgb));
   idxConfig.pWriteFn  = pConfig->pWriteFn;
   idxConfig.pContext  = pConfig->pContext;
-  idxConfig.path      = pConfig->path;
+  idxConfig.buffer      = pConfig->buffer;
   idxConfig.numLoops  = pConfig->numLoops;
   idxConfig.width     = pConfig->width;
   idxConfig.height    = pConfig->height;

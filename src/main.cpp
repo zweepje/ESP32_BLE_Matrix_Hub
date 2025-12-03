@@ -11,8 +11,6 @@
 #include <string>
 #include "clock/timefunctions.h"
 
-#include "png/pngmaker.h"
-
 extern "C" {
 void initfs(void);
 }

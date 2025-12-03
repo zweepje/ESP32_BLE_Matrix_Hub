@@ -27,8 +27,8 @@ IndexedBitmap::IndexedBitmap(int width, int height, uint8_t bpp, uint8_t default
     
     // Alloceer geheugen (gebruik de standaard heap allocatie, kan ps_malloc zijn indien aangepast)
     data_ = new uint8_t[totalBytes]; 
-    Serial.printf("Bitmap size: %d\n", totalBytes );
-    Serial.printf("data at: %d\n", data_ );
+//    Serial.printf("Bitmap size: %d\n", totalBytes );
+//    Serial.printf("data at: %d\n", data_ );
 
     // Vul de bitmap met de standaard kleurindex
     clear(defaultColorIndex);

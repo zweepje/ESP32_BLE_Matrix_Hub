@@ -11,6 +11,11 @@ const unsigned int WIDTH = 32;
 const unsigned int HEIGHT =32 ;
 
 //
+// one instance of gifmaker
+//
+GifMaker *gifEngine = NULL ;
+
+//
 // helpers:
 //
 void putin( IndexedBitmap *target, IndexedBitmap *src1, IndexedBitmap *src2, int places ) {
@@ -22,12 +27,14 @@ void putin( IndexedBitmap *target, IndexedBitmap *src1, IndexedBitmap *src2, int
 
 Animation::Animation() {
 
+    if ( gifEngine==NULL) {
+        gifEngine = new GifMaker();
+    }
 }
 
 
 void Animation::MakeAnimation( std::vector<uint8_t>& binaryDataVector, IndexedBitmap *start, IndexedBitmap *end ) {
 
-    GifMaker gifEngine ;
     //gifEngine.MakeGif( bmp->getData(), aPalette, numColors, true, 50 );
 
     int stepsize = 2 ;
@@ -37,26 +44,26 @@ void Animation::MakeAnimation( std::vector<uint8_t>& binaryDataVector, IndexedBi
     int speed = ( time / steps ) ;  // in mSec
     speed /= 10 ;   // adapt to gif standard of 10ms units
     // start with oldbitmap
-    gifEngine.MakeGif( start->getData(), aPalette, numColors, true, speed );
+    gifEngine->MakeGif( start->getData(), aPalette, numColors, true, speed );
     auto *tmpbmp = new IndexedBitmap(WIDTH, HEIGHT, 8);
 
 
-    for ( int i=stepsize ; i<32 ; i+=stepsize ) {
+    for ( int i=stepsize ; i<=32 ; i+=stepsize ) {
 
         int tspeed ;
 
         putin( tmpbmp, start, end, i );
-        if ( (i+stepsize)  >= 32 ) {
+        if ( (i+stepsize)  > 32 ) {
             tspeed = 10000 ; // very long
-            Serial.printf("Temp, setting long time\n" );
+            //Serial.printf("Temp, setting long time\n" );
 
         } else {
             tspeed = speed ;
         }
-        gifEngine.AddGif( tmpbmp->getData(), tspeed );
+        gifEngine->AddGif( tmpbmp->getData(), tspeed );
     }
 
-    gifEngine.CloseGif();
-    gifEngine.GetResults(binaryDataVector);
+    gifEngine->CloseGif();
+    gifEngine->GetResults(binaryDataVector);
 
 }

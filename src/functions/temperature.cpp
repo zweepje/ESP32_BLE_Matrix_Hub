@@ -23,8 +23,14 @@ const int    RED = 1 ;
 const int    GREEN = 2 ;
 const int    BLUE = 3 ;
 
-extern uint8_t       aPalette[] ;                // blue
-extern uint16_t      numColors;                                        // number of colors in aPalette (up to 256 possible)
+uint8_t       aPalette[] = {0x00, 0x00, 0x00,                 // black
+                            0xFF, 0x00, 0x00,                 // red
+                            0x00, 0xFF, 0x00,                 // green
+                            0xFF, 0x00, 0xFF                  // blue
+                };                // blue
+
+uint16_t numColors = 4;                                        // number of colors in aPalette (up to 256 possible)
+
 
 
 
@@ -105,6 +111,18 @@ bool make_animated_temperature( std::vector<uint8_t>& binaryDataVector, float te
     String temperatureString = tempBuffer;
 
     Serial.printf("Temperature is %f, string is %s\n", temperature, temperatureString.c_str() );
+
+ /*
+    // make a debug image
+    for ( int x= 0 ; x<32 ; x++ ) {
+
+        bmp->setPixel( x,x, 1);
+        bmp->setPixel( 31-x,x, 1);
+    }//
+*/
+
+
+
 
     // display temperature
     //canvas.setFont(&FreeSans9pt7b); // Gebruik een ingesloten lettertype

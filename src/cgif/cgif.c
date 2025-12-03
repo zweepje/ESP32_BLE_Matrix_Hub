@@ -57,20 +57,12 @@ uint32_t  getFileCount(CGIF* pGIF) {
 }
 
 
-void CreateFileBuffer() {
+void CreateFileBuffer( uint8_t *buffer) {
 
-    printf("allocating buffer for file" );
-    uint8_t *ptr = heap_caps_malloc(4096, MALLOC_CAP_SPIRAM);
-    if ( ptr==NULL ) {
-      printf("psmalloc failed\n" );
-      FileBuffer = NULL ;
-    }
-    FileBuffer = ptr ;
+
+    FileBuffer = buffer ;
     FileCount = 0 ;
 }
-
-
-
 
 
 
@@ -119,7 +111,7 @@ CGIF* cgif_newgif(CGIF_Config* pConfig) {
   CGIFRaw_Config rawConfig = {0};
 
 
-  printf("inside cgif_newgif\n" );
+  //printf("inside cgif_newgif\n" );
 
   // width or heigth cannot be zero
   if(!pConfig->width || !pConfig->height) {
@@ -138,11 +130,8 @@ CGIF* cgif_newgif(CGIF_Config* pConfig) {
   memset(pGIF, 0, sizeof(CGIF));
 
 
-  // open output file (if necessary)
-  CreateFileBuffer() ;
-
-
-
+  // Buffer to write output to
+  CreateFileBuffer(pConfig->buffer) ;
 
   pGIF->pFile = pFile;
   pGIF->iHEAD = 1;
@@ -171,7 +160,7 @@ CGIF* cgif_newgif(CGIF_Config* pConfig) {
       //fclose(pFile);
     }
     freeCGIF(pGIF);
-    printf("pGIFRaw failed\n" );
+    //printf("pGIFRaw failed\n" );
 
     return NULL;
   }
@@ -542,7 +531,7 @@ int cgif_addframe(CGIF* pGIF, CGIF_FrameConfig* pConfig) {
   }
 
 
-  printf("---- Frame delay is %d\n", pConfig->delay );
+  //printf("---- Frame delay is %d\n", pConfig->delay );
 
   // if frame matches previous frame, drop it completely and sum the frame delay
   if(pGIF->aFrames[pGIF->iHEAD] != NULL) {

@@ -434,8 +434,8 @@ CGIFRaw* cgif_raw_newgif(const CGIFRaw_Config* pConfig) {
   }
 
   // copy pConfig into pGif->config \n",g)
-  printf("Copy pConfig %p  into pGif->config %p\n", pConfig, &(pGIF->config));
-  printf("Sizes %llu, %llu ", sizeof( CGIF_Config ), sizeof(CGIFRaw_Config) ) ;
+ // printf("Copy pConfig %p  into pGif->config %p\n", pConfig, &(pGIF->config));
+ // printf("Sizes %llu, %llu ", sizeof( CGIF_Config ), sizeof(CGIFRaw_Config) ) ;
 
   memcpy(&(pGIF->config), pConfig, sizeof(CGIFRaw_Config));
   // initiate all sections we can at this stage:
@@ -577,7 +577,7 @@ cgif_result cgif_raw_addframe(CGIFRaw* pGIF, const CGIFRaw_FrameConfig* pConfig)
   // do things for animation / transparency, if required.
   if(needsGraphicCtrlExt) {
 
-    printf("Graphics Extension is needed\n");
+   // printf("Graphics Extension is needed\n");
 
     memset(aGraphicExt, 0, SIZE_GRAPHIC_EXT);
     aGraphicExt[0] = 0x21;
@@ -590,7 +590,7 @@ cgif_result cgif_raw_addframe(CGIFRaw* pGIF, const CGIFRaw_FrameConfig* pConfig)
       aGraphicExt[6]  = pConfig->transIndex;
     }
     // set delay (LE ordering)
-    printf("---- raw Frame delay is %d\n", pConfig->delay );
+    //("---- raw Frame delay is %d\n", pConfig->delay );
 
     const uint16_t delayLE = hU16toLE(pConfig->delay);
     memcpy(aGraphicExt + GEXT_OFFSET_DELAY, &delayLE, sizeof(uint16_t));
@@ -598,7 +598,7 @@ cgif_result cgif_raw_addframe(CGIFRaw* pGIF, const CGIFRaw_FrameConfig* pConfig)
     rWrite |= pGIF->config.pWriteFn(pGIF->config.pContext, aGraphicExt, SIZE_GRAPHIC_EXT);
   } else {
 
-    printf("Graphics Extension is not needed\n");
+ //   printf("Graphics Extension is not needed\n");
 
   }
 

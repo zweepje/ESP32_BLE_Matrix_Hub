@@ -71,7 +71,7 @@ struct st_gifconfig {
 
 
   uint8_t*    pGlobalPalette;                            // global color table of the GIF
-  const char* path;                                      // path of the GIF to be created, mutually exclusive with pWriteFn
+  uint8_t*    buffer;                                    // path of the GIF to be created, mutually exclusive with pWriteFn
   uint32_t    attrFlags;                                 // fixed attributes of the GIF (e.g. whether it is animated or not)
   uint32_t    genFlags;                                  // flags that determine how the GIF is generated (e.g. optimization)
   uint16_t    width;                                     // width of each frame in the GIF
@@ -97,7 +97,7 @@ struct st_frameconfig {
 struct st_cgif_rgb_config {
   cgif_write_fn* pWriteFn;
   void*          pContext;
-  const char*    path;
+  uint8_t*        buffer;
   uint32_t       attrFlags;
   uint32_t       genFlags;
   uint16_t       numLoops;

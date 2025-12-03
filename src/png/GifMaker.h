@@ -30,6 +30,9 @@ private:
         CGIF_FrameConfig        fConfig;
         uint8_t                 *aPalette ;
         int                     numberofcolors ;
+
+        size_t                  buffersize ;
+        uint8_t                 *buffer ;
 };
 
 

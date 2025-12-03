@@ -5,7 +5,6 @@
 #include "global.h"
 #include "iPixelCommands.h"
 #include "Helpers.h"
-#include "png/pngmaker.h"
 #include "functions/temperature.h"
 #include "clock/timefunctions.h"
 
@@ -29,7 +28,7 @@ void iPixelDevice::processQueue() {
         commandQueue.pop();
 
         // Verwerk en verstuur het commando
-        DBG_PRINTF( DEBUG_QUEUE, "Verwerk commando voor %s: %s\n", address.toString().c_str(), command.c_str());
+//        DBG_PRINTF( DEBUG_QUEUE, "Verwerk commando voor %s: %s\n", address.toString().c_str(), command.c_str());
 
         // Implementeer de daadwerkelijke BLE-schrijflogica (zie volgende stap)
         //       ex
@@ -49,7 +48,7 @@ void iPixelDevice::processQueue() {
         //
         const char* cmd = doc["command"];
         JsonArray params = doc["params"];
-        DBG_PRINTF( DEBUG_QUEUE, "JSON Command: %s\n", cmd );
+//        DBG_PRINTF( DEBUG_QUEUE, "JSON Command: %s\n", cmd );
         if ( strcmp( cmd, "ASSIGN" ) == 0 ) {
 
 
@@ -107,7 +106,7 @@ void iPixelDevice::processQueue() {
 
         } else if  ( strcmp( cmd, "make_time_ani" ) == 0 ) {
 
-            DBG_PRINTF( DEBUG_QUEUE, "calling make_animated time\n");
+  //          DBG_PRINTF( DEBUG_QUEUE, "calling make_animated time\n");
             std::vector<uint8_t> binaryDataVector;
             String time = getCurrentTimeString();
             make_animated_time( binaryDataVector, time ) ;
@@ -126,25 +125,25 @@ void iPixelDevice::processQueue() {
                 String paramStr = params[i].as<String>();
                 int equals_index = paramStr.indexOf('=');
 
-                Serial.printf("paramStr %s: ", paramStr.c_str() ) ;
+//                Serial.printf("paramStr %s: ", paramStr.c_str() ) ;
 
 
 
                 if (equals_index > 0) {
                     String key = paramStr.substring(0, equals_index);
                     String value = paramStr.substring(equals_index + 1);
-                    Serial.printf("key %s: ", key.c_str() ) ;
+ //                   Serial.printf("key %s: ", key.c_str() ) ;
 
                     if (key.equalsIgnoreCase("temperature")) {
                         temperature = value.toFloat();
-                        Serial.printf("detected temp %f ", temperature ) ;
+ //                       Serial.printf("detected temp %f ", temperature ) ;
 
                     } else if (key.equalsIgnoreCase("title")) {
                         title = value;
                     }
                 }
             }
-            DBG_PRINTF( DEBUG_QUEUE, "calling make_animated temperature\n");
+ //           DBG_PRINTF( DEBUG_QUEUE, "calling make_animated temperature\n");
             std::vector<uint8_t> binaryDataVector;
             make_animated_temperature( binaryDataVector, temperature, title ) ;
             this->sendGIF( binaryDataVector );
@@ -153,7 +152,7 @@ void iPixelDevice::processQueue() {
 
         } else if  ( strcmp( cmd, "send_gif" ) == 0 ) {
 
-            DBG_PRINTF( DEBUG_QUEUE, "Decoded send_gif commando");
+ //           DBG_PRINTF( DEBUG_QUEUE, "Decoded send_gif commando");
 
             //String paramStr = params[0].as<String>();
             //this->sendPNG( Helpers::hexStringToVector(paramStr) );
@@ -169,13 +168,13 @@ void iPixelDevice::processQueue() {
             binaryDataVector.resize(len);
             memcpy(binaryDataVector.data(), aap.c_str(), len);
         */
-            Serial.print("make_temperature De lengte van de String is: ");
-            Serial.println(binaryDataVector.size());  // print de lengte van de String als getal
+//            Serial.print("make_temperature De lengte van de String is: ");
+ //           Serial.println(binaryDataVector.size());  // print de lengte van de String als getal
 
             // printout string
             for ( int i=0 ; i<binaryDataVector.size() ; i++ ) {
 
-                Serial.printf("%02x", binaryDataVector[i]);
+//                Serial.printf("%02x", binaryDataVector[i]);
             }
 
 
@@ -237,9 +236,9 @@ void iPixelDevice::enqueueCommand(const JsonDocument& doc) {
     commandQueue.push(output.c_str());
 
     // Optioneel: Loggen om te controleren of de data in de queue is gekomen
-    Serial.printf("Commando in queue geplaatst voor %s: %s\n",
-                  address.toString().c_str(),
-                  output.c_str());
+//    Serial.printf("Commando in queue geplaatst voor %s: %s\n",
+//                  address.toString().c_str(),
+//                  output.c_str());
 }
 
 
@@ -322,8 +321,8 @@ void iPixelDevice::queueTick() {
     //Take bytes from command
     size_t chunkSize = min(500, (int)command.size());
 
-    Serial.print("Char is " ) ;
-    Serial.println((unsigned long)characteristic, HEX);
+    //Serial.print("Char is " ) ;
+    //Serial.println((unsigned long)characteristic, HEX);
 
     if ( this->client != nullptr && client->isConnected()) {
 
@@ -332,15 +331,15 @@ void iPixelDevice::queueTick() {
     characteristic->writeValue(command.data(), chunkSize, false);
 
     //Debug
-    printPrefix();
+ //   printPrefix();
 
-    DBG_PRINTF( DEBUG_BLE, "Sent chunk of ");
+  //  DBG_PRINTF( DEBUG_BLE, "Sent chunk of ");
 
-    DBG_PRINTF( DEBUG_BLE,"ChunkSize: %u\n", chunkSize);
+  //  DBG_PRINTF( DEBUG_BLE,"ChunkSize: %u\n", chunkSize);
 
 
-    DBG_PRINTF( DEBUG_BLE," bytes (remaining:  %)\n", command.size() );
-    DBG_PRINTF( DEBUG_BLE, " (queue size:%u)", queue.size() );
+    //DBG_PRINTF( DEBUG_BLE," bytes (remaining:  %)\n", command.size() );
+    //DBG_PRINTF( DEBUG_BLE, " (queue size:%u)", queue.size() );
     //Print bytes as HEX
     DBG_PRINTF( DEBUG_BLE2,"Data: ");
     for (size_t i = 0; i < chunkSize; i++) {
@@ -348,7 +347,7 @@ void iPixelDevice::queueTick() {
           DBG_PRINTF( DEBUG_BLE2, "02x", command[i] );
           DBG_PRINTF( DEBUG_BLE2, " ");
     }
-    Serial.println();
+    //Serial.println();
 
     //Remove bytes from command
     command.erase(command.begin(), command.begin() + chunkSize);
@@ -371,16 +370,16 @@ void iPixelDevice::queueTick() {
 
 void iPixelDevice::queuePush(std::vector<uint8_t> command) {
     queue.push_back(command);
-    printPrefix();
-    Serial.print("Added command with ");
-    Serial.print(command.size());
-    Serial.print(" bytes to queue at ");
-    Serial.println(queue.size() - 1);
+//    printPrefix();
+//    Serial.print("Added command with ");
+//    Serial.print(command.size());
+//    Serial.print(" bytes to queue at ");
+//    Serial.println(queue.size() - 1);
 }
 
 void iPixelDevice::sendImage() {
     std::vector<uint8_t> command = iPixelCommands::sendImage();
-    printPrefix();
+//    printPrefix();
     queuePush(command);
 }
 
@@ -559,9 +558,9 @@ void iPixelDevice::sendPNG(const std::vector<uint8_t> &pngData) {
 
 void iPixelDevice::sendGIF(const std::vector<uint8_t> &gifData) {
     std::vector<uint8_t> command = iPixelCommands::sendGIF(gifData);
-    printPrefix();
-    Serial.print("GIF with ");
-    Serial.print(gifData.size());
-    Serial.println(" bytes");
+//    printPrefix();
+//    Serial.print("GIF with ");
+ //   Serial.print(gifData.size());
+ //   Serial.println(" bytes");
     queuePush(command);
 }

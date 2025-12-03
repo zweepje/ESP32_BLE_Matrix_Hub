@@ -101,7 +101,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
                 client->text("ERROR: Ongeldig JSON-formaat.");
                 return;
             }
-            Serial.printf("Data was valid for client #%u\n", client->id());
+            //Serial.printf("Data was valid for client #%u\n", client->id());
 
             //
             // check if
@@ -163,7 +163,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
                 // Normale commando verwerking (zoals SET_COLOR) gaat verder
                 state.assignedMatrix->enqueueCommand(doc);
                 client->text("ACK: Commando in queue geplaatst.");
-                Serial.printf("Commando <%s> received\n", command);
+               // Serial.printf("Commando <%s> received\n", command);
             } else {
                 Serial.printf("Commando with no matrix <%s> received\n", command);
 
