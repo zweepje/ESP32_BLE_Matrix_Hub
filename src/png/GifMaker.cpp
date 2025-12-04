@@ -63,13 +63,14 @@ static void initFrameConfig(CGIF_FrameConfig* pConfig, uint8_t* pImageData, uint
         buffer = (uint8_t*)heap_caps_malloc(buffersize, MALLOC_CAP_SPIRAM);
 
         if (buffer == NULL) {
-            Serial.println("FATAL: Kon geen SPRAM alloceren!");
+            Serial.printf("FATAL: Kon geen SPRAM alloceren!\n");
+            Serial.printf("--------------------------------\n");
         } else {
             Serial.printf("Succesvol %u bytes in SPRAM gealloceerd op adres %p\n", buffersize, buffer);
+            Serial.printf("----------------------------------------------------------------\n", buffersize, buffer);
 
         }
-        // Vergeet niet het geheugen vrij te geven wanneer je klaar bent
-        free(buffer);
+
     }
 
 
@@ -139,11 +140,20 @@ bool GifMaker::GetResults( std::vector<uint8_t>& binaryDataVector ) {
         size_t received_len = getFileCount(pGIF);               // De lengte van de data
 
         //Serial.printf("Vector data at %u, size is %u bytes\n", received_data, received_len );
+/*
+        Serial.printf("Hexdump of gif file\n") ;
+        for ( int i = 0; i < received_len; i++ ) {
+
+            Serial.printf("%02x", received_data[i]);
+        }
+        Serial.printf("\n End of Hexdump of gif file\n") ;
+*/
+
 
 
         if (fillVectorFromCharPtr(binaryDataVector, received_data, received_len)) {
             // De vector is nu gevuld met de bytes
-            //Serial.printf("Vector succesvol gevuld, grootte: %u bytes\n", binaryDataVector.size());
+            Serial.printf("Vector succesvol gevuld, grootte: %u bytes\n", binaryDataVector.size());
 
             // Roep de functie aan die de vector nodig heeft:
             // this->sendPNG(binaryDataVector);

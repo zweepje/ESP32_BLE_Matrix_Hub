@@ -50,9 +50,6 @@ void iPixelDevice::processQueue() {
         JsonArray params = doc["params"];
 //        DBG_PRINTF( DEBUG_QUEUE, "JSON Command: %s\n", cmd );
         if ( strcmp( cmd, "ASSIGN" ) == 0 ) {
-
-
-
             //
             // make the connection
             // c. Start direct de BLE verbinding voor dit nieuwe apparaat
@@ -103,6 +100,13 @@ void iPixelDevice::processQueue() {
 
             // 4. Roep de functie aan met de geparseerde/default waarden
             this->sendText(text_str, animation, save_slot, speed, colorR, colorG, colorB, rainbow_mode, matrix_height);
+
+        } else if  ( strcmp( cmd, "set_brightness" ) == 0 ) {
+
+            String br_str = params[0].as<String>();
+            int brightness = br_str.toInt();
+            Serial.printf("Set brightness to: %d", brightness ) ;
+            this->setBrightness( brightness );
 
         } else if  ( strcmp( cmd, "make_time_ani" ) == 0 ) {
 
@@ -250,14 +254,6 @@ void iPixelDevice::connectAsync() {
         return;
     }
 
-    if (g_isBleBusy) {
-        // Iemand anders is bezig met BLE, probeer later opnieuw
-        Serial.println("WARN: BLE locked");
-        return ;
-    }
-
-    g_isBleBusy = true; // Neem de lock
-
     printPrefix();
     Serial.println("Connecting...");
 
@@ -271,7 +267,6 @@ void iPixelDevice::connectAsync() {
     if (!client->connect(address)) {
         printPrefix();
         Serial.println("ERROR: Failed to connect!");
-        g_isBleBusy = false;
         return;
     }
 
@@ -281,7 +276,6 @@ void iPixelDevice::connectAsync() {
         printPrefix();
         Serial.println("ERROR: Service not found!");
         client->disconnect();
-        g_isBleBusy = false;
         return;
     }
 
@@ -290,11 +284,9 @@ void iPixelDevice::connectAsync() {
         printPrefix();
         Serial.println("ERROR: Characteristic not found!");
         client->disconnect();
-        g_isBleBusy = false;
         return;
     }
 
-    g_isBleBusy = false;
     connected = true;
     printPrefix();
     Serial.println("Connected successfully!");
@@ -306,13 +298,6 @@ void iPixelDevice::connectAsync() {
 void iPixelDevice::queueTick() {
     if (queue.empty()) return;
 
-    if (g_isBleBusy) {
-        // Queue is verwerkt, maar kan nu niet schrijven.
-        // Optioneel: Zet commando terug in queue of wacht.
-        return;
-    }
-
-    g_isBleBusy = true; // Neem de lock
 
 
     //Get command from queue
@@ -331,15 +316,15 @@ void iPixelDevice::queueTick() {
     characteristic->writeValue(command.data(), chunkSize, false);
 
     //Debug
- //   printPrefix();
+    printPrefix();
 
-  //  DBG_PRINTF( DEBUG_BLE, "Sent chunk of ");
+    DBG_PRINTF( DEBUG_BLE, "Sent chunk of ");
 
-  //  DBG_PRINTF( DEBUG_BLE,"ChunkSize: %u\n", chunkSize);
+    DBG_PRINTF( DEBUG_BLE,"ChunkSize: %u\n", chunkSize);
 
 
-    //DBG_PRINTF( DEBUG_BLE," bytes (remaining:  %)\n", command.size() );
-    //DBG_PRINTF( DEBUG_BLE, " (queue size:%u)", queue.size() );
+    DBG_PRINTF( DEBUG_BLE," bytes (remaining:  %)\n", command.size() );
+    DBG_PRINTF( DEBUG_BLE, " (queue size:%u)", queue.size() );
     //Print bytes as HEX
     DBG_PRINTF( DEBUG_BLE2,"Data: ");
     for (size_t i = 0; i < chunkSize; i++) {
@@ -352,7 +337,7 @@ void iPixelDevice::queueTick() {
     //Remove bytes from command
     command.erase(command.begin(), command.begin() + chunkSize);
 
-    //Remove command if empty
+        //Remove command if empty
     if (command.empty()) queue.erase(queue.begin());
 
     //Do not overload BLE
@@ -363,8 +348,12 @@ void iPixelDevice::queueTick() {
                       address.toString().c_str(),
                       this->client,
                       (this->client && this->client->isConnected() ? "JA" : "NEE"));
+
+        if ( !this->client->isConnected() ) {
+            Serial.printf("===> Matrix %s: retrying connection\n",address.toString().c_str());
+            this->connectAsync();
+        }
     }
-    g_isBleBusy = false; // release de lock
 
 }
 

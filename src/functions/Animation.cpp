@@ -55,7 +55,7 @@ void Animation::MakeAnimation( std::vector<uint8_t>& binaryDataVector, IndexedBi
         putin( tmpbmp, start, end, i );
         if ( (i+stepsize)  > 32 ) {
             tspeed = 10000 ; // very long
-            //Serial.printf("Temp, setting long time\n" );
+            Serial.printf("Temp, setting long time\n" );
 
         } else {
             tspeed = speed ;
