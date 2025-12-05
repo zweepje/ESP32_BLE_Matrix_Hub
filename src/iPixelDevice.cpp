@@ -296,9 +296,8 @@ void iPixelDevice::connectAsync() {
 // hier wordt de BLE queue verwerkt
 //
 void iPixelDevice::queueTick() {
+
     if (queue.empty()) return;
-
-
 
     //Get command from queue
     std::vector<uint8_t> &command = queue.front();
@@ -311,37 +310,36 @@ void iPixelDevice::queueTick() {
 
     if ( this->client != nullptr && client->isConnected()) {
 
+        //Write bytes from command
+        characteristic->writeValue(command.data(), chunkSize, false);
 
-    //Write bytes from command
-    characteristic->writeValue(command.data(), chunkSize, false);
+        //Debug
+        printPrefix();
 
-    //Debug
-    printPrefix();
+        DBG_PRINTF( DEBUG_BLE, "Sent chunk of ");
 
-    DBG_PRINTF( DEBUG_BLE, "Sent chunk of ");
-
-    DBG_PRINTF( DEBUG_BLE,"ChunkSize: %u\n", chunkSize);
+        DBG_PRINTF( DEBUG_BLE,"ChunkSize: %u\n", chunkSize);
 
 
-    DBG_PRINTF( DEBUG_BLE," bytes (remaining:  %)\n", command.size() );
-    DBG_PRINTF( DEBUG_BLE, " (queue size:%u)", queue.size() );
-    //Print bytes as HEX
-    DBG_PRINTF( DEBUG_BLE2,"Data: ");
-    for (size_t i = 0; i < chunkSize; i++) {
-        if (command[i] < 0x10) DBG_PRINTF( DEBUG_BLE2,"0" ); // leading zero for single-digit hex
-          DBG_PRINTF( DEBUG_BLE2, "02x", command[i] );
-          DBG_PRINTF( DEBUG_BLE2, " ");
-    }
-    //Serial.println();
+        DBG_PRINTF( DEBUG_BLE," bytes (remaining:  %)\n", command.size() );
+        DBG_PRINTF( DEBUG_BLE, " (queue size:%u)", queue.size() );
+        //Print bytes as HEX
+        DBG_PRINTF( DEBUG_BLE2,"Data: ");
+        for (size_t i = 0; i < chunkSize; i++) {
+            if (command[i] < 0x10) DBG_PRINTF( DEBUG_BLE2,"0" ); // leading zero for single-digit hex
+              DBG_PRINTF( DEBUG_BLE2, "02x", command[i] );
+              DBG_PRINTF( DEBUG_BLE2, " ");
+        }
+        //Serial.println();
 
-    //Remove bytes from command
-    command.erase(command.begin(), command.begin() + chunkSize);
+        //Remove bytes from command
+        command.erase(command.begin(), command.begin() + chunkSize);
 
-        //Remove command if empty
-    if (command.empty()) queue.erase(queue.begin());
+            //Remove command if empty
+        if (command.empty()) queue.erase(queue.begin());
 
-    //Do not overload BLE
-    delay(100);
+        //Do not overload BLE
+        delay(100);
     } else {
         // Foutopsporing: print welke Matrix niet verbonden is
         Serial.printf("Matrix %s: Queue niet verwerkt. Client (0x%p) verbonden: %s\n",
@@ -350,11 +348,12 @@ void iPixelDevice::queueTick() {
                       (this->client && this->client->isConnected() ? "JA" : "NEE"));
 
         if ( !this->client->isConnected() ) {
+            this->connected =false;
             Serial.printf("===> Matrix %s: retrying connection\n",address.toString().c_str());
+            this->client->disconnect();
             this->connectAsync();
         }
     }
-
 }
 
 void iPixelDevice::queuePush(std::vector<uint8_t> command) {
