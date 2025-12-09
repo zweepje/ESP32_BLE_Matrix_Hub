@@ -17,9 +17,14 @@ extern std::map<std::string, iPixelDevice> matrixRegistry;
 
 void iPixelDevice::processQueue() {
 
+
+    Serial.write("ProcessQueue: " );
+
     // 1. Controleer of er verbinding is en of de queue niet leeg is
     //   if (!commandQueue.empty() && isBLEConnected()) {
     if (!commandQueue.empty() ) {
+        Serial.printf("data available." );
+
         // Haal het oudste commando op
         std::string command = commandQueue.front();
 
@@ -190,6 +195,9 @@ void iPixelDevice::processQueue() {
             //            this->sendPNG( Helpers::hexStringToVector(paramStr) );
 
         }
+    } else {
+        Serial.printf("Queue empty" );
+        delay( 200 ) ;
     }
 }
 
@@ -346,13 +354,15 @@ void iPixelDevice::queueTick() {
                       address.toString().c_str(),
                       this->client,
                       (this->client && this->client->isConnected() ? "JA" : "NEE"));
-
+        delay(100);
+        /*
         if ( !this->client->isConnected() ) {
             this->connected =false;
             Serial.printf("===> Matrix %s: retrying connection\n",address.toString().c_str());
             this->client->disconnect();
             this->connectAsync();
         }
+        */
     }
 }
 

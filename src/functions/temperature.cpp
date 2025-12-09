@@ -16,6 +16,7 @@
 
 #include "Animation.h"
 #include "../png/IndexedBitmap.h"
+#include "../png/LetterDraw.h"
 
 
 const int    BLACK = 0 ;
@@ -112,21 +113,25 @@ bool make_animated_temperature( std::vector<uint8_t>& binaryDataVector, float te
 
     Serial.printf("Temperature is %f, string is %s\n", temperature, temperatureString.c_str() );
 
- /*
+
     // make a debug image
-    for ( int x= 0 ; x<32 ; x++ ) {
+/*    for ( int x= 0 ; x<32 ; x++ ) {
 
         bmp->setPixel( x,x, 1);
         bmp->setPixel( 31-x,x, 1);
     }//
-*/
+    */
 
-
+    //tekenCijfer( *bmp, '1', 2, 14, RED );
+    //tekenCijfer( *bmp, '2', 7, 14, GREEN );
+    //tekenCijfer( *bmp, '3', 16, 14, BLUE );
+    tekenString( *bmp, "323", 1, 12, RED ) ;
+    tekenString( *bmp, "312", 1, 30, BLUE ) ;
 
 
     // display temperature
     //canvas.setFont(&FreeSans9pt7b); // Gebruik een ingesloten lettertype
-    canvas.setFont(NULL); // Gebruik een ingesloten lettertype
+/*    canvas.setFont(NULL); // Gebruik een ingesloten lettertype
     canvas.setTextSize(1);  // 5x7 pixels
     canvas.setTextColor(RED);         // Stel de tekstkleur in op Index 1 (bijv. wit)
     canvas.setCursor( 4, 8) ;
@@ -138,7 +143,7 @@ bool make_animated_temperature( std::vector<uint8_t>& binaryDataVector, float te
     canvas.setTextColor(GREEN);         // Stel de tekstkleur in op Index 1 (bijv. wit)
     canvas.setCursor( 1, 21 ) ;
     canvas.print(title);
-
+*/
     Animation anim = Animation();
     anim.MakeAnimation( binaryDataVector, &startBitmap, bmp ) ;
 

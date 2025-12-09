@@ -35,7 +35,6 @@ void setup_wifi_post();
 uint8_t g_debugFlags = DEBUG_BLE | DEBUG_QUEUE ; //| DEBUG_BLE2;
 // Initialisatie
 
-bool g_isBleBusy = false;
 
 
 

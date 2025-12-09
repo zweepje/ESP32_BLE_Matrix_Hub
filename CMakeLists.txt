@@ -28,4 +28,7 @@ add_executable(myipixel
         src/clock/timefunctions.h
         src/functions/Animation.cpp
         src/functions/Animation.h
+        src/png/LetterDraw.cpp
+        src/png/LetterDraw.h
+        src/png/letterbitmap.h
 )
