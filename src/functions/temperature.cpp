@@ -96,11 +96,62 @@ bool make_animated_time( std::vector<uint8_t>& binaryDataVector, String time) {
 
 }
 
-
+static int counter=0 ;
 //
 // Maakt een animated gif van een temperatuur die naar een vol scherm scrollt
 //
 bool make_animated_temperature( std::vector<uint8_t>& binaryDataVector, float temperature, String title ) {
+
+    auto *bmp = new IndexedBitmap(WIDTH, HEIGHT, 8);
+
+    char tempBuffer[6]; // Buffer moet groot genoeg zijn voor "±XX.X\0"
+
+    Serial.printf("Temperature counter is %d\n", temperature, counter );
+
+
+    // make a debug image
+    /*    for ( int x= 0 ; x<32 ; x++ ) {
+
+            bmp->setPixel( x,x, 1);
+            bmp->setPixel( 31-x,x, 1);
+        }//
+        */
+
+    sprintf(tempBuffer, "%d", counter);
+
+    tekenString( *bmp, "323", 1, 12, RED ) ;
+    tekenString( *bmp, "312", 1, 30, BLUE ) ;
+
+
+    // display temperature
+    //canvas.setFont(&FreeSans9pt7b); // Gebruik een ingesloten lettertype
+    /*    canvas.setFont(NULL); // Gebruik een ingesloten lettertype
+        canvas.setTextSize(1);  // 5x7 pixels
+        canvas.setTextColor(RED);         // Stel de tekstkleur in op Index 1 (bijv. wit)
+        canvas.setCursor( 4, 8) ;
+        canvas.print(temperatureString);
+
+        // display environment
+        canvas.setFont(NULL); // Gebruik het standaard 5x7 font
+        canvas.setTextSize(1);  // 5x7 pixels
+        canvas.setTextColor(GREEN);         // Stel de tekstkleur in op Index 1 (bijv. wit)
+        canvas.setCursor( 1, 21 ) ;
+        canvas.print(title);
+    */
+    Animation anim = Animation();
+    anim.MakeAnimation( binaryDataVector, &startBitmap, bmp ) ;
+
+
+
+    startBitmap = *bmp ; // copy the bitmap to startbitmap
+    return true ;
+
+}
+
+//
+// Maakt een animated gif van een temperatuur die naar een vol scherm scrollt
+//
+bool orgmake_animated_temperature( std::vector<uint8_t>& binaryDataVector, float temperature, String title ) {
 
     auto *bmp = new IndexedBitmap(WIDTH, HEIGHT, 8);
     BitmapGFX canvas( *bmp);
