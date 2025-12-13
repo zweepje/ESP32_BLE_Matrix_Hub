@@ -119,8 +119,8 @@ bool make_animated_temperature( std::vector<uint8_t>& binaryDataVector, float te
 
     sprintf(tempBuffer, "%d", counter);
 
-    tekenString( *bmp, "323", 1, 12, RED ) ;
-    tekenString( *bmp, "312", 1, 30, BLUE ) ;
+    tekenString( *bmp, "323", 1, 12, RED, largefont ) ;
+    tekenString( *bmp, "312", 1, 30, BLUE, largefont ) ;
 
 
     // display temperature
@@ -176,8 +176,8 @@ bool orgmake_animated_temperature( std::vector<uint8_t>& binaryDataVector, float
     //tekenCijfer( *bmp, '1', 2, 14, RED );
     //tekenCijfer( *bmp, '2', 7, 14, GREEN );
     //tekenCijfer( *bmp, '3', 16, 14, BLUE );
-    tekenString( *bmp, "323", 1, 12, RED ) ;
-    tekenString( *bmp, "312", 1, 30, BLUE ) ;
+    tekenString( *bmp, "323", 1, 12, RED, largefont) ;
+    tekenString( *bmp, "312", 1, 30, BLUE, largefont ) ;
 
 
     // display temperature

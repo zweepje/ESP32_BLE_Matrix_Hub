@@ -8,6 +8,7 @@
 
 class FontInfo {
 
+    public:
     char    character;
     uint8_t width, height;
     uint8_t xoffset, yoffset;
@@ -19,11 +20,18 @@ class MyFont {
 
     public:
         MyFont( const uint8_t *bm, uint8_t width, FontInfo *fi );
+        FontInfo *getFontInfo(char character);
+        bool bitset( FontInfo *info, int x, int y ) ;
 
-    const uint8_t *bitmap{};
-    uint8_t bitmapWidth{};
-    FontInfo *fontinfo{};
+
+    private:
+        const uint8_t *bitmap{};
+        uint8_t bitmapWidth{};
+        FontInfo *fontinfo{};
 };
+
+
+extern MyFont largefont;    // make it public available
 
 
 #endif //MYIPIXEL_MYFONT_H

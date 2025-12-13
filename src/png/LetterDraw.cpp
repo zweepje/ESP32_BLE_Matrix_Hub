@@ -6,6 +6,7 @@
 #include "LetterDraw.h"
 #include "IndexedBitmap.h"
 #include "letterbitmap.h"
+#include "MyFont.h"
 
 
 // De structuur die de metadata van één karakter opslaat
@@ -34,18 +35,6 @@ static CharInfo letterinfo[] = {
 // Global of statische lookup tabel voor alle cijfers '0' t/m '9'
 extern CharInfo karakterLookup[10];
 
-bool bitset( const uint8_t *bm, int x, int y) {
-
-    int byteindex = (x/8)+y*8;
-    int xx = x % 8;
-    uint8_t mask = 1<<(7-xx);
-    uint8_t bit = bm[byteindex] & mask;
-
-    //Serial.printf("acces %d, %d  div %d:", x, y, xx );
-    //Serial.printf("byte is %02x, mask is %02x", bm[byteindex], mask );
-
-    return ( bit==0 ? false : true );
-}
 
 /**
  * Tekent een enkel cijfer uit de bron-bitmap naar de doel-canvas.
@@ -55,27 +44,22 @@ bool bitset( const uint8_t *bm, int x, int y) {
  * @param startY: Y-coördinaat op de canvas waar het cijfer moet beginnen.
  * @param kleur: De kleur om de pixels mee te tekenen (meestal 1 voor 'aan'/wit).
  */
-void tekenCijfer(IndexedBitmap& bmp, char cijferChar, int startX, int startY, uint16_t kleur) {
+void tekenCijfer(IndexedBitmap& bmp, char cijferChar, int startX, int startY, uint16_t kleur, MyFont font) {
     Serial.println("TekenCijfer:");
 
-    if (cijferChar < '0' || cijferChar > '9') {
-        return; // Alleen cijfers ondersteund
-    }
-
-    // Index is 0 voor '0', 1 voor '1', etc.
-    int index = cijferChar - '0';
-    const CharInfo& info = letterinfo[index];
+    FontInfo *info = font.getFontInfo( cijferChar );
 
     // De offset in de data-array
     uint32_t byte_offset = 0;
 
     // Loop door elke rij van het karakter (y-as)
     //for (int y = 0; y < info.height; y++) {
-    for (int y = info.height -1 ; y>=0 ; y--) {
+    for (int y = info->height -1 ; y>=0 ; y--) {
 
-        for ( int x=0 ; x< info.width; x++ ) {
+        for ( int x=0 ; x< info->width; x++ ) {
 
-            if ( bitset( cijfers, x+info.x, info.y - y) ) {
+            //if ( bitset( cijfers, x+info.x, info.y - y) ) {
+            if ( font.bitset( info, x, y ) ) {
                 //Serial.println("TekenCijfer: bit true");
                 bmp.setPixel( x+startX, startY-y, kleur);
 
@@ -89,13 +73,13 @@ void tekenCijfer(IndexedBitmap& bmp, char cijferChar, int startX, int startY, ui
     }
 }
 
-    void tekenString( IndexedBitmap& bmp, char *cijferStr, int startX, int startY, uint16_t kleur) {
+    void tekenString( IndexedBitmap& bmp, char *cijferStr, int startX, int startY, uint16_t kleur, MyFont font ) {
 
         for ( int i = 0 ; i < strlen(cijferStr) ; i++) {
 
             char cijfer = cijferStr[i];
 
-            tekenCijfer( bmp, cijfer, startX, startY, kleur) ;
+            tekenCijfer( bmp, cijfer, startX, startY, kleur, font ) ;
 
             int index = cijfer - '0';
             const CharInfo& info = letterinfo[index];
