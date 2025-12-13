@@ -45,12 +45,11 @@ extern CharInfo karakterLookup[10];
  * @param kleur: De kleur om de pixels mee te tekenen (meestal 1 voor 'aan'/wit).
  */
 void tekenCijfer(IndexedBitmap& bmp, char cijferChar, int startX, int startY, uint16_t kleur, MyFont font) {
-    Serial.println("TekenCijfer:");
+    Serial.printf("TekenCijfer: <%c>", cijferChar );
 
     FontInfo *info = font.getFontInfo( cijferChar );
+    Serial.printf(" info: <%c> at: %d, %d\n", info->character, info->xoffset, info->yoffset);
 
-    // De offset in de data-array
-    uint32_t byte_offset = 0;
 
     // Loop door elke rij van het karakter (y-as)
     //for (int y = 0; y < info.height; y++) {
@@ -81,6 +80,7 @@ void tekenCijfer(IndexedBitmap& bmp, char cijferChar, int startX, int startY, ui
 
             tekenCijfer( bmp, cijfer, startX, startY, kleur, font ) ;
 
+            // Note: nog aanpassen!!!!
             int index = cijfer - '0';
             const CharInfo& info = letterinfo[index];
             startX += 1 + info.width;

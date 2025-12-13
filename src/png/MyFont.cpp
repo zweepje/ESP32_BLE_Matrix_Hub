@@ -19,13 +19,31 @@ FontInfo LargeFontInfo[] =
     FontInfo( '8', 8, 9, 9, 19),
     FontInfo( '9', 8, 9, 18, 19),
     FontInfo( '0', 8, 9, 27, 19),
-    FontInfo( ',', 8, 9, 36, 20)
+    FontInfo( ',', 2, 9, 36, 20)
+};
+
+FontInfo LargeFont2Info[] =
+{
+    FontInfo( '1', 3, 7, 2, 27),
+    FontInfo( '2', 5, 7, 6, 27),
+    FontInfo( '3', 5, 7, 12, 27),
+    FontInfo( '4', 5, 7, 18, 27),
+    FontInfo( '5', 5, 7, 24, 27),
+    FontInfo( '6', 5, 7, 30, 27),
+    FontInfo( '7', 5, 7, 36, 27),
+    FontInfo( '8', 5, 7, 42, 27),
+    FontInfo( '9', 5, 7, 48, 27),
+    FontInfo( '0', 5, 7, 54, 27),
+    FontInfo( ':', 1, 7, 60, 27),
+
 };
 
 MyFont largefont( largefontbitmap, 64, LargeFontInfo );
+MyFont largefont2( largefontbitmap, 64, LargeFont2Info );
 
 
 int ElementsLargeFont = sizeof( LargeFontInfo ) / sizeof( FontInfo);
+int ElementsLargeFont2 = sizeof( LargeFont2Info ) / sizeof( FontInfo);
 
 MyFont::MyFont( const uint8_t *bm, uint8_t width, FontInfo *fi ) :
      bitmap(bm),
@@ -48,7 +66,7 @@ FontInfo *MyFont::getFontInfo(char character) {
 bool MyFont::bitset( FontInfo *info, int x, int y ) {
 
     x = x+info->xoffset ;
-    y = y+info->yoffset ;
+    y = info->yoffset-y ;
 
     int byteindex = (x/8)+y*(bitmapWidth/8);
     int xx = x % 8;
