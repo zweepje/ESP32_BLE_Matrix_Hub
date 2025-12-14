@@ -70,14 +70,21 @@ public:
 
 
 
-IndexedBitmap startBitmap = IndexedBitmap(WIDTH, HEIGHT, 8);
+
+// We have to allocate it one time
+static IndexedBitmap bmp(WIDTH, HEIGHT, 8);
 
 
 
-bool make_animated_time( std::vector<uint8_t>& binaryDataVector, String time) {
+bool make_animated_time( void* generic_context, std::vector<uint8_t>& binaryDataVector, String time) {
 
-    auto *bmp = new IndexedBitmap(WIDTH, HEIGHT, 8);
-    BitmapGFX canvas( *bmp);
+    //auto *bmp = new IndexedBitmap(WIDTH, HEIGHT, 8);
+    MatrixContext* context = static_cast<MatrixContext*>(generic_context);
+    //
+    // Clear the bitmap  ( we kunnen ook background color zetten )
+    //
+    bmp.clear(0) ;
+    BitmapGFX canvas( bmp);
 
     Serial.printf("timestring is %s\n", time.c_str() );
 
@@ -90,9 +97,10 @@ bool make_animated_time( std::vector<uint8_t>& binaryDataVector, String time) {
     canvas.print(time);
 
     Animation anim = Animation();
-    anim.MakeAnimation( binaryDataVector, &startBitmap, bmp ) ;
+    anim.MakeAnimation( binaryDataVector, &context->current_bitmap, &bmp ) ;
 
-    startBitmap = *bmp ; // copy the bitmap to startbitmap
+    // keep the last image for animation
+    context->current_bitmap.CopyFromBitmap(bmp);
     return true ;
 
 }
@@ -104,56 +112,48 @@ bool make_animated_time( std::vector<uint8_t>& binaryDataVector, String time) {
 bool make_animated_temperature( void* generic_context, std::vector<uint8_t>& binaryDataVector, float temperature, String title ) {
 
     MatrixContext* context = static_cast<MatrixContext*>(generic_context);
+    //
+    // Clear the bitmap  ( we kunnen ook background color zetten )
+    //
+    bmp.clear(0) ;
 
-    auto *bmp = new IndexedBitmap(WIDTH, HEIGHT, 8);
 
+    // debug stuff
+    /*
     char tempBuffer[6]; // Buffer moet groot genoeg zijn voor "±XX.X\0"
-
-    Serial.printf("Temperature counter is %d\n", temperature, context->counter );
-
-
-    // make a debug image
-    /*    for ( int x= 0 ; x<32 ; x++ ) {
-
-            bmp->setPixel( x,x, 1);
-            bmp->setPixel( 31-x,x, 1);
-        }//
-        */
-
     sprintf(tempBuffer, "%d", context->counter);
+    Serial.printf("Temperature counter is %d\n", temperature, context->counter );
     context->counter++;
 
-    tekenString( *bmp, tempBuffer, 1, 10, RED, largefont ) ;
 
-
+    tekenString( bmp, tempBuffer, 1, 10, RED, largefont ) ;
     //tekenString( *bmp, "123", 1, 10, RED, largefont ) ;
     //tekenString( *bmp, "456", 1, 20, BLUE, largefont ) ;
     //tekenString( *bmp, "789", 1, 30, BLUE, largefont ) ;
+    */
+
+    // String maken van temperature
+    char tempBuffer[6]; // Buffer moet groot genoeg zijn voor "±XX.X\0"
+    // dtostrf(float_var, totale_breedte, decimalen, buffer)
+    dtostrf(temperature, 4, 1, tempBuffer);
+    String temperatureString = tempBuffer;
+    Serial.printf("Temperature is %f, string is %s\n", temperature, temperatureString.c_str() );
+
+
+
+
+
 
 
     // display temperature
-    //canvas.setFont(&FreeSans9pt7b); // Gebruik een ingesloten lettertype
-    /*    canvas.setFont(NULL); // Gebruik een ingesloten lettertype
-        canvas.setTextSize(1);  // 5x7 pixels
-        canvas.setTextColor(RED);         // Stel de tekstkleur in op Index 1 (bijv. wit)
-        canvas.setCursor( 4, 8) ;
-        canvas.print(temperatureString);
-
-        // display environment
-        canvas.setFont(NULL); // Gebruik het standaard 5x7 font
-        canvas.setTextSize(1);  // 5x7 pixels
-        canvas.setTextColor(GREEN);         // Stel de tekstkleur in op Index 1 (bijv. wit)
-        canvas.setCursor( 1, 21 ) ;
-        canvas.print(title);
-    */
     Animation anim = Animation();
-    //anim.MakeAnimation( binaryDataVector, &startBitmap, bmp ) ;
-    anim.MakeAnimation( binaryDataVector, &context->current_bitmap, bmp ) ;
+    anim.MakeAnimation( binaryDataVector, &context->current_bitmap, &bmp ) ;
 
 
 
     //startBitmap = *bmp ; // copy the bitmap to startbitmap
-    context->current_bitmap = *bmp ;
+    context->current_bitmap.CopyFromBitmap(bmp);
+    //context->current_bitmap = *bmp ;
     return true ;
 
 }
@@ -205,12 +205,12 @@ bool orgmake_animated_temperature( std::vector<uint8_t>& binaryDataVector, float
     canvas.setCursor( 1, 21 ) ;
     canvas.print(title);
 */
-    Animation anim = Animation();
-    anim.MakeAnimation( binaryDataVector, &startBitmap, bmp ) ;
+ //   Animation anim = Animation();
+ //   anim.MakeAnimation( binaryDataVector, &startBitmap, bmp ) ;
 
 
 
-    startBitmap = *bmp ; // copy the bitmap to startbitmap
+ //   startBitmap = *bmp ; // copy the bitmap to startbitmap
     return true ;
 
 }

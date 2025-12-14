@@ -32,6 +32,9 @@ public:
     IndexedBitmap(const IndexedBitmap& other);
     IndexedBitmap& operator=(const IndexedBitmap& other);
 
+    // copy only the bitmap without new/delete
+    void CopyFromBitmap( const IndexedBitmap& other) ;
+
     // --- Core Functies ---
 
     /**

@@ -41,6 +41,13 @@ IndexedBitmap::~IndexedBitmap() {
     }
 }
 
+
+void IndexedBitmap::CopyFromBitmap( const IndexedBitmap& other) {
+    size_t totalBytes = calculateTotalBytes();
+    memcpy(data_, other.data_, totalBytes);
+}
+
+
 // --- Copy Constructors & Assignment Operator ---
 
 IndexedBitmap::IndexedBitmap(const IndexedBitmap& other)

@@ -120,7 +120,7 @@ void iPixelDevice::processQueue() {
   //          DBG_PRINTF( DEBUG_QUEUE, "calling make_animated time\n");
             std::vector<uint8_t> binaryDataVector;
             String time = getCurrentTimeString();
-            make_animated_time( binaryDataVector, time ) ;
+            make_animated_time( this->context_data,binaryDataVector, time ) ;
             this->sendGIF( binaryDataVector );
 
 
