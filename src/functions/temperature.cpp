@@ -15,6 +15,7 @@
 #include "temperature.h"
 
 #include "Animation.h"
+#include "MatrixContext.h"
 #include "../png/IndexedBitmap.h"
 #include "../png/LetterDraw.h"
 
@@ -96,17 +97,19 @@ bool make_animated_time( std::vector<uint8_t>& binaryDataVector, String time) {
 
 }
 
-static int counter=0 ;
+
 //
 // Maakt een animated gif van een temperatuur die naar een vol scherm scrollt
 //
-bool make_animated_temperature( std::vector<uint8_t>& binaryDataVector, float temperature, String title ) {
+bool make_animated_temperature( void* generic_context, std::vector<uint8_t>& binaryDataVector, float temperature, String title ) {
+
+    MatrixContext* context = static_cast<MatrixContext*>(generic_context);
 
     auto *bmp = new IndexedBitmap(WIDTH, HEIGHT, 8);
 
     char tempBuffer[6]; // Buffer moet groot genoeg zijn voor "±XX.X\0"
 
-    Serial.printf("Temperature counter is %d\n", temperature, counter );
+    Serial.printf("Temperature counter is %d\n", temperature, context->counter );
 
 
     // make a debug image
@@ -117,8 +120,8 @@ bool make_animated_temperature( std::vector<uint8_t>& binaryDataVector, float te
         }//
         */
 
-    sprintf(tempBuffer, "%d", counter);
-    counter++;
+    sprintf(tempBuffer, "%d", context->counter);
+    context->counter++;
 
     tekenString( *bmp, tempBuffer, 1, 10, RED, largefont ) ;
 
@@ -144,11 +147,13 @@ bool make_animated_temperature( std::vector<uint8_t>& binaryDataVector, float te
         canvas.print(title);
     */
     Animation anim = Animation();
-    anim.MakeAnimation( binaryDataVector, &startBitmap, bmp ) ;
+    //anim.MakeAnimation( binaryDataVector, &startBitmap, bmp ) ;
+    anim.MakeAnimation( binaryDataVector, &context->current_bitmap, bmp ) ;
 
 
 
-    startBitmap = *bmp ; // copy the bitmap to startbitmap
+    //startBitmap = *bmp ; // copy the bitmap to startbitmap
+    context->current_bitmap = *bmp ;
     return true ;
 
 }

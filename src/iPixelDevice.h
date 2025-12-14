@@ -24,6 +24,8 @@ public:
     NimBLERemoteCharacteristic *characteristic = nullptr;
     boolean connected = false;
 
+    void* context_data;
+
     iPixelDevice(NimBLEAddress pAddress) : address(pAddress) {}
     void printPrefix();
 

@@ -45,7 +45,9 @@ IndexedBitmap::~IndexedBitmap() {
 
 IndexedBitmap::IndexedBitmap(const IndexedBitmap& other)
     : width_(other.width_), height_(other.height_), bitsPerPixel_(other.bitsPerPixel_) {
-    
+
+    Serial.println("====> copy constructor.");
+
     size_t totalBytes = calculateTotalBytes();
     data_ = new uint8_t[totalBytes];
     memcpy(data_, other.data_, totalBytes);
@@ -53,6 +55,9 @@ IndexedBitmap::IndexedBitmap(const IndexedBitmap& other)
 
 IndexedBitmap& IndexedBitmap::operator=(const IndexedBitmap& other) {
     if (this != &other) {
+
+        Serial.println("====> assignment constructor.");
+
         // Geef oude geheugen vrij
         delete[] data_; 
         

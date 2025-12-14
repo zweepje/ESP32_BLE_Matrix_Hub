@@ -8,6 +8,8 @@
 #include <cstdint>
 #include <map>
 
+#include "../functions/MatrixContext.h"
+
 
 struct ClientState;
 class iPixelDevice;
@@ -133,12 +135,19 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
                     auto result = matrixRegistry.emplace(
                         macAddressStr,
                         iPixelDevice(bleAddress)
-                        //iPixelDevice(addr)
                     );
+
 
                     Serial.printf("Nieuw iPixelDevice aangemaakt voor MAC: %s\n", macAddressStr);
 
                     iPixelDevice& targetDevice = result.first->second;
+
+                    // size MatrixContext afhankelijk van device! (hoe herkennen we dit type?)
+                    MatrixContext* context = new (std::nothrow) MatrixContext(32, 32, 8);
+                    targetDevice.context_data = static_cast<void*>(context);
+
+
+
                     targetDevice.enqueueCommand(doc);
 
                     // c. Start direct de BLE verbinding voor dit nieuwe apparaat

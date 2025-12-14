@@ -14,7 +14,9 @@ NimBLEUUID charUUID("0000fa02-0000-1000-8000-00805f9b34fb");
 extern std::map<std::string, iPixelDevice> matrixRegistry;
 
 
-
+//
+// ProcessQueue ( data ontvangen door WS )
+//
 void iPixelDevice::processQueue() {
 
 
@@ -153,8 +155,10 @@ void iPixelDevice::processQueue() {
                 }
             }
  //           DBG_PRINTF( DEBUG_QUEUE, "calling make_animated temperature\n");
+
+
             std::vector<uint8_t> binaryDataVector;
-            make_animated_temperature( binaryDataVector, temperature, title ) ;
+            make_animated_temperature( this->context_data, binaryDataVector, temperature, title ) ;
             this->sendGIF( binaryDataVector );
 
 
@@ -166,7 +170,7 @@ void iPixelDevice::processQueue() {
             //String paramStr = params[0].as<String>();
             //this->sendPNG( Helpers::hexStringToVector(paramStr) );
             std::vector<uint8_t> binaryDataVector;
-            make_animated_temperature( binaryDataVector, 12.3, "boven" ) ;
+            make_animated_temperature( this->context_data,binaryDataVector, 12.3, "boven" ) ;
 
 
        /*     Serial.print("make_temperature De lengte van de String is: ");

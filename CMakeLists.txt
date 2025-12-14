@@ -33,4 +33,6 @@ add_executable(myipixel
         src/png/letterbitmap.h
         src/png/MyFont.cpp
         src/png/MyFont.h
+        src/functions/MatrixContext.cpp
+        src/functions/MatrixContext.h
 )
