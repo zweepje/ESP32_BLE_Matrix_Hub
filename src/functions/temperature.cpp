@@ -17,6 +17,7 @@
 #include "Animation.h"
 #include "MatrixContext.h"
 #include "../png/IndexedBitmap.h"
+#include "../png/letterbitmap.h"
 #include "../png/LetterDraw.h"
 
 
@@ -127,9 +128,11 @@ bool make_animated_temperature( void* generic_context, std::vector<uint8_t>& bin
 
 
     tekenString( bmp, tempBuffer, 1, 10, RED, largefont ) ;
-    //tekenString( *bmp, "123", 1, 10, RED, largefont ) ;
-    //tekenString( *bmp, "456", 1, 20, BLUE, largefont ) ;
-    //tekenString( *bmp, "789", 1, 30, BLUE, largefont ) ;
+
+    tekenString( bmp, "abcd", 1, 10, RED, smallfont ) ;
+    tekenString( bmp, "efgh", 1, 20, BLUE, smallfont ) ;
+    tekenString( bmp, "ijkl", 1, 30, BLUE, smallfont ) ;
+
     */
 
     // String maken van temperature
@@ -139,6 +142,8 @@ bool make_animated_temperature( void* generic_context, std::vector<uint8_t>& bin
     String temperatureString = tempBuffer;
     Serial.printf("Temperature is %f, string is %s\n", temperature, temperatureString.c_str() );
 
+    tekenString( bmp, temperatureString.c_str(), 1, 15, GREEN, largefont ) ;
+    tekenString( bmp, title.c_str(), 1,30, BLUE, smallfont ) ;
 
 
 
@@ -183,11 +188,11 @@ bool orgmake_animated_temperature( std::vector<uint8_t>& binaryDataVector, float
     }//
     */
 
-    //tekenCijfer( *bmp, '1', 2, 14, RED );
-    //tekenCijfer( *bmp, '2', 7, 14, GREEN );
-    //tekenCijfer( *bmp, '3', 16, 14, BLUE );
-    tekenString( *bmp, "323", 1, 12, RED, largefont) ;
-    tekenString( *bmp, "312", 1, 30, BLUE, largefont ) ;
+    //tekenCijfer( bmp, '1', 2, 14, RED );
+    //tekenCijfer( bmp, '2', 7, 14, GREEN );
+    //tekenCijfer( bmp, '3', 16, 14, BLUE );
+    //tekenString( *bmp, "323", 1, 12, RED, largefont) ;
+    //tekenString( *bmp, "312", 1, 30, BLUE, largefont ) ;
 
 
     // display temperature

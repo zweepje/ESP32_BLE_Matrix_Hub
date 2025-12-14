@@ -2,6 +2,7 @@
 // Created by zweepje on 13-12-2025.
 //
 
+#include "Arduino.h"
 #include "MyFont.h"
 
 #include "letterbitmap.h"
@@ -38,25 +39,67 @@ FontInfo LargeFont2Info[] =
 
 };
 
-MyFont largefont( largefontbitmap, 64, LargeFontInfo );
-MyFont largefont2( largefontbitmap, 64, LargeFont2Info );
+FontInfo SmallFontInfo[] =
+{
+    FontInfo( 'a', 5, 7, 0, 6),
+    FontInfo( 'b', 5, 7, 5, 6),
+    FontInfo( 'c', 5, 7, 10, 6),
+    FontInfo( 'd', 5, 7, 15, 6),
+    FontInfo( 'e', 5, 7, 20, 6),
+    FontInfo( 'f', 3, 7, 25, 6),
+    FontInfo( 'g', 5, 7, 30, 6),
+    FontInfo( 'h', 5, 7, 35, 6),
+    FontInfo( 'i', 1, 7, 40, 6),
+    FontInfo( 'j', 3, 7, 45, 6),
+    FontInfo( 'k', 5, 7, 50, 6),
+    FontInfo( 'l', 1, 7, 55, 6),
+    FontInfo( 'm', 5, 7, 60, 6),
+    FontInfo( 'n', 5, 7, 65, 6),
+    FontInfo( 'o', 5, 7, 70, 6),
+    FontInfo( 'p', 5, 7, 75, 6),
+    FontInfo( 'q', 5, 7, 80, 6),
+    FontInfo( 'r', 5, 7, 85, 6),
+    FontInfo( 's', 5, 7, 90, 6),
+    FontInfo( 't', 5, 7, 95, 6),
+    FontInfo( 'u', 5, 7, 100, 6),
+    FontInfo( 'v', 5, 7, 105, 6),
+    FontInfo( 'w', 5, 7, 110, 6),
+    FontInfo( 'x', 5, 7, 115, 6),
+    FontInfo( 'y', 5, 7, 120, 6),
+    FontInfo( 'z', 5, 7, 0, 16),
+
+
+};
+
+
 
 
 int ElementsLargeFont = sizeof( LargeFontInfo ) / sizeof( FontInfo);
 int ElementsLargeFont2 = sizeof( LargeFont2Info ) / sizeof( FontInfo);
+int ElementsSmallFont = sizeof( SmallFontInfo ) / sizeof( FontInfo);
 
-MyFont::MyFont( const uint8_t *bm, uint8_t width, FontInfo *fi ) :
+MyFont largefont( largefontbitmap, 64, LargeFontInfo, ElementsLargeFont );
+MyFont largefont2( largefontbitmap, 64, LargeFont2Info, ElementsLargeFont2 );
+MyFont smallfont( smallfontbitmap, 128, SmallFontInfo, ElementsSmallFont );
+
+
+
+
+MyFont::MyFont( const uint8_t *bm, uint8_t width, FontInfo *fi, int size ) :
      bitmap(bm),
      bitmapWidth(width),
-     fontinfo(fi) {
+     fontinfo(fi),
+     nElements(size) {
 }
 
 FontInfo *MyFont::getFontInfo(char character) {
 
-    for ( int i=0 ; i<ElementsLargeFont ; i++ ) {
+    Serial.printf("Nelements is %d\n", nElements );
 
-        if ( character == LargeFontInfo[i].character ) {
-            return &LargeFontInfo[i];
+    for ( int i=0 ; i<nElements ; i++ ) {
+
+        if ( character == fontinfo[i].character ) {
+            return &fontinfo[i];
         }
 
     }

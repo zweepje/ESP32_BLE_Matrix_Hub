@@ -8,7 +8,7 @@
 #include "MyFont.h"
 
 void tekenCijfer(IndexedBitmap& canvas, char cijferChar, int startX, int startY, uint16_t kleur, MyFont font) ;
-void tekenString( IndexedBitmap& bmp, char *cijferStr, int startX, int startY, uint16_t kleur, MyFont font) ;
+void tekenString( IndexedBitmap& bmp, const char *cijferStr, int startX, int startY, uint16_t kleur, MyFont font) ;
 
 
 

@@ -72,18 +72,16 @@ void tekenCijfer(IndexedBitmap& bmp, char cijferChar, int startX, int startY, ui
     }
 }
 
-    void tekenString( IndexedBitmap& bmp, char *cijferStr, int startX, int startY, uint16_t kleur, MyFont font ) {
+    void tekenString( IndexedBitmap& bmp, const char *cijferStr, int startX, int startY, uint16_t kleur, MyFont font ) {
 
         for ( int i = 0 ; i < strlen(cijferStr) ; i++) {
 
             char cijfer = cijferStr[i];
-
             tekenCijfer( bmp, cijfer, startX, startY, kleur, font ) ;
 
-            // Note: nog aanpassen!!!!
-            int index = cijfer - '0';
-            const CharInfo& info = letterinfo[index];
-            startX += 1 + info.width;
+
+            FontInfo *info = font.getFontInfo( cijfer );
+            startX += 1 + info->width;
         }
     }
 
