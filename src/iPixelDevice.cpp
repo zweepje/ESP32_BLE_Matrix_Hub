@@ -311,7 +311,7 @@ void iPixelDevice::queueTick() {
     std::vector<uint8_t> &command = queue.front();
 
     //Take bytes from command
-    size_t chunkSize = min(500, (int)command.size());
+    size_t chunkSize = min(200, (int)command.size());
 
     //Serial.print("Char is " ) ;
     //Serial.println((unsigned long)characteristic, HEX);
@@ -347,7 +347,7 @@ void iPixelDevice::queueTick() {
         if (command.empty()) queue.erase(queue.begin());
 
         //Do not overload BLE
-        delay(100);
+        delay(50);
     } else {
         // Foutopsporing: print welke Matrix niet verbonden is
         Serial.printf("Matrix %s: Queue niet verwerkt. Client (0x%p) verbonden: %s\n",

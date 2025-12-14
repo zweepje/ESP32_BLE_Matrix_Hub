@@ -31,4 +31,6 @@ add_executable(myipixel
         src/png/LetterDraw.cpp
         src/png/LetterDraw.h
         src/png/letterbitmap.h
+        src/png/MyFont.cpp
+        src/png/MyFont.h
 )
