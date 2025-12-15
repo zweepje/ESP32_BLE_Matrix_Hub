@@ -97,8 +97,6 @@ MyFont::MyFont( const uint8_t *bm, uint8_t width, FontInfo *fi, int size ) :
 
 FontInfo *MyFont::getFontInfo(char character) {
 
-    Serial.printf("Nelements is %d\n", nElements );
-
     for ( int i=0 ; i<nElements ; i++ ) {
 
         if ( character == fontinfo[i].character ) {

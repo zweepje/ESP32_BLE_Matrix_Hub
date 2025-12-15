@@ -20,7 +20,7 @@ extern std::map<std::string, iPixelDevice> matrixRegistry;
 void iPixelDevice::processQueue() {
 
 
-    Serial.write("ProcessQueue: " );
+    //Serial.write("ProcessQueue: " );
 
     // 1. Controleer of er verbinding is en of de queue niet leeg is
     //   if (!commandQueue.empty() && isBLEConnected()) {
@@ -200,8 +200,8 @@ void iPixelDevice::processQueue() {
 
         }
     } else {
-        Serial.printf("Queue empty" );
-        delay( 200 ) ;
+        //Serial.printf("Queue empty" );
+        delay( 100 ) ;
     }
 }
 
@@ -309,7 +309,10 @@ void iPixelDevice::connectAsync() {
 //
 void iPixelDevice::queueTick() {
 
-    if (queue.empty()) return;
+    if (queue.empty()) {
+        Serial.println( "BLE queue is empty");
+        return;
+    }
 
     //Get command from queue
     std::vector<uint8_t> &command = queue.front();
@@ -326,7 +329,7 @@ void iPixelDevice::queueTick() {
         characteristic->writeValue(command.data(), chunkSize, false);
 
         //Debug
-        printPrefix();
+        //printPrefix();
 
         DBG_PRINTF( DEBUG_BLE, "Sent chunk of ");
 
@@ -351,7 +354,7 @@ void iPixelDevice::queueTick() {
         if (command.empty()) queue.erase(queue.begin());
 
         //Do not overload BLE
-        delay(50);
+        //delay(100);
     } else {
         // Foutopsporing: print welke Matrix niet verbonden is
         Serial.printf("Matrix %s: Queue niet verwerkt. Client (0x%p) verbonden: %s\n",
@@ -560,9 +563,9 @@ void iPixelDevice::sendPNG(const std::vector<uint8_t> &pngData) {
 
 void iPixelDevice::sendGIF(const std::vector<uint8_t> &gifData) {
     std::vector<uint8_t> command = iPixelCommands::sendGIF(gifData);
-//    printPrefix();
-//    Serial.print("GIF with ");
- //   Serial.print(gifData.size());
- //   Serial.println(" bytes");
+    printPrefix();
+    Serial.print("GIF with ");
+    Serial.print(gifData.size());
+    Serial.println(" bytes");
     queuePush(command);
 }

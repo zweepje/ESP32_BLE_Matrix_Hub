@@ -85,19 +85,39 @@ bool make_animated_time( void* generic_context, std::vector<uint8_t>& binaryData
     // Clear the bitmap  ( we kunnen ook background color zetten )
     //
     bmp.clear(0) ;
-    BitmapGFX canvas( bmp);
 
     Serial.printf("timestring is %s\n", time.c_str() );
-    
+    tekenString( bmp, time.c_str(), 1, 15, GREEN, largefont2 ) ;
+/*    String tijdString = time ; //"14:38"; // Voorbeeldtijd
+    String urenString;
+    String minutenString;
+    // Zoek de positie van het scheidingsteken (de dubbelepunt)
+    int scheidingstekenIndex = tijdString.indexOf(':');
+    if (scheidingstekenIndex != -1) {
+        // 1. Uren ophalen (alles vóór de dubbelepunt)
+        // De lengte van de uren is gelijk aan de index van het scheidingsteken
+        urenString = tijdString.substring(0, scheidingstekenIndex);
+
+        // 2. Minuten ophalen (alles ná de dubbelepunt)
+        // Begin op de positie direct na de dubbelepunt (+1) tot het einde
+        minutenString = tijdString.substring(scheidingstekenIndex + 1);
+
+        // Optioneel: Trimmen om eventuele onnodige spaties te verwijderen (goede gewoonte)
+        urenString.trim();
+        minutenString.trim();
+    } else {
+        // Foutafhandeling als de dubbelepunt niet gevonden is
+        Serial.println("Fout: Geen scheidingsteken gevonden in de tijdstring.");
+    }
+
+    Serial.print("Uren: "); Serial.println(urenString);     // Output: 14
+    Serial.print("Minuten: "); Serial.println(minutenString); // Output: 38
+
+    tekenString( bmp, urenString.c_str(), 1, 15, GREEN, largefont ) ;
+    tekenString( bmp, (minutenString.c_str()), 1, 30, GREEN, largefont ) ;
+*/
 
 
-    // display temperature
-    //canvas.setFont(&FreeSans9pt7b); // Gebruik een ingesloten lettertype
-    canvas.setFont(NULL); // Gebruik een ingesloten lettertype
-    canvas.setTextSize(1);  // 5x7 pixels
-    canvas.setTextColor(RED);         // Stel de tekstkleur in op Index 1 (bijv. wit)
-    canvas.setCursor( 2, 8) ;
-    canvas.print(time);
 
     Animation anim = Animation();
     anim.MakeAnimation( binaryDataVector, &context->current_bitmap, &bmp ) ;
