@@ -171,17 +171,38 @@ void setup() {
   initTime();
 }
 
+
+unsigned long previousMillis = 0 ;
+unsigned long interval = 10000 ;
+
 void loop() {
 
   //improvSerial.handleSerial();
   //if (improvSerial.isConnected()) loop_connected();
+  unsigned long currentMillis = millis();
+  // Controleer of er 60 seconden zijn verstreken sinds de laatste afdruk
+  if (currentMillis - previousMillis >= interval) {
+    // Sla de huidige tijd op als de nieuwe 'laatste actie' tijd
+    previousMillis = currentMillis;
+    // Roep de functie aan om de tijd af te drukken
+    //printLocalTime();
 
+    String time = getCurrentTimeString();
+    Serial.println("=========================================");
+
+    Serial.println( time );
+    Serial.println("=========================================");
+  }
 
   loop_connected();
 
 }
 
 void loop_connected() {
+
+
+
+
 
     //String tstr = getCurrentTimeString(); // bijv. 12:41
     //Serial.printf("Current time: %s\n", tstr.c_str() );
