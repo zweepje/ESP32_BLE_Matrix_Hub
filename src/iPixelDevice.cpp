@@ -309,6 +309,7 @@ void iPixelDevice::connectAsync() {
 //
 void iPixelDevice::queueTick() {
 
+
     if (queue.empty()) {
         Serial.println( "BLE queue is empty");
         return;
