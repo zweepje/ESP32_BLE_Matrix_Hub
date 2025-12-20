@@ -360,6 +360,10 @@ void iPixelDevice::postconnect() {
     }
     Serial.println("got characteristic");
 
+    // 14 Dec Optimalisatie: MTU bepalen
+    uint16_t mtu = client->getMTU();
+    // De chunksize is MTU - 3 bytes overhead
+    this->chunkSize = mtu - 3;
 
     connected = true;
     connecting = false;
@@ -394,37 +398,16 @@ void iPixelDevice::queueTick() {
     std::vector<uint8_t> &command = queue.front();
 
     //Take bytes from command
-    size_t chunkSize = min(200, (int)command.size());
-
-    Serial.print("Char is " ) ;
-    Serial.println((unsigned long)characteristic, HEX);
+    size_t chunks = min((int)this->chunkSize, (int)command.size());
+    //Serial.printf("Chunk is %d", chunks ) ;
 
     if ( this->client != nullptr && client->isConnected()) {
 
         //Write bytes from command
-        characteristic->writeValue(command.data(), chunkSize, false);
-
-        //Debug
-        printPrefix();
-
-//        DBG_PRINTF( DEBUG_BLE, "Sent chunk of ");
-
-//        DBG_PRINTF( DEBUG_BLE,"ChunkSize: %u\n", chunkSize);
-
-
-//        DBG_PRINTF( DEBUG_BLE," bytes (remaining:  %)\n", command.size() );
- //       DBG_PRINTF( DEBUG_BLE, " (queue size:%u)", queue.size() );
-        //Print bytes as HEX
- //       DBG_PRINTF( DEBUG_BLE2,"Data: ");
- //       for (size_t i = 0; i < chunkSize; i++) {
- //           if (command[i] < 0x10) DBG_PRINTF( DEBUG_BLE2,"0" ); // leading zero for single-digit hex
- //             DBG_PRINTF( DEBUG_BLE2, "02x", command[i] );
- //             DBG_PRINTF( DEBUG_BLE2, " ");
-  //      }
-        //Serial.println();
+        characteristic->writeValue(command.data(), chunks, false);
 
         //Remove bytes from command
-        command.erase(command.begin(), command.begin() + chunkSize);
+        command.erase(command.begin(), command.begin() + chunks);
 
             //Remove command if empty
         if (command.empty()) queue.erase(queue.begin());

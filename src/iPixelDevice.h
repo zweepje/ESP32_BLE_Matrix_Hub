@@ -28,6 +28,9 @@ public:
     boolean connecting = false;         // Connect started
     boolean dopostconnect = false ;
     void* context_data;
+    // 14 Dec Optimalisatie: MTU bepalen
+    uint16_t chunkSize = 200 ;
+
 
     iPixelDevice(NimBLEAddress pAddress) : address(pAddress) {}
     void printPrefix();
