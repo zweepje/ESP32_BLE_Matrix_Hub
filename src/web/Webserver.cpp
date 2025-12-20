@@ -1,4 +1,6 @@
 #include "Webserver.h"
+#include <ESPAsyncWebServer.h>
+#include <AsyncWebSocket.h>
 #include "main.h"
 
 #include <cstring>
@@ -34,15 +36,60 @@ void setupBuffer() {
 
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
 
+
+    AsyncWebServerRequest *request;
+
     switch (type) {
-        case WS_EVT_CONNECT:
+
+        case WS_EVT_CONNECT: {
             currentClient = client; // Sla de nieuwe client op
+            String mac ;
+
+            request = (AsyncWebServerRequest *)arg;
+            if (request && request->hasParam("mac")) {
+                mac = request->getParam("mac")->value();
+                Serial.println("Client MAC: " + mac);
+            } else {
+                Serial.println("Geen mac parameter");
+            }
+
             Serial.printf("WebSocket Client #%u verbonden.\n", client->id());
             // Voeg nieuwe client toe aan de statusmap
             clientStates[client->id()] = ClientState();
             Serial.printf("Client #%u verbonden.\n", client->id());
-            break;
 
+            //
+            // start the BLE connection
+            //
+            const char* macAddressStr = mac.c_str() ;
+            if (matrixRegistry.count(macAddressStr) == 0) {
+
+                // --- 2. APPARAAT BESTAAT NIET: CREËER & REGISTREER DYNAMISCH ---
+
+                // a. Converteer de string MAC-adres naar een NimBLEAddress object
+                NimBLEAddress bleAddress(macAddressStr, 0);
+
+                auto result = matrixRegistry.emplace(
+                    macAddressStr,
+                    iPixelDevice(bleAddress)
+                );
+                Serial.printf("Nieuw iPixelDevice aangemaakt voor MAC: %s\n", macAddressStr);
+                iPixelDevice& targetDevice = result.first->second;
+                // size MatrixContext afhankelijk van device! (hoe herkennen we dit type?)
+                MatrixContext* context = new (std::nothrow) MatrixContext(32, 32, 8);
+                targetDevice.context_data = static_cast<void*>(context);
+                // c. Start direct de BLE verbinding voor dit nieuwe apparaat
+                matrixRegistry.at(macAddressStr).connectAsync();
+                Serial.printf("Queued BLE connectie met %s\n", macAddressStr);
+            }
+
+            ClientState& state = clientStates.at(client->id());
+            iPixelDevice& targetDevice = matrixRegistry.at(macAddressStr);
+            state.assignedMatrix = &targetDevice;
+            client->text("ACK: Succesvol toegewezen aan MAC: " + String(macAddressStr));
+
+            break;
+        }
         case WS_EVT_DISCONNECT:
             if (currentClient == client) {
                 currentClient = nullptr;
@@ -76,42 +123,18 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
                 return ;
             }
 
-            //for ( int i=0 ; i<bufzize)
-
-
-
 #pragma GCC diagnostic push
-            // 2. Schakel de specifieke waarschuwing uit voor de volgende regels
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-            // 3. De regel die de waarschuwing veroorzaakt:
-            // JsonDocument heeft geen vooraf reservatie oid.
-
-            // dynamic maken!!!
             StaticJsonDocument<4096> doc; // of StaticJsonDocument<CAPACITY> doc
-            //SpiRamJsonDocument doc(SOCKET_DATA_SIZE);
-            //JsonDocument doc ;
-            // 4. Herstel de oorspronkelijke waarschuwingsstatus
 #pragma GCC diagnostic pop
 
             DeserializationError error = deserializeJson(doc, (char*)socketData, len);
-
-
-
             if (error) {
                 Serial.printf("JSON error: %d\n", error );
                 Serial.printf("Data ontvangen Ongeldig JSON-formaat\n", client->id());
                 client->text("ERROR: Ongeldig JSON-formaat.");
                 return;
             }
-            //Serial.printf("Data was valid for client #%u\n", client->id());
-
-            //
-            // check if
-
-
-
-            //const char* targetKey = doc["target"]; // Bijv. "MATRIX_1"
-            //const char* command = doc["command"]; // Bijv. "SET_COLOR"
 
             const char* macAddressStr = doc["target"];
 
@@ -119,7 +142,11 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
             ClientState& state = clientStates.at(client->id());
             const char* command = doc["command"];
 
-            if (strcmp(command, "ASSIGN") == 0) {
+            //
+            // We don't do assign anymore
+            //
+            if ( false ) {
+            //if (strcmp(command, "ASSIGN") == 0) {
 
                 // 1. CONTROLEER OF HET APPARAAT REEDS BESTAAT
                 if (matrixRegistry.count(macAddressStr) == 0) {

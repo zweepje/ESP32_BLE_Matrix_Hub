@@ -13,7 +13,41 @@ NimBLEUUID charUUID("0000fa02-0000-1000-8000-00805f9b34fb");
 
 extern std::map<std::string, iPixelDevice> matrixRegistry;
 
+void iPixelDevice::update() {
 
+    switch (_state) {
+        case IDLE:
+            // Niets doen, we wachten op een commando om te verbinden
+            break;
+
+        case CONNECTING:
+            // We wachten hier simpelweg tot de NimBLE-callback de status verandert.
+            // Je zou hier eventueel een 'timeout' kunnen toevoegen.
+            break;
+
+        case WAITING_FOR_POST:
+            // De callback heeft gemeld dat er verbinding is.
+            // Nu voeren we de zware taken uit in de hoofd-loop:
+            postconnect();
+            // postConnectAsync zet de state op READY als hij klaar is
+            break;
+
+        case READY:
+            // Hier gebeurt het echte werk:
+            // Bijvoorbeeld: check of er nieuwe data in de buffer zit om te verzenden.
+            processQueue();
+            break;
+
+        case ERROR:
+            // Foutafhandeling: probeer bijvoorbeeld na 5 seconden opnieuw te verbinden
+            //if (millis() - _lastErrorTime > 5000) {
+            //    Serial.println("Retry verbinding na fout...");
+            //    connectAsync();
+            //}
+            Serial.printf("Error iPixelDevice\n" );
+            break;
+    }
+}
 //
 // ProcessQueue ( data ontvangen door WS )
 //
@@ -56,13 +90,7 @@ void iPixelDevice::processQueue() {
         const char* cmd = doc["command"];
         JsonArray params = doc["params"];
 //        DBG_PRINTF( DEBUG_QUEUE, "JSON Command: %s\n", cmd );
-        if ( strcmp( cmd, "ASSIGN" ) == 0 ) {
-            //
-            // make the connection
-            // c. Start direct de BLE verbinding voor dit nieuwe apparaat
-            connectAsync();
-
-        } else if  ( strcmp( cmd, "send_text" ) == 0 ) {
+         if  ( strcmp( cmd, "send_text" ) == 0 ) {
 
             const char* text_str = params[0];
 
@@ -213,18 +241,37 @@ void iPixelDevice::printPrefix() {
     Serial.print("] ");
 }
 
+
+//
+// callback when connection is made BLE
+//
 void iPixelDevice::onConnect(NimBLEClient *pClient) {
 
     printPrefix();
 
     if ( client == pClient ) {
         Serial.println("############### OnConnect matching! ###############");
+        dopostconnect = true ;
     } else {
         Serial.println("############### OnConnect mismatch! ###############");
     }
-    Serial.println("On Connect, connection lijkt goed te zijn!");
-    connected = true;
+
+    _state = WAITING_FOR_POST;
+
+   // postconnectAsync() ;
+   // Serial.println("On Connect, connection lijkt goed te zijn!");
+
+
 }
+
+void iPixelDevice::onConnectFail(NimBLEClient* pClient, int reason) {
+
+    Serial.println("############### Connection Failed! ###############");
+    Serial.printf("Reason %d\n", reason);
+}
+
+
+
 
 void iPixelDevice::onDisconnect(NimBLEClient *pClient) {
     printPrefix();
@@ -260,12 +307,15 @@ void iPixelDevice::enqueueCommand(const JsonDocument& doc) {
 
 
 void iPixelDevice::connectAsync() {
+
+
     if (connected) {
         printPrefix();
         Serial.println("WARN: Already connected!");
         return;
     }
 
+    _state = CONNECTING;
     printPrefix();
     Serial.println("Connecting...");
 
@@ -276,12 +326,20 @@ void iPixelDevice::connectAsync() {
     }
 
     // Async connect (non-blocking)
-    if (!client->connect(address)) {
+    bool status = client->connect( address,true,true, true ) ;
+    //bool status = client->connect( address) ;  // blocking
+    if ( !status ) {
+
         printPrefix();
-        Serial.println("ERROR: Failed to connect!");
+        Serial.println("ERROR: Failed to start BLE connection!");
         return;
     }
+    connecting = true;
+}
 
+void iPixelDevice::postconnect() {
+
+    Serial.println("In Post connect");
     // Discover services & characteristic
     service = client->getService(serviceUUID);
     if (!service) {
@@ -290,6 +348,8 @@ void iPixelDevice::connectAsync() {
         client->disconnect();
         return;
     }
+    Serial.println("got service");
+
 
     characteristic = service->getCharacteristic(charUUID);
     if (!characteristic) {
@@ -298,10 +358,16 @@ void iPixelDevice::connectAsync() {
         client->disconnect();
         return;
     }
+    Serial.println("got characteristic");
+
 
     connected = true;
+    connecting = false;
+    dopostconnect = false;
     printPrefix();
     Serial.println("Connected successfully!");
+    _state = READY;  // ready for commands
+
 }
 
 //
@@ -311,9 +377,18 @@ void iPixelDevice::queueTick() {
 
 
     if (queue.empty()) {
-        Serial.println( "BLE queue is empty");
+        //Serial.println( "BLE queue is empty");
         return;
     }
+
+    if ( !connected ) {
+
+        Serial.println("BLE not connected");
+        // remove all from queue
+        queue.erase(queue.begin());
+        return ;
+    }
+
 
     //Get command from queue
     std::vector<uint8_t> &command = queue.front();
@@ -321,8 +396,8 @@ void iPixelDevice::queueTick() {
     //Take bytes from command
     size_t chunkSize = min(200, (int)command.size());
 
-    //Serial.print("Char is " ) ;
-    //Serial.println((unsigned long)characteristic, HEX);
+    Serial.print("Char is " ) ;
+    Serial.println((unsigned long)characteristic, HEX);
 
     if ( this->client != nullptr && client->isConnected()) {
 
@@ -330,22 +405,22 @@ void iPixelDevice::queueTick() {
         characteristic->writeValue(command.data(), chunkSize, false);
 
         //Debug
-        //printPrefix();
+        printPrefix();
 
-        DBG_PRINTF( DEBUG_BLE, "Sent chunk of ");
+//        DBG_PRINTF( DEBUG_BLE, "Sent chunk of ");
 
-        DBG_PRINTF( DEBUG_BLE,"ChunkSize: %u\n", chunkSize);
+//        DBG_PRINTF( DEBUG_BLE,"ChunkSize: %u\n", chunkSize);
 
 
-        DBG_PRINTF( DEBUG_BLE," bytes (remaining:  %)\n", command.size() );
-        DBG_PRINTF( DEBUG_BLE, " (queue size:%u)", queue.size() );
+//        DBG_PRINTF( DEBUG_BLE," bytes (remaining:  %)\n", command.size() );
+ //       DBG_PRINTF( DEBUG_BLE, " (queue size:%u)", queue.size() );
         //Print bytes as HEX
-        DBG_PRINTF( DEBUG_BLE2,"Data: ");
-        for (size_t i = 0; i < chunkSize; i++) {
-            if (command[i] < 0x10) DBG_PRINTF( DEBUG_BLE2,"0" ); // leading zero for single-digit hex
-              DBG_PRINTF( DEBUG_BLE2, "02x", command[i] );
-              DBG_PRINTF( DEBUG_BLE2, " ");
-        }
+ //       DBG_PRINTF( DEBUG_BLE2,"Data: ");
+ //       for (size_t i = 0; i < chunkSize; i++) {
+ //           if (command[i] < 0x10) DBG_PRINTF( DEBUG_BLE2,"0" ); // leading zero for single-digit hex
+ //             DBG_PRINTF( DEBUG_BLE2, "02x", command[i] );
+ //             DBG_PRINTF( DEBUG_BLE2, " ");
+  //      }
         //Serial.println();
 
         //Remove bytes from command

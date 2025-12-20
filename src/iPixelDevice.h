@@ -17,13 +17,16 @@ class iPixelDevice : public NimBLEClientCallbacks {
 
 private:
     std::queue<std::string> commandQueue; // De queue is hier gedeclareerd
+    enum DeviceState { IDLE, CONNECTING, WAITING_FOR_POST, READY, ERROR };
+    DeviceState _state = IDLE;
 public:
     NimBLEAddress address;
     NimBLEClient *client = nullptr;
     NimBLERemoteService *service = nullptr;
     NimBLERemoteCharacteristic *characteristic = nullptr;
-    boolean connected = false;
-
+    boolean connected = false;          // BLE connection
+    boolean connecting = false;         // Connect started
+    boolean dopostconnect = false ;
     void* context_data;
 
     iPixelDevice(NimBLEAddress pAddress) : address(pAddress) {}
@@ -35,10 +38,13 @@ public:
     //BLEClientCallbacks
     void onConnect(NimBLEClient *pClient);
     void onDisconnect(NimBLEClient *pClient);
+    void onConnectFail(NimBLEClient* pClient, int reason);
 
     //Methods
     void connectAsync();
+    void postconnect() ;
 
+    void update(); // Deze roep je aan in de hoofd-loop
     //Queue
     std::vector<std::vector<uint8_t>> queue;
     void queueTick();

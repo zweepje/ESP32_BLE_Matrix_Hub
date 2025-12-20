@@ -32,7 +32,7 @@ void setup_connected();
 void setup_wifi_post();
 
 
-uint8_t g_debugFlags = DEBUG_QUEUE ; //| DEBUG_BLE | DEBUG_BLE2;
+uint8_t g_debugFlags = DEBUG_QUEUE | DEBUG_BLE | DEBUG_BLE2;
 // Initialisatie
 
 
@@ -216,7 +216,8 @@ void loop_connected() {
     // Loop door alle geregistreerde Matrix Controllers
     for (auto& pair : matrixRegistry) {
       // pair.second is een referentie naar het iPixelDevice object
-      pair.second.processQueue();
+      //pair.second.processQueue();
+      pair.second.update();
       pair.second.queueTick();
     }
 
