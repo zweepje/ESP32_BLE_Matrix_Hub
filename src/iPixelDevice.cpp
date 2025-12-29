@@ -7,6 +7,7 @@
 #include "Helpers.h"
 #include "functions/temperature.h"
 #include "clock/timefunctions.h"
+#include "utils/webserial.h"
 
 NimBLEUUID serviceUUID("000000fa-0000-1000-8000-00805f9b34fb");
 NimBLEUUID charUUID("0000fa02-0000-1000-8000-00805f9b34fb");
@@ -317,7 +318,7 @@ void iPixelDevice::connectAsync() {
 
     _state = CONNECTING;
     printPrefix();
-    Serial.println("Connecting...");
+    debugPrintf("[iPixelDevice] Connecting with %s",address.toString().c_str());
 
     if (!client) {
         Serial.println("Creating client...");
@@ -344,21 +345,19 @@ void iPixelDevice::postconnect() {
     service = client->getService(serviceUUID);
     if (!service) {
         printPrefix();
-        Serial.println("ERROR: Service not found!");
+        debugPrintf("ERROR: Service not found!\n");
         client->disconnect();
         return;
     }
-    Serial.println("got service");
 
 
     characteristic = service->getCharacteristic(charUUID);
     if (!characteristic) {
         printPrefix();
-        Serial.println("ERROR: Characteristic not found!");
+        debugPrintf("ERROR: Characteristic not found!\n");
         client->disconnect();
         return;
     }
-    Serial.println("got characteristic");
 
     // 14 Dec Optimalisatie: MTU bepalen
     uint16_t mtu = client->getMTU();
@@ -368,8 +367,7 @@ void iPixelDevice::postconnect() {
     connected = true;
     connecting = false;
     dopostconnect = false;
-    printPrefix();
-    Serial.println("Connected successfully!");
+    debugPrintf("[iPixelDevice] Connected with %s",address.toString().c_str());
     _state = READY;  // ready for commands
 
 }

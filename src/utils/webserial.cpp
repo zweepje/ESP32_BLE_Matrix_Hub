@@ -26,6 +26,7 @@ void debugPrintf(const char *format, ...) {
 
             // 2. Stuur naar de WebSerial interface
             WebSerial.print(buffer);
+            //WebSerial._flush_print_buffer();
 
             free(buffer);
         }

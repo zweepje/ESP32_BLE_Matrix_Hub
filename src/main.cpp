@@ -1,6 +1,7 @@
 #include "main.h"
 #include "global.h"
 #include <Arduino.h>
+#include "utils/webserial.h"
 #include <ImprovWiFiLibrary.h>
 #include <Preferences.h>
 #include "Bluetooth.h"
@@ -173,25 +174,18 @@ void setup() {
 
 
 unsigned long previousMillis = 0 ;
-unsigned long interval = 10000 ;
+unsigned long interval = 60000 ;
 
 void loop() {
 
-  //improvSerial.handleSerial();
-  //if (improvSerial.isConnected()) loop_connected();
   unsigned long currentMillis = millis();
   // Controleer of er 60 seconden zijn verstreken sinds de laatste afdruk
   if (currentMillis - previousMillis >= interval) {
-    // Sla de huidige tijd op als de nieuwe 'laatste actie' tijd
-    previousMillis = currentMillis;
-    // Roep de functie aan om de tijd af te drukken
-    //printLocalTime();
+      previousMillis = currentMillis;
+      String time = getCurrentTimeString();
 
-    String time = getCurrentTimeString();
-    Serial.println("=========================================");
+      debugPrintf( "======== Time is: %s ========\n",time.c_str() );
 
-    Serial.println( time );
-    Serial.println("=========================================");
   }
 
   loop_connected();
@@ -199,14 +193,6 @@ void loop() {
 }
 
 void loop_connected() {
-
-
-
-
-
-    //String tstr = getCurrentTimeString(); // bijv. 12:41
-    //Serial.printf("Current time: %s\n", tstr.c_str() );
-
 
     // 1. WebSocket onderhoud
     // Nodig om client time-outs af te handelen
@@ -221,55 +207,43 @@ void loop_connected() {
       pair.second.queueTick();
     }
 
-    // 3. Andere taken
-    // Bijv. delay(1); of yield();
-
-
-  //loop_deviceregistry();
 }
 
 //  iPixelDevice test(BLEAddress("3d:50:0c:1f:6d:ec"));
 //2F:9F:9C:9C:51:AC
 
-//
-// voorlopig mijn experimenten
-//
-void verder() {
-  Serial.println("In verder....");
-  //  connect met de matrix:
- // std::string mac_str("C6:2A:E6:06:7D:10");
- // NimBLEAddress  addr(mac_str, 0);
-
- // iPixelDevice dev = iPixelDevice( addr );
- // dev.connectAsync() ;
- // Serial.println("Klaar met connectie");
- /* dev.setBrightness(1);
-  dev.queueTick();
-  Serial.println("Brightness gezet");
-  Serial.println("delay");
-  delay(2000);
-  dev.setBrightness(90);
-  dev.queueTick();
-  Serial.println("Brightness gezet");
-  */
-/*
-  String text_str = "Jezus is een vriend van mij.";
-  dev.sendText( text_str, 1, 1, 20, 0,0,99, 0, 16 );
-  //t(const String& text,  int animation, int save_slot, int speed, uint8_t colorR, uint8_t colorG, uint8_t colorB, int rainbow_mode, int matrix_height) {
-  dev.queueTick();
-  dev.queueTick();
-  dev.queueTick();
-  */
 
 
+String getResetReason() {
+  esp_reset_reason_t reason = esp_reset_reason();
+  switch (reason) {
+    case ESP_RST_POWERON: return "Power On / Hard Reset";
+    case ESP_RST_SW:      return "Software Restart";
+    case ESP_RST_PANIC:   return "System Panic (Crash)";
+    case ESP_RST_INT_WDT: return "Interrupt Watchdog (Hung)";
+    case ESP_RST_TASK_WDT:return "Task Watchdog (Hung)";
+    case ESP_RST_BROWNOUT:return "Brownout (Voltage Drop)";
+    default:              return "Unknown Reset Reason";
+  }
 }
-
 
 
 
 void setup_connected() {
   init_bluetooth();
   init_webserver();
+  WebSerial.setBuffer( 0 );
+  WebSerial.begin(&server);
+  delay(2000) ;
 
-  verder() ;
+  // Rapportage zodra WebSerial klaar is
+  debugPrintf("--- ESP32-S3 BOOT REPORT ---\n");
+  debugPrintf("[SYS] Reset Reason: %s\n", getResetReason().c_str());
+  debugPrintf("[SYS] Free Heap: %u bytes\n", ESP.getFreeHeap());
+  debugPrintf("[WIFI] Connected! IP: %s (RSSI: %d)\n", WiFi.localIP().toString().c_str(), WiFi.RSSI());
+
+  // De MTU die we op 14 dec wilden checken:
+  debugPrintf("[BLE] Auto-MTU Detection: Ready\n");
+  debugPrintf("----------------------------\n");
+
 }
