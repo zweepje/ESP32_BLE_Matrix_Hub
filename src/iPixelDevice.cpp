@@ -193,12 +193,12 @@ void iPixelDevice::processQueue() {
 
         } else if  ( strcmp( cmd, "send_gif" ) == 0 ) {
 
- //           DBG_PRINTF( DEBUG_QUEUE, "Decoded send_gif commando");
+            DBG_PRINTF( DEBUG_QUEUE, "Decoded send_gif commando");
 
-            //String paramStr = params[0].as<String>();
-            //this->sendPNG( Helpers::hexStringToVector(paramStr) );
-            std::vector<uint8_t> binaryDataVector;
-            make_animated_temperature( this->context_data,binaryDataVector, 12.3, "boven" ) ;
+            String paramStr = params[0].as<String>();
+            this->sendGIF( Helpers::hexStringToVector(paramStr) );
+        //    std::vector<uint8_t> binaryDataVector;
+        //    make_animated_temperature( this->context_data,binaryDataVector, 12.3, "boven" ) ;
 
 
        /*     Serial.print("make_temperature De lengte van de String is: ");
@@ -213,13 +213,13 @@ void iPixelDevice::processQueue() {
  //           Serial.println(binaryDataVector.size());  // print de lengte van de String als getal
 
             // printout string
-            for ( int i=0 ; i<binaryDataVector.size() ; i++ ) {
+         //   for ( int i=0 ; i<binaryDataVector.size() ; i++ ) {
 
 //                Serial.printf("%02x", binaryDataVector[i]);
-            }
+          //  }
 
 
-            this->sendGIF( binaryDataVector );
+           // this->sendGIF( binaryDataVector );
             //this->sendPNG( (aap) );
 
             //
@@ -626,5 +626,7 @@ void iPixelDevice::sendGIF(const std::vector<uint8_t> &gifData) {
     Serial.print("GIF with ");
     Serial.print(gifData.size());
     Serial.println(" bytes");
+
+    Serial.printf("%2x%2x%2x", gifData[0], gifData[1], gifData[2]);
     queuePush(command);
 }

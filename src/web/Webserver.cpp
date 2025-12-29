@@ -2,6 +2,7 @@
 #include <ESPAsyncWebServer.h>
 #include <AsyncWebSocket.h>
 #include "main.h"
+#include <utils/webserial.h>
 
 #include <cstring>
 
@@ -22,17 +23,44 @@ extern std::map<std::string, iPixelDevice> matrixRegistry;
 // Globale map om de status van alle verbonden PC's bij te houden
 extern  std::map<uint32_t, ClientState> clientStates; // Key is client ID
 
+int COLLECTING = 1 ;
+int COMMANDS = 2 ;
+int parsestate = COMMANDS ;
+const char* hexsize ;
+int currentindex = 0 ;
+char *gifbuffer ;
+
+
 
 
 char * socketData;
 int currSocketBufferIndex = 0;
-void setupBuffer() {
-    // allocate memory for socketData in PSRAM if you have.
-    socketData  = (char *) malloc (4096);
+void setupBuffers() {
+
+    int buffersize = 1 * 4096; // Bijvoorbeeld 16K
+    socketData = (char *)heap_caps_malloc(buffersize, MALLOC_CAP_SPIRAM);
     if ( socketData == NULL ) {
         Serial.printf("Malloc socket buffer failed\n");
     }
+
+    buffersize = 8 * 4096; // Bijvoorbeeld 16K
+    gifbuffer = (char *)heap_caps_malloc(buffersize, MALLOC_CAP_SPIRAM);
+    if ( gifbuffer == NULL ) {
+        Serial.printf("Malloc gifbuffer  failed\n");
+    }
+
 }
+
+void printdata( uint8_t *data, int len ) {
+
+    Serial.printf( "Received %d bytes\n", len );
+
+    for ( int i = 0; i < len; i++ ) {
+        Serial.printf( "%c", data[i] );
+    }
+    Serial.println( "");
+}
+
 
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
 
@@ -100,18 +128,43 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
             break;
 
         case WS_EVT_DATA: {
+            //Serial.printf("Data ontvangen client: #%u, lengte %d\n", client->id(), len );
+			debugPrintf("Data ontvangen client: #%u, lengte %d\n", client->id(), len);
 
-            Serial.printf("Data ontvangen client: #%u, lengte %d\n", client->id(), len );
+
+
             // Controleer of het tekstdata is (JSON)
             AwsFrameInfo *info = (AwsFrameInfo*)arg;
-            if (info->opcode != WS_TEXT) return;
+            if (info->opcode != WS_TEXT) {
+                Serial.printf("Data was no text\n" );
+                return;
+            }
+
+            //Serial.printf("Pakket #%d,    masked is %d\n", info->num , info->masked);
+            //Serial.printf("  De index is %" PRIu64 "\n",  info->index);
+
+            //Serial.printf("Ik verwacht totaal %d bytes, dit pakket heeft %d bytes  final=%s\n,",
+             //               (int)info->len, len,  info->final!=0 ? "true" : "false") ;
+            //Serial.printf(
+            //  "index=%u len=%d until now=%u, after=%u final=%d\n",
+            //  (int)info->index, len, currSocketBufferIndex, currSocketBufferIndex+len, info->final
+            //);
+
             //
             // copy what we got
+            //
+
             for (size_t i = 0; i < len; i++){
                 socketData[currSocketBufferIndex] = data[i];
                 currSocketBufferIndex++;
             }
-            if( currSocketBufferIndex >= info->len ){
+           //rintdata( data, len  );
+            //Serial.printf( "final %s\n", info->final!=0 ? "true" : "false" );
+            //Serial.printf( "index %d\n", (int)info->index  );
+
+            if ( currSocketBufferIndex >= (info->len) ){
+            //if ( info->final ) {
+
                     socketData[currSocketBufferIndex] = '\0';
                     Serial.printf("Data compleet: #%u, lengte %d\n", client->id(), currSocketBufferIndex );
 
@@ -120,8 +173,10 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
                     // do the normal stuff
             } else {
                 // wait for more data
+                Serial.printf("Waiting for more data\n"   );
                 return ;
             }
+            Serial.printf("Processing data\n"   );
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -136,98 +191,65 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
                 return;
             }
 
-            const char* macAddressStr = doc["target"];
 
             // Zoek de status van de client
             ClientState& state = clientStates.at(client->id());
             const char* command = doc["command"];
 
-            //
-            // We don't do assign anymore
-            //
-            if ( false ) {
-            //if (strcmp(command, "ASSIGN") == 0) {
+            if ( command==nullptr ) {
+                Serial.printf("command = NULL\n" );
+                return ;
+            }
+            Serial.printf("command = <%s>\n", command );
 
-                // 1. CONTROLEER OF HET APPARAAT REEDS BESTAAT
-                if (matrixRegistry.count(macAddressStr) == 0) {
+            if ( strcasecmp(command, "start") == 0 ||
+                 strcasecmp(command, "chunk") == 0 ||
+                 strcasecmp(command, "end") == 0            ) {
 
-                    // --- 2. APPARAAT BESTAAT NIET: CREËER & REGISTREER DYNAMISCH ---
+                if (  strcasecmp(command, "start") == 0 ) {
 
-                    // a. Converteer de string MAC-adres naar een NimBLEAddress object
-                    NimBLEAddress bleAddress(macAddressStr, 0);
-              //      NimBLEAddress  addr(macAddressStr, 0);
-                    // b. Creëer de iPixelDevice instantie en voeg toe aan de map
-                    // De std::map voert de copy/move constructor uit
+                    parsestate = COLLECTING ;
+                    hexsize = doc["size"];
+                    Serial.printf("collecting %d bytes>\n", hexsize );
+                    currentindex = 0 ;
+                    // copy piece to gifbuffer
+                    const char *data = doc["data"];
 
-                    auto result = matrixRegistry.emplace(
-                        macAddressStr,
-                        iPixelDevice(bleAddress)
-                    );
+                    for ( int i = 0 ; i < strlen(data);  i++ ) {
+                        gifbuffer[currentindex] = data[i];
+                        currentindex++;
+                    }
+                    return ;
+                }
+                if (  strcasecmp(command, "chunk") == 0 && parsestate==COLLECTING) {
 
+                    Serial.printf("Processing chunk\n" );
 
-                    Serial.printf("Nieuw iPixelDevice aangemaakt voor MAC: %s\n", macAddressStr);
-
-                    iPixelDevice& targetDevice = result.first->second;
-
-                    // size MatrixContext afhankelijk van device! (hoe herkennen we dit type?)
-                    MatrixContext* context = new (std::nothrow) MatrixContext(32, 32, 8);
-                    targetDevice.context_data = static_cast<void*>(context);
-
-
-
-                    targetDevice.enqueueCommand(doc);
-
-                    // c. Start direct de BLE verbinding voor dit nieuwe apparaat
-                    //matrixRegistry.at(macAddressStr).connectAsync();
-                    Serial.printf("Queued BLE connectie met %s\n", macAddressStr);
                 }
 
-                // --- 3. TOEWĲZEN aan de ClientState ---
+                Serial.printf("Chunk received\n" );
+                // ignore for now
+                return ;
+            }
+            parsestate = COMMANDS ;
 
-                // Haal de referentie op van het (nieuwe of bestaande) apparaat
-                iPixelDevice& targetDevice = matrixRegistry.at(macAddressStr);
 
-                // Wijs de pointer in de ClientState toe aan dit apparaat
-                state.assignedMatrix = &targetDevice;
 
-                client->text("ACK: Succesvol toegewezen aan MAC: " + String(macAddressStr));
 
-            } else if (state.assignedMatrix != nullptr) {
+
+
+
+            if (state.assignedMatrix != nullptr) {
                 //
                 // There is a valid connection with an assigned matrix
                 //
                 // Normale commando verwerking (zoals SET_COLOR) gaat verder
                 state.assignedMatrix->enqueueCommand(doc);
                 client->text("ACK: Commando in queue geplaatst.");
-               // Serial.printf("Commando <%s> received\n", command);
+                Serial.printf("Commando <%s> received\n", command);
             } else {
                 Serial.printf("Commando with no matrix <%s> received\n", command);
-
             }
-
-
-
-/*
-            // Routering: Zoek de juiste Matrix op
-            if (matrixRegistry.count(targetKey)) {
-                iPixelDevice& targetDevice = matrixRegistry.at(targetKey);
-
-                // Roep de BLE methode aan op de specifieke controller
-                if (strcmp(command, "SET_COLOR") == 0) {
-                    const char* colorValue = doc["value"];
-                    Serial.printf("calling sendColor.\n");
-
- //                   targetDevice.sendColor(colorValue); // Implementeer deze in iPixelDevice
-                    client->text("ACK: Kleur gestuurd naar " + String(targetKey));
-                } else if (strcmp(command, "ON") == 0) {
-                     Serial.printf("calling sendOnCommand.\n");
-   //                  targetDevice.sendOnCommand(); // Implementeer deze
-                    client->text("ACK: ON commando naar " + String(targetKey) + " verstuurd.");
-                }
-            } else {
-                client->text("ERROR: Onbekende matrix ID.");
-            }
-            */
             break;
         }
     }
@@ -235,9 +257,8 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 
 void init_webserver() {
 
-    Serial.println("[Webserver] Initializing webserver...");
-
-    setupBuffer() ; // reserve socket buffer
+ 	debugPrintf("[Webserver] Initializing webserver...\n") ;
+    setupBuffers() ; // reserve socket buffer
 
     // Registreer de event handler bij de WebSockets server
     ws.onEvent(onWsEvent);
@@ -247,5 +268,5 @@ void init_webserver() {
     server.begin();
     Serial.println("WebSocket Server gestart op ws://" + WiFi.localIP().toString() + "/ws");
     server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
-    Serial.println("[Webserver] Webserver initialized!");
+	debugPrintf("[Webserver] Webserver initialized!\n") ;
 }

@@ -1,4 +1,5 @@
 #include "main.h"
+#include "utils/webserial.h"
 #include "global.h"
 #include <Arduino.h>
 #include <ImprovWiFiLibrary.h>
@@ -164,16 +165,22 @@ void setup() {
   }
   Serial.println("-------------------------------------");
 
+  //delay(2000);
   setup_wifi_pre();
+  //Serial.println("setup_wifi_pre was called -------------------------------------");
+  delay(2000);
+
   setup_improv();
   setup_wifi_post();
+
+  WebSerial.begin(&server);
 
   initTime();
 }
 
 
 unsigned long previousMillis = 0 ;
-unsigned long interval = 10000 ;
+unsigned long interval = 60000 ;
 
 void loop() {
 
@@ -199,10 +206,6 @@ void loop() {
 }
 
 void loop_connected() {
-
-
-
-
 
     //String tstr = getCurrentTimeString(); // bijv. 12:41
     //Serial.printf("Current time: %s\n", tstr.c_str() );
@@ -270,6 +273,9 @@ void verder() {
 void setup_connected() {
   init_bluetooth();
   init_webserver();
-
-  verder() ;
+  //
+  // Setup is completed
+  // now loop() is called by the OS.
+  //
+	debugPrintf("Setup Completed.\n") ;
 }
