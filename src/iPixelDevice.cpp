@@ -194,10 +194,21 @@ void iPixelDevice::processQueue() {
 
         } else if  ( strcmp( cmd, "send_gif" ) == 0 ) {
 
-            DBG_PRINTF( DEBUG_QUEUE, "Decoded send_gif commando");
+            debugPrintf( "[iPixelDevice]Decoded send_gif commando\n");
 
             String paramStr = params[0].as<String>();
+            debugPrintf("Paramstring size %d- %d %d %d", paramStr.length(), paramStr[0], paramStr[1], paramStr[2]);
+
+            debugPrintf("Dit komt uit de queue als params[0]:\n");
+            for ( int i=0 ; i<20 ; i++ ) {
+                debugPrintf( "%c", paramStr[i] );
+            }
+            debugPrintf(("\n"));
+
+
+            //debugPrintf("params %s\n", paramStr.c_str());
             this->sendGIF( Helpers::hexStringToVector(paramStr) );
+            debugPrintf("[iPixelDevice] gif verzonden");
         //    std::vector<uint8_t> binaryDataVector;
         //    make_animated_temperature( this->context_data,binaryDataVector, 12.3, "boven" ) ;
 
@@ -300,9 +311,9 @@ void iPixelDevice::enqueueCommand(const JsonDocument& doc) {
     commandQueue.push(output.c_str());
 
     // Optioneel: Loggen om te controleren of de data in de queue is gekomen
-//    Serial.printf("Commando in queue geplaatst voor %s: %s\n",
+//    debugPrintf("Commando in queue geplaatst voor %s: %s\n",
 //                  address.toString().c_str(),
-//                  output.c_str());
+//                 output.c_str());
 }
 
 
@@ -619,6 +630,8 @@ void iPixelDevice::sendPNG(const std::vector<uint8_t> &pngData) {
 
 
 void iPixelDevice::sendGIF(const std::vector<uint8_t> &gifData) {
+
+    debugPrintf("sendGIF %02x %02x %02x\n", gifData.at(0), gifData.at(1), gifData.at(2));
     std::vector<uint8_t> command = iPixelCommands::sendGIF(gifData);
     printPrefix();
     Serial.print("GIF with ");

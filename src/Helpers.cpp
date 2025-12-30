@@ -1,5 +1,7 @@
 #include "Helpers.h"
 
+#include "utils/webserial.h"
+
 namespace Helpers {
 
     std::vector<uint8_t> switchEndian(const std::vector<uint8_t>& bytes) {
@@ -71,6 +73,7 @@ namespace Helpers {
     std::vector<uint8_t> hexStringToVector(const String &hexString) {
         std::vector<uint8_t> result;
         int len = hexString.length();
+        debugPrintf( "hexStringToVector size %d\n",len );
         for (int i = 0; i < len; ) {
             // Skip any spaces
             while (i < len && hexString[i] == ' ') i++;
@@ -92,6 +95,10 @@ namespace Helpers {
             if (c2 >= '0' && c2 <= '9') byte |= (c2 - '0');
             else if (c2 >= 'A' && c2 <= 'F') byte |= (c2 - 'A' + 10);
             else if (c2 >= 'a' && c2 <= 'f') byte |= (c2 - 'a' + 10);
+
+            if ( i<10 ) {
+                debugPrintf("hexStringToVector: byte=%d\n", byte);
+            }
 
             result.push_back(byte);
         }

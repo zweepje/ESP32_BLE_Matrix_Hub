@@ -11,7 +11,9 @@
 #include <cstdint>
 #include <map>
 
+#include "ChunkProcessor.h"
 #include "../functions/MatrixContext.h"
+
 
 
 struct ClientState;
@@ -29,7 +31,7 @@ int parsestate = COMMANDS ;
 const char* hexsize ;
 int currentindex = 0 ;
 char *gifbuffer ;
-
+ChunkProcessor *chunkProcessor;
 
 
 
@@ -128,27 +130,14 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
             break;
 
         case WS_EVT_DATA: {
-            //Serial.printf("Data ontvangen client: #%u, lengte %d\n", client->id(), len );
 			debugPrintf("Data ontvangen client: #%u, lengte %d\n", client->id(), len);
-
-
 
             // Controleer of het tekstdata is (JSON)
             AwsFrameInfo *info = (AwsFrameInfo*)arg;
             if (info->opcode != WS_TEXT) {
-                Serial.printf("Data was no text\n" );
+                debugPrintf("Data was no text\n" );
                 return;
             }
-
-            //Serial.printf("Pakket #%d,    masked is %d\n", info->num , info->masked);
-            //Serial.printf("  De index is %" PRIu64 "\n",  info->index);
-
-            //Serial.printf("Ik verwacht totaal %d bytes, dit pakket heeft %d bytes  final=%s\n,",
-             //               (int)info->len, len,  info->final!=0 ? "true" : "false") ;
-            //Serial.printf(
-            //  "index=%u len=%d until now=%u, after=%u final=%d\n",
-            //  (int)info->index, len, currSocketBufferIndex, currSocketBufferIndex+len, info->final
-            //);
 
             //
             // copy what we got
@@ -158,26 +147,24 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
                 socketData[currSocketBufferIndex] = data[i];
                 currSocketBufferIndex++;
             }
-           //rintdata( data, len  );
-            //Serial.printf( "final %s\n", info->final!=0 ? "true" : "false" );
-            //Serial.printf( "index %d\n", (int)info->index  );
 
             if ( currSocketBufferIndex >= (info->len) ){
-            //if ( info->final ) {
 
                     socketData[currSocketBufferIndex] = '\0';
                     Serial.printf("Data compleet: #%u, lengte %d\n", client->id(), currSocketBufferIndex );
-
                      len = currSocketBufferIndex ;
                      currSocketBufferIndex = 0;
-                    // do the normal stuff
             } else {
                 // wait for more data
-                Serial.printf("Waiting for more data\n"   );
+                debugPrintf("Waiting for more data\n"   );
                 return ;
             }
-            Serial.printf("Processing data\n"   );
+            debugPrintf("Processing data\n"   );
 
+
+            //
+            // Moeten we hier al json eruit zoeken?
+            //
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
             StaticJsonDocument<4096> doc; // of StaticJsonDocument<CAPACITY> doc
@@ -185,8 +172,8 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 
             DeserializationError error = deserializeJson(doc, (char*)socketData, len);
             if (error) {
-                Serial.printf("JSON error: %d\n", error );
-                Serial.printf("Data ontvangen Ongeldig JSON-formaat\n", client->id());
+                debugPrintf("JSON error: %d\n", error );
+                debugPrintf("Data ontvangen Ongeldig JSON-formaat\n", client->id());
                 client->text("ERROR: Ongeldig JSON-formaat.");
                 return;
             }
@@ -200,41 +187,67 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
                 Serial.printf("command = NULL\n" );
                 return ;
             }
-            Serial.printf("command = <%s>\n", command );
+            Serial.printf("[WEBSERVER] command = <%s>\n", command );
 
             if ( strcasecmp(command, "start") == 0 ||
                  strcasecmp(command, "chunk") == 0 ||
                  strcasecmp(command, "end") == 0            ) {
 
                 if (  strcasecmp(command, "start") == 0 ) {
+                    size_t size = doc["size"];
+                    chunkProcessor = new ChunkProcessor( size );
+                    return ;
+                }
+                /*
+                                    parsestate = COLLECTING ;
+                                    hexsize = doc["size"];
+                                    Serial.printf("collecting %d bytes>\n", hexsize );
+                                    currentindex = 0 ;
+                                    // copy piece to gifbuffer
+                                    const char *data = doc["data"];
 
-                    parsestate = COLLECTING ;
-                    hexsize = doc["size"];
-                    Serial.printf("collecting %d bytes>\n", hexsize );
-                    currentindex = 0 ;
-                    // copy piece to gifbuffer
+                                    for ( int i = 0 ; i < strlen(data);  i++ ) {
+                                        gifbuffer[currentindex] = data[i];
+                                        currentindex++;
+                                    }
+                                    return ;
+                                }
+                                */
+                if (  strcasecmp(command, "chunk") == 0 && chunkProcessor != nullptr ) {
+
+                    debugPrintf("Processing chunk\n" );
                     const char *data = doc["data"];
+                    chunkProcessor->process( data );
+                    return ;
+                }
 
-                    for ( int i = 0 ; i < strlen(data);  i++ ) {
-                        gifbuffer[currentindex] = data[i];
-                        currentindex++;
+                if (  strcasecmp(command, "end") == 0 && chunkProcessor != nullptr ) {
+
+                    debugPrintf("End of chunck train\n" );
+                    const char *data = doc["data"];
+                    std::vector<uint8_t> *databuffer = chunkProcessor->ending();
+                    if ( databuffer==nullptr ) {
+                        return ;
+                    }
+
+                    //
+                    // Now we can push the complete command to the queue
+                    //
+                    DynamicJsonDocument doc(databuffer->size() + 512);
+                    doc["command"] = "send_gif";
+                    JsonArray params = doc.createNestedArray("params");
+
+                    params.add((char*)databuffer->data());
+
+                    state.assignedMatrix->enqueueCommand(doc);
+                    databuffer->clear();
+
+                    if (state.assignedMatrix != nullptr) {
+                        state.assignedMatrix->enqueueCommand(doc);
                     }
                     return ;
                 }
-                if (  strcasecmp(command, "chunk") == 0 && parsestate==COLLECTING) {
-
-                    Serial.printf("Processing chunk\n" );
-
-                }
-
-                Serial.printf("Chunk received\n" );
-                // ignore for now
-                return ;
             }
-            parsestate = COMMANDS ;
-
-
-
 
 
 
