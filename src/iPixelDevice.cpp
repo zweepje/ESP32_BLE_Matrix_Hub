@@ -469,6 +469,7 @@ void iPixelDevice::queueTick() {
             */
         }
     }
+    debugPrintf("\n");
 }
 void iPixelDevice::queuePush(std::vector<uint8_t> command) {
     queue.push_back(command);
