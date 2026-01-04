@@ -267,7 +267,7 @@ void iPixelDevice::onConnect(NimBLEClient *pClient) {
     } else {
         Serial.println("############### OnConnect mismatch! ###############");
     }
-
+    pClient->updateConnParams( 20, 40, 0, 400);
     _state = WAITING_FOR_POST;
 
    // postconnectAsync() ;
@@ -378,7 +378,8 @@ void iPixelDevice::postconnect() {
     connected = true;
     connecting = false;
     dopostconnect = false;
-    debugPrintf("[iPixelDevice] Connected with %s",address.toString().c_str());
+    debugPrintf("[iPixelDevice] Connected with %s\n",address.toString().c_str());
+    debugPrintf("[iPixelDevice] MTU is %d, chunksize %d\n", mtu, chunkSize);
     _state = READY;  // ready for commands
 
 }
@@ -387,8 +388,6 @@ void iPixelDevice::postconnect() {
 // hier wordt de BLE queue verwerkt
 //
 void iPixelDevice::queueTick() {
-
-
     if (queue.empty()) {
         //Serial.println( "BLE queue is empty");
         return;
@@ -406,41 +405,71 @@ void iPixelDevice::queueTick() {
     //Get command from queue
     std::vector<uint8_t> &command = queue.front();
 
-    //Take bytes from command
-    size_t chunks = min((int)this->chunkSize, (int)command.size());
-    //Serial.printf("Chunk is %d", chunks ) ;
+    Serial.printf("\n%s - Processing BLE queue\n", getLocalTimestamp().c_str() ) ;
+    while ( command.size() > 0 ) {
 
-    if ( this->client != nullptr && client->isConnected()) {
+        //Take bytes from command
+        size_t chunks = min((int)this->chunkSize, (int)command.size());
+        Serial.printf("Chunk is %d", chunks ) ;
 
-        //Write bytes from command
-        characteristic->writeValue(command.data(), chunks, false);
+        if ( this->client != nullptr && client->isConnected()) {
 
-        //Remove bytes from command
-        command.erase(command.begin(), command.begin() + chunks);
+            bool success = characteristic->writeValue(command.data(), chunks, true);
+            if (success) {
+                // 2. Alleen verwijderen als het ECHT is aangekomen
+                command.erase(command.begin(), command.begin() + chunks);
 
-            //Remove command if empty
-        if (command.empty()) queue.erase(queue.begin());
+                if (command.empty()) {
+                    queue.erase(queue.begin());
+                }
 
-        //Do not overload BLE
-        //delay(100);
-    } else {
-        // Foutopsporing: print welke Matrix niet verbonden is
-        Serial.printf("Matrix %s: Queue niet verwerkt. Client (0x%p) verbonden: %s\n",
-                      address.toString().c_str(),
-                      this->client,
-                      (this->client && this->client->isConnected() ? "JA" : "NEE"));
-        delay(100);
-        /*
-        if ( !this->client->isConnected() ) {
-            this->connected =false;
-            Serial.printf("===> Matrix %s: retrying connection\n",address.toString().c_str());
-            this->client->disconnect();
-            this->connectAsync();
+                // Omdat 'true' wacht op de overkant, heb je vaak minder delay nodig
+                // Maar een kleine pauze (bijv. 5-10ms) houdt de CPU koel
+                delay(5);
+            } else {
+                // 3. Foutafhandeling: Niet wissen!
+                // Bij de volgende loop probeert hij ditzelfde pakketje gewoon opnieuw.
+                Serial.println("BLE Write failed, retrying next loop...");
+
+                // Geef de verbinding even rust om te herstellen van de hik
+                delay(20);
+            }
+
+
+
+            /*
+
+
+                //Write bytes from command
+                characteristic->writeValue(command.data(), chunks, false);
+
+                //Remove bytes from command
+                command.erase(command.begin(), command.begin() + chunks);
+
+                    //Remove command if empty
+                if (command.empty()) queue.erase(queue.begin());
+
+                //Do not overload BLE
+                //delay(100);
+                */
+        } else {
+            // Foutopsporing: print welke Matrix niet verbonden is
+            Serial.printf("Matrix %s: Queue niet verwerkt. Client (0x%p) verbonden: %s\n",
+                          address.toString().c_str(),
+                          this->client,
+                          (this->client && this->client->isConnected() ? "JA" : "NEE"));
+            delay(100);
+            /*
+            if ( !this->client->isConnected() ) {
+                this->connected =false;
+                Serial.printf("===> Matrix %s: retrying connection\n",address.toString().c_str());
+                this->client->disconnect();
+                this->connectAsync();
+            }
+            */
         }
-        */
     }
 }
-
 void iPixelDevice::queuePush(std::vector<uint8_t> command) {
     queue.push_back(command);
 //    printPrefix();

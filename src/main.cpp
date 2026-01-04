@@ -195,6 +195,7 @@ void loop() {
 
 void loop_connected() {
 
+  //debugPrintf(("--- Main Loop ---\n"));
     // 1. WebSocket onderhoud
     // Nodig om client time-outs af te handelen
     ws.cleanupClients();

@@ -40,7 +40,7 @@ void Animation::MakeAnimation( std::vector<uint8_t>& binaryDataVector, IndexedBi
 
     //gifEngine.MakeGif( bmp->getData(), aPalette, numColors, true, 50 );
 
-    int stepsize = 2 ;
+    int stepsize = 4 ;
     int steps = 32 / stepsize ;
     int time = 1000 ;   // msec
 
@@ -58,7 +58,7 @@ void Animation::MakeAnimation( std::vector<uint8_t>& binaryDataVector, IndexedBi
 
         putin( &tmpbmp, start, end, i );
         if ( (i+stepsize)  > 32 ) {
-            tspeed = 500; // 5 seconds
+            tspeed = 5000; // 50 seconds
             Serial.printf("Temp, setting long time\n" );
 
         } else {

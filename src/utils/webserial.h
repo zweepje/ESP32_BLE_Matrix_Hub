@@ -7,4 +7,5 @@
 #include <WebSerial.h>
 
 void debugPrintf(const char *format, ...);
+String getLocalTimestamp() ;
 #endif //MYIPIXEL_WEBSERIAL_H

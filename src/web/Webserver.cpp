@@ -79,6 +79,10 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
             if (request && request->hasParam("mac")) {
                 mac = request->getParam("mac")->value();
                 Serial.println("Client MAC: " + mac);
+                if ( mac=="00:00:00:00:00") {
+                    debugPrintf("ZERO macaddress\n") ;
+                    debugPrintf("###############\n") ;
+                }
             } else {
                 Serial.println("Geen mac parameter");
             }
@@ -130,7 +134,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
             break;
 
         case WS_EVT_DATA: {
-			debugPrintf("Data ontvangen client: #%u, lengte %d\n", client->id(), len);
+			debugPrintf("%s - Data ontvangen client: #%u, lengte %d\n", getLocalTimestamp().c_str(), client->id(), len);
 
             // Controleer of het tekstdata is (JSON)
             AwsFrameInfo *info = (AwsFrameInfo*)arg;
