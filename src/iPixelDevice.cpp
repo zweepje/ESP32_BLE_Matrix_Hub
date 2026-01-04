@@ -194,12 +194,23 @@ void iPixelDevice::processQueue() {
 
         } else if  ( strcmp( cmd, "send_gif" ) == 0 ) {
 
- //           DBG_PRINTF( DEBUG_QUEUE, "Decoded send_gif commando");
+            debugPrintf( "[iPixelDevice]Decoded send_gif commando\n");
 
-            //String paramStr = params[0].as<String>();
-            //this->sendPNG( Helpers::hexStringToVector(paramStr) );
-            std::vector<uint8_t> binaryDataVector;
-            make_animated_temperature( this->context_data,binaryDataVector, 12.3, "boven" ) ;
+            String paramStr = params[0].as<String>();
+            debugPrintf("Paramstring size %d- %d %d %d", paramStr.length(), paramStr[0], paramStr[1], paramStr[2]);
+
+            debugPrintf("Dit komt uit de queue als params[0]:\n");
+            for ( int i=0 ; i<20 ; i++ ) {
+                debugPrintf( "%c", paramStr[i] );
+            }
+            debugPrintf(("\n"));
+
+
+            //debugPrintf("params %s\n", paramStr.c_str());
+            this->sendGIF( Helpers::hexStringToVector(paramStr) );
+            debugPrintf("[iPixelDevice] gif verzonden");
+        //    std::vector<uint8_t> binaryDataVector;
+        //    make_animated_temperature( this->context_data,binaryDataVector, 12.3, "boven" ) ;
 
 
        /*     Serial.print("make_temperature De lengte van de String is: ");
@@ -214,13 +225,13 @@ void iPixelDevice::processQueue() {
  //           Serial.println(binaryDataVector.size());  // print de lengte van de String als getal
 
             // printout string
-            for ( int i=0 ; i<binaryDataVector.size() ; i++ ) {
+         //   for ( int i=0 ; i<binaryDataVector.size() ; i++ ) {
 
 //                Serial.printf("%02x", binaryDataVector[i]);
-            }
+          //  }
 
 
-            this->sendGIF( binaryDataVector );
+           // this->sendGIF( binaryDataVector );
             //this->sendPNG( (aap) );
 
             //
@@ -256,7 +267,7 @@ void iPixelDevice::onConnect(NimBLEClient *pClient) {
     } else {
         Serial.println("############### OnConnect mismatch! ###############");
     }
-
+    pClient->updateConnParams( 20, 40, 0, 400);
     _state = WAITING_FOR_POST;
 
    // postconnectAsync() ;
@@ -300,9 +311,9 @@ void iPixelDevice::enqueueCommand(const JsonDocument& doc) {
     commandQueue.push(output.c_str());
 
     // Optioneel: Loggen om te controleren of de data in de queue is gekomen
-//    Serial.printf("Commando in queue geplaatst voor %s: %s\n",
+//    debugPrintf("Commando in queue geplaatst voor %s: %s\n",
 //                  address.toString().c_str(),
-//                  output.c_str());
+//                 output.c_str());
 }
 
 
@@ -367,7 +378,8 @@ void iPixelDevice::postconnect() {
     connected = true;
     connecting = false;
     dopostconnect = false;
-    debugPrintf("[iPixelDevice] Connected with %s",address.toString().c_str());
+    debugPrintf("[iPixelDevice] Connected with %s\n",address.toString().c_str());
+    debugPrintf("[iPixelDevice] MTU is %d, chunksize %d\n", mtu, chunkSize);
     _state = READY;  // ready for commands
 
 }
@@ -376,8 +388,6 @@ void iPixelDevice::postconnect() {
 // hier wordt de BLE queue verwerkt
 //
 void iPixelDevice::queueTick() {
-
-
     if (queue.empty()) {
         //Serial.println( "BLE queue is empty");
         return;
@@ -395,41 +405,72 @@ void iPixelDevice::queueTick() {
     //Get command from queue
     std::vector<uint8_t> &command = queue.front();
 
-    //Take bytes from command
-    size_t chunks = min((int)this->chunkSize, (int)command.size());
-    //Serial.printf("Chunk is %d", chunks ) ;
+    Serial.printf("\n%s - Processing BLE queue\n", getLocalTimestamp().c_str() ) ;
+    while ( command.size() > 0 ) {
 
-    if ( this->client != nullptr && client->isConnected()) {
+        //Take bytes from command
+        size_t chunks = min((int)this->chunkSize, (int)command.size());
+        Serial.printf("Chunk is %d", chunks ) ;
 
-        //Write bytes from command
-        characteristic->writeValue(command.data(), chunks, false);
+        if ( this->client != nullptr && client->isConnected()) {
 
-        //Remove bytes from command
-        command.erase(command.begin(), command.begin() + chunks);
+            bool success = characteristic->writeValue(command.data(), chunks, true);
+            if (success) {
+                // 2. Alleen verwijderen als het ECHT is aangekomen
+                command.erase(command.begin(), command.begin() + chunks);
 
-            //Remove command if empty
-        if (command.empty()) queue.erase(queue.begin());
+                if (command.empty()) {
+                    queue.erase(queue.begin());
+                }
 
-        //Do not overload BLE
-        //delay(100);
-    } else {
-        // Foutopsporing: print welke Matrix niet verbonden is
-        Serial.printf("Matrix %s: Queue niet verwerkt. Client (0x%p) verbonden: %s\n",
-                      address.toString().c_str(),
-                      this->client,
-                      (this->client && this->client->isConnected() ? "JA" : "NEE"));
-        delay(100);
-        /*
-        if ( !this->client->isConnected() ) {
-            this->connected =false;
-            Serial.printf("===> Matrix %s: retrying connection\n",address.toString().c_str());
-            this->client->disconnect();
-            this->connectAsync();
+                // Omdat 'true' wacht op de overkant, heb je vaak minder delay nodig
+                // Maar een kleine pauze (bijv. 5-10ms) houdt de CPU koel
+                delay(5);
+            } else {
+                // 3. Foutafhandeling: Niet wissen!
+                // Bij de volgende loop probeert hij ditzelfde pakketje gewoon opnieuw.
+                Serial.println("BLE Write failed, retrying next loop...");
+
+                // Geef de verbinding even rust om te herstellen van de hik
+                delay(20);
+            }
+
+
+
+            /*
+
+
+                //Write bytes from command
+                characteristic->writeValue(command.data(), chunks, false);
+
+                //Remove bytes from command
+                command.erase(command.begin(), command.begin() + chunks);
+
+                    //Remove command if empty
+                if (command.empty()) queue.erase(queue.begin());
+
+                //Do not overload BLE
+                //delay(100);
+                */
+        } else {
+            // Foutopsporing: print welke Matrix niet verbonden is
+            Serial.printf("Matrix %s: Queue niet verwerkt. Client (0x%p) verbonden: %s\n",
+                          address.toString().c_str(),
+                          this->client,
+                          (this->client && this->client->isConnected() ? "JA" : "NEE"));
+            delay(100);
+            /*
+            if ( !this->client->isConnected() ) {
+                this->connected =false;
+                Serial.printf("===> Matrix %s: retrying connection\n",address.toString().c_str());
+                this->client->disconnect();
+                this->connectAsync();
+            }
+            */
         }
-        */
     }
+    debugPrintf("\n");
 }
-
 void iPixelDevice::queuePush(std::vector<uint8_t> command) {
     queue.push_back(command);
 //    printPrefix();
@@ -619,10 +660,14 @@ void iPixelDevice::sendPNG(const std::vector<uint8_t> &pngData) {
 
 
 void iPixelDevice::sendGIF(const std::vector<uint8_t> &gifData) {
+
+    debugPrintf("sendGIF %02x %02x %02x\n", gifData.at(0), gifData.at(1), gifData.at(2));
     std::vector<uint8_t> command = iPixelCommands::sendGIF(gifData);
     printPrefix();
     Serial.print("GIF with ");
     Serial.print(gifData.size());
     Serial.println(" bytes");
+
+    Serial.printf("%2x%2x%2x", gifData[0], gifData[1], gifData[2]);
     queuePush(command);
 }

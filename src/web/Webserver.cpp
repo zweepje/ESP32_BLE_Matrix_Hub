@@ -2,6 +2,7 @@
 #include <ESPAsyncWebServer.h>
 #include <AsyncWebSocket.h>
 #include "main.h"
+#include <utils/webserial.h>
 
 #include <cstring>
 
@@ -10,7 +11,9 @@
 #include <cstdint>
 #include <map>
 
+#include "ChunkProcessor.h"
 #include "../functions/MatrixContext.h"
+
 
 
 struct ClientState;
@@ -22,17 +25,44 @@ extern std::map<std::string, iPixelDevice> matrixRegistry;
 // Globale map om de status van alle verbonden PC's bij te houden
 extern  std::map<uint32_t, ClientState> clientStates; // Key is client ID
 
+int COLLECTING = 1 ;
+int COMMANDS = 2 ;
+int parsestate = COMMANDS ;
+const char* hexsize ;
+int currentindex = 0 ;
+char *gifbuffer ;
+ChunkProcessor *chunkProcessor;
+
 
 
 char * socketData;
 int currSocketBufferIndex = 0;
-void setupBuffer() {
-    // allocate memory for socketData in PSRAM if you have.
-    socketData  = (char *) malloc (4096);
+void setupBuffers() {
+
+    int buffersize = 1 * 4096; // Bijvoorbeeld 16K
+    socketData = (char *)heap_caps_malloc(buffersize, MALLOC_CAP_SPIRAM);
     if ( socketData == NULL ) {
         Serial.printf("Malloc socket buffer failed\n");
     }
+
+    buffersize = 8 * 4096; // Bijvoorbeeld 16K
+    gifbuffer = (char *)heap_caps_malloc(buffersize, MALLOC_CAP_SPIRAM);
+    if ( gifbuffer == NULL ) {
+        Serial.printf("Malloc gifbuffer  failed\n");
+    }
+
 }
+
+void printdata( uint8_t *data, int len ) {
+
+    Serial.printf( "Received %d bytes\n", len );
+
+    for ( int i = 0; i < len; i++ ) {
+        Serial.printf( "%c", data[i] );
+    }
+    Serial.println( "");
+}
+
 
 void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
 
@@ -49,6 +79,10 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
             if (request && request->hasParam("mac")) {
                 mac = request->getParam("mac")->value();
                 Serial.println("Client MAC: " + mac);
+                if ( mac=="00:00:00:00:00") {
+                    debugPrintf("ZERO macaddress\n") ;
+                    debugPrintf("###############\n") ;
+                }
             } else {
                 Serial.println("Geen mac parameter");
             }
@@ -100,29 +134,41 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
             break;
 
         case WS_EVT_DATA: {
+			debugPrintf("%s - Data ontvangen client: #%u, lengte %d\n", getLocalTimestamp().c_str(), client->id(), len);
 
-            Serial.printf("Data ontvangen client: #%u, lengte %d\n", client->id(), len );
             // Controleer of het tekstdata is (JSON)
             AwsFrameInfo *info = (AwsFrameInfo*)arg;
-            if (info->opcode != WS_TEXT) return;
+            if (info->opcode != WS_TEXT) {
+                debugPrintf("Data was no text\n" );
+                return;
+            }
+
             //
             // copy what we got
+            //
+
             for (size_t i = 0; i < len; i++){
                 socketData[currSocketBufferIndex] = data[i];
                 currSocketBufferIndex++;
             }
-            if( currSocketBufferIndex >= info->len ){
+
+            if ( currSocketBufferIndex >= (info->len) ){
+
                     socketData[currSocketBufferIndex] = '\0';
                     Serial.printf("Data compleet: #%u, lengte %d\n", client->id(), currSocketBufferIndex );
-
                      len = currSocketBufferIndex ;
                      currSocketBufferIndex = 0;
-                    // do the normal stuff
             } else {
                 // wait for more data
+                debugPrintf("Waiting for more data\n"   );
                 return ;
             }
+            debugPrintf("Processing data\n"   );
 
+
+            //
+            // Moeten we hier al json eruit zoeken?
+            //
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
             StaticJsonDocument<4096> doc; // of StaticJsonDocument<CAPACITY> doc
@@ -130,104 +176,97 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 
             DeserializationError error = deserializeJson(doc, (char*)socketData, len);
             if (error) {
-                Serial.printf("JSON error: %d\n", error );
-                Serial.printf("Data ontvangen Ongeldig JSON-formaat\n", client->id());
+                debugPrintf("JSON error: %d\n", error );
+                debugPrintf("Data ontvangen Ongeldig JSON-formaat\n", client->id());
                 client->text("ERROR: Ongeldig JSON-formaat.");
                 return;
             }
 
-            const char* macAddressStr = doc["target"];
 
             // Zoek de status van de client
             ClientState& state = clientStates.at(client->id());
             const char* command = doc["command"];
 
-            //
-            // We don't do assign anymore
-            //
-            if ( false ) {
-            //if (strcmp(command, "ASSIGN") == 0) {
+            if ( command==nullptr ) {
+                Serial.printf("command = NULL\n" );
+                return ;
+            }
+            Serial.printf("[WEBSERVER] command = <%s>\n", command );
 
-                // 1. CONTROLEER OF HET APPARAAT REEDS BESTAAT
-                if (matrixRegistry.count(macAddressStr) == 0) {
+            if ( strcasecmp(command, "start") == 0 ||
+                 strcasecmp(command, "chunk") == 0 ||
+                 strcasecmp(command, "end") == 0            ) {
 
-                    // --- 2. APPARAAT BESTAAT NIET: CREËER & REGISTREER DYNAMISCH ---
+                if (  strcasecmp(command, "start") == 0 ) {
+                    size_t size = doc["size"];
+                    chunkProcessor = new ChunkProcessor( size );
+                    return ;
+                }
+                /*
+                                    parsestate = COLLECTING ;
+                                    hexsize = doc["size"];
+                                    Serial.printf("collecting %d bytes>\n", hexsize );
+                                    currentindex = 0 ;
+                                    // copy piece to gifbuffer
+                                    const char *data = doc["data"];
 
-                    // a. Converteer de string MAC-adres naar een NimBLEAddress object
-                    NimBLEAddress bleAddress(macAddressStr, 0);
-              //      NimBLEAddress  addr(macAddressStr, 0);
-                    // b. Creëer de iPixelDevice instantie en voeg toe aan de map
-                    // De std::map voert de copy/move constructor uit
+                                    for ( int i = 0 ; i < strlen(data);  i++ ) {
+                                        gifbuffer[currentindex] = data[i];
+                                        currentindex++;
+                                    }
+                                    return ;
+                                }
+                                */
+                if (  strcasecmp(command, "chunk") == 0 && chunkProcessor != nullptr ) {
 
-                    auto result = matrixRegistry.emplace(
-                        macAddressStr,
-                        iPixelDevice(bleAddress)
-                    );
-
-
-                    Serial.printf("Nieuw iPixelDevice aangemaakt voor MAC: %s\n", macAddressStr);
-
-                    iPixelDevice& targetDevice = result.first->second;
-
-                    // size MatrixContext afhankelijk van device! (hoe herkennen we dit type?)
-                    MatrixContext* context = new (std::nothrow) MatrixContext(32, 32, 8);
-                    targetDevice.context_data = static_cast<void*>(context);
-
-
-
-                    targetDevice.enqueueCommand(doc);
-
-                    // c. Start direct de BLE verbinding voor dit nieuwe apparaat
-                    //matrixRegistry.at(macAddressStr).connectAsync();
-                    Serial.printf("Queued BLE connectie met %s\n", macAddressStr);
+                    debugPrintf("Processing chunk\n" );
+                    const char *data = doc["data"];
+                    chunkProcessor->process( data );
+                    return ;
                 }
 
-                // --- 3. TOEWĲZEN aan de ClientState ---
+                if (  strcasecmp(command, "end") == 0 && chunkProcessor != nullptr ) {
 
-                // Haal de referentie op van het (nieuwe of bestaande) apparaat
-                iPixelDevice& targetDevice = matrixRegistry.at(macAddressStr);
+                    debugPrintf("End of chunck train\n" );
+                    const char *data = doc["data"];
+                    std::vector<uint8_t> *databuffer = chunkProcessor->ending();
+                    if ( databuffer==nullptr ) {
+                        return ;
+                    }
 
-                // Wijs de pointer in de ClientState toe aan dit apparaat
-                state.assignedMatrix = &targetDevice;
+                    //
+                    // Now we can push the complete command to the queue
+                    //
+                    DynamicJsonDocument doc(databuffer->size() + 512);
+                    doc["command"] = "send_gif";
+                    JsonArray params = doc.createNestedArray("params");
 
-                client->text("ACK: Succesvol toegewezen aan MAC: " + String(macAddressStr));
+                    params.add((char*)databuffer->data());
 
-            } else if (state.assignedMatrix != nullptr) {
+                    state.assignedMatrix->enqueueCommand(doc);
+                    databuffer->clear();
+
+                    if (state.assignedMatrix != nullptr) {
+                        state.assignedMatrix->enqueueCommand(doc);
+                    }
+                    return ;
+                }
+            }
+
+
+
+
+            if (state.assignedMatrix != nullptr) {
                 //
                 // There is a valid connection with an assigned matrix
                 //
                 // Normale commando verwerking (zoals SET_COLOR) gaat verder
                 state.assignedMatrix->enqueueCommand(doc);
                 client->text("ACK: Commando in queue geplaatst.");
-               // Serial.printf("Commando <%s> received\n", command);
+                Serial.printf("Commando <%s> received\n", command);
             } else {
                 Serial.printf("Commando with no matrix <%s> received\n", command);
-
             }
-
-
-
-/*
-            // Routering: Zoek de juiste Matrix op
-            if (matrixRegistry.count(targetKey)) {
-                iPixelDevice& targetDevice = matrixRegistry.at(targetKey);
-
-                // Roep de BLE methode aan op de specifieke controller
-                if (strcmp(command, "SET_COLOR") == 0) {
-                    const char* colorValue = doc["value"];
-                    Serial.printf("calling sendColor.\n");
-
- //                   targetDevice.sendColor(colorValue); // Implementeer deze in iPixelDevice
-                    client->text("ACK: Kleur gestuurd naar " + String(targetKey));
-                } else if (strcmp(command, "ON") == 0) {
-                     Serial.printf("calling sendOnCommand.\n");
-   //                  targetDevice.sendOnCommand(); // Implementeer deze
-                    client->text("ACK: ON commando naar " + String(targetKey) + " verstuurd.");
-                }
-            } else {
-                client->text("ERROR: Onbekende matrix ID.");
-            }
-            */
             break;
         }
     }
@@ -235,9 +274,8 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 
 void init_webserver() {
 
-    Serial.println("[Webserver] Initializing webserver...");
-
-    setupBuffer() ; // reserve socket buffer
+ 	debugPrintf("[Webserver] Initializing webserver...\n") ;
+    setupBuffers() ; // reserve socket buffer
 
     // Registreer de event handler bij de WebSockets server
     ws.onEvent(onWsEvent);
@@ -247,5 +285,5 @@ void init_webserver() {
     server.begin();
     Serial.println("WebSocket Server gestart op ws://" + WiFi.localIP().toString() + "/ws");
     server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
-    Serial.println("[Webserver] Webserver initialized!");
+	debugPrintf("[Webserver] Webserver initialized!\n") ;
 }

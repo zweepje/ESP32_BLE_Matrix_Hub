@@ -1,4 +1,5 @@
 #include "main.h"
+#include "utils/webserial.h"
 #include "global.h"
 #include <Arduino.h>
 #include "utils/webserial.h"
@@ -194,6 +195,7 @@ void loop() {
 
 void loop_connected() {
 
+  //debugPrintf(("--- Main Loop ---\n"));
     // 1. WebSocket onderhoud
     // Nodig om client time-outs af te handelen
     ws.cleanupClients();
@@ -224,8 +226,8 @@ String getResetReason() {
     case ESP_RST_TASK_WDT:return "Task Watchdog (Hung)";
     case ESP_RST_BROWNOUT:return "Brownout (Voltage Drop)";
     default:              return "Unknown Reset Reason";
-  }
-}
+  }}
+
 
 
 

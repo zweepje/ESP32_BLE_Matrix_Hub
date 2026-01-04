@@ -39,6 +39,7 @@ public:
     void enqueueCommand(const JsonDocument& doc);
 
     //BLEClientCallbacks
+    //void onConnect(NimBLEClient *pClient);
     void onConnect(NimBLEClient *pClient);
     void onDisconnect(NimBLEClient *pClient);
     void onConnectFail(NimBLEClient* pClient, int reason);
