@@ -6,7 +6,6 @@
 #include "global.h"
 #include "iPixelCommands.h"
 #include "Helpers.h"
-#include "Kookwekker.h"
 #include "functions/temperature.h"
 #include "clock/timefunctions.h"
 #include "utils/webserial.h"
@@ -15,6 +14,80 @@ NimBLEUUID serviceUUID("000000fa-0000-1000-8000-00805f9b34fb");
 NimBLEUUID charUUID("0000fa02-0000-1000-8000-00805f9b34fb");
 
 extern std::map<std::string, iPixelDevice> matrixRegistry;
+
+
+
+void iPixelDevice::processTimerCommand(StaticJsonDocument<4096>& doc) {
+
+    const char* action = doc["action"];
+
+    debugPrintf("TimerCommand received <%s>\n", action );
+
+
+    if (strcmp(action, "INC_MIN") == 0) {
+        timerSeconds += 60;
+        Serial.printf("Tijd toegevoegd: %d sec\n", timerSeconds);
+    }
+    else if (strcmp(action, "INC_SEC") == 0) {
+        timerSeconds += 1;
+    }
+    else if (strcmp(action, "TOGGLE") == 0) {
+        isRunning = !isRunning;
+        Serial.printf("Wekker %s\n", isRunning ? "gestart" : "gepauzeerd");
+    }
+    else if (strcmp(action, "RESET") == 0) {
+        timerSeconds = 0;
+        isRunning = false;
+        Serial.println("Wekker gereset.");
+    }
+    else return ; // nothing changed
+
+    showTime( timerSeconds );
+    // Optioneel: Stuur direct een status update terug naar Home Assistant
+    // updateHomeAssistant();
+}
+
+
+
+void iPixelDevice::showTime( int timerSeconds ) {
+
+    int m = timerSeconds / 60;
+    int s = timerSeconds % 60;
+    Serial.printf("Resterend: %02d:%02d\n", m, s);
+
+    std::vector<uint8_t> binaryDataVector;
+    char timeBuffer[6]; // Ruimte voor "mm.ss" + de afsluitende '\0'
+    snprintf(timeBuffer, sizeof(timeBuffer), "%02d.%02d", m, s);
+
+    String displayTime = String(timeBuffer);
+
+    debugPrintf("Timestring is <%s>\n", displayTime.c_str() );
+
+    make_kooktime( this->context_data,binaryDataVector, displayTime ) ;
+    debugPrintf("Sending GIF <%s>\n", displayTime.c_str() );
+
+    this->sendGIF( binaryDataVector );
+
+}
+
+
+void iPixelDevice::handleTimerLogic() {
+
+    // Check of er een seconde voorbij is
+    if (isRunning && millis() - lastTick >= 1000) {
+        lastTick = millis();
+
+        if (timerSeconds > 0) {
+            timerSeconds--;
+            showTime( timerSeconds );
+
+        } else {
+            isRunning = false;
+            Serial.println("ALARM! Tijd is om.");
+            // Hier kun je een buzzer of LED-strip triggeren
+        }
+    }
+}
 
 void iPixelDevice::update() {
 
@@ -90,15 +163,6 @@ void iPixelDevice::processQueue() {
         //
 #ifdef KOOKWEKKER
         processTimerCommand( doc );
-
-        std::vector<uint8_t> binaryDataVector;
-        String timeStr = getCurrentTimeString();
-        debugPrintf("Timestring is <%s>\n", timeStr.c_str() );
-
-        make_kooktime( this->context_data,binaryDataVector, timeStr ) ;
-        debugPrintf("Sending GIF <%s>\n", timeStr.c_str() );
-
-        this->sendGIF( binaryDataVector );
         return;
 #endif
 

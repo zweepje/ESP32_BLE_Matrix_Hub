@@ -11,6 +11,7 @@
 #include <LittleFS.h>
 #include <map>
 #include <string>
+
 #include "clock/timefunctions.h"
 
 extern "C" {
@@ -206,6 +207,9 @@ void loop_connected() {
       // pair.second is een referentie naar het iPixelDevice object
       //pair.second.processQueue();
       pair.second.update();
+#ifdef KOOKWEKKER
+      pair.second.handleTimerLogic() ;
+#endif
       pair.second.queueTick();
     }
 

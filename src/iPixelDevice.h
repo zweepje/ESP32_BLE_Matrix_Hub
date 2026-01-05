@@ -16,6 +16,13 @@ extern NimBLEUUID charUUID;
 class iPixelDevice : public NimBLEClientCallbacks {
 
 private:
+    int timerSeconds = 0;
+    bool isRunning = false;
+    unsigned long lastTick = 0;
+
+
+
+private:
     std::queue<std::string> commandQueue; // De queue is hier gedeclareerd
     enum DeviceState { IDLE, CONNECTING, WAITING_FOR_POST, READY, ERROR };
     DeviceState _state = IDLE;
@@ -56,6 +63,12 @@ public:
 
     // command queue
     void processQueue() ;
+
+    // kookwekker
+    void handleTimerLogic() ;
+    void processTimerCommand(StaticJsonDocument<4096>& doc) ;
+    void showTime( int seconds ) ;
+
 
     //Commands
     void sendImage();

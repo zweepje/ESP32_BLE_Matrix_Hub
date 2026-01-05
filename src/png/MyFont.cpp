@@ -40,6 +40,7 @@ FontInfo LargeFont2Info[] =
     FontInfo( '9', 5, 7, 48, 27),
     FontInfo( '0', 5, 7, 54, 27),
     FontInfo( ':', 1, 7, 60, 27),
+    FontInfo( '.', 1, 3, 60, 27),
 
 };
 
