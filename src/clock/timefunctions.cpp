@@ -5,6 +5,8 @@
 #include "esp_sntp.h"     // ESP32-specifieke functies voor NTP
 #include <Arduino.h>  // Voor Serial en String
 
+#include "utils/webserial.h"
+
 // Functie om de ESP32 te configureren voor NTP en te synchroniseren
 void initTime() {
 
@@ -61,6 +63,8 @@ String getCurrentTimeString() {
 
     // strftime formatteert de struct tm naar de gewenste string
     strftime(timeBuffer, sizeof(timeBuffer), "%H:%M", &timeinfo);
+
+    debugPrintf("Timestring is <%s>\n", timeBuffer);
 
     // Converteer de C-string naar een Arduino String object
     return String(timeBuffer);

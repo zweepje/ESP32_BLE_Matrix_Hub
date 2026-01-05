@@ -8,4 +8,5 @@
 //bool make_temperature( String& resultString, float temperature, String title ) ;
 bool make_animated_temperature( void* generic_context, std::vector<uint8_t>& binaryDataVector, float temperature, String title );
 bool make_animated_time( void* generic_context, std::vector<uint8_t>& binaryDataVector, String time);
+bool make_kooktime( void* generic_context, std::vector<uint8_t>& binaryDataVector, String time );
 #endif //MYIPIXEL_TEMPERATURE_H

@@ -14,6 +14,7 @@ class Animation {
 public:
     Animation() ;
     void MakeAnimation( std::vector<uint8_t>& binaryDataVector, IndexedBitmap *start, IndexedBitmap *end );
+    void MakeGif(std::vector<uint8_t>& binaryDataVector, IndexedBitmap *start );
 };
 
 

@@ -1,10 +1,12 @@
 #include "iPixelDevice.h"
 #include "global.h"
 #include <cstring>
+#include "main.h"
 
 #include "global.h"
 #include "iPixelCommands.h"
 #include "Helpers.h"
+#include "Kookwekker.h"
 #include "functions/temperature.h"
 #include "clock/timefunctions.h"
 #include "utils/webserial.h"
@@ -70,8 +72,6 @@ void iPixelDevice::processQueue() {
         commandQueue.pop();
 
         // Verwerk en verstuur het commando
-//        DBG_PRINTF( DEBUG_QUEUE, "Verwerk commando voor %s: %s\n", address.toString().c_str(), command.c_str());
-
         // Implementeer de daadwerkelijke BLE-schrijflogica (zie volgende stap)
         //       ex
 #pragma GCC diagnostic push
@@ -88,10 +88,27 @@ void iPixelDevice::processQueue() {
         //
         // Check which command
         //
+#ifdef KOOKWEKKER
+        processTimerCommand( doc );
+
+        std::vector<uint8_t> binaryDataVector;
+        String timeStr = getCurrentTimeString();
+        debugPrintf("Timestring is <%s>\n", timeStr.c_str() );
+
+        make_kooktime( this->context_data,binaryDataVector, timeStr ) ;
+        debugPrintf("Sending GIF <%s>\n", timeStr.c_str() );
+
+        this->sendGIF( binaryDataVector );
+        return;
+#endif
+
+
+        // todo: cmd kan null zijn!!
         const char* cmd = doc["command"];
         JsonArray params = doc["params"];
-//        DBG_PRINTF( DEBUG_QUEUE, "JSON Command: %s\n", cmd );
-         if  ( strcmp( cmd, "send_text" ) == 0 ) {
+        debugPrintf(  "JSON Command: %s\n", cmd );
+
+       if  ( strcmp( cmd, "send_text" ) == 0 ) {
 
             const char* text_str = params[0];
 
@@ -213,36 +230,17 @@ void iPixelDevice::processQueue() {
         //    make_animated_temperature( this->context_data,binaryDataVector, 12.3, "boven" ) ;
 
 
-       /*     Serial.print("make_temperature De lengte van de String is: ");
-            Serial.println(aap.length());  // print de lengte van de String als getal
-
-            std::vector<uint8_t> binaryDataVector;
-            size_t len = aap.length();
-            binaryDataVector.resize(len);
-            memcpy(binaryDataVector.data(), aap.c_str(), len);
-        */
-//            Serial.print("make_temperature De lengte van de String is: ");
- //           Serial.println(binaryDataVector.size());  // print de lengte van de String als getal
-
-            // printout string
-         //   for ( int i=0 ; i<binaryDataVector.size() ; i++ ) {
-
-//                Serial.printf("%02x", binaryDataVector[i]);
-          //  }
-
-
-           // this->sendGIF( binaryDataVector );
-            //this->sendPNG( (aap) );
-
-            //
-            // original:
-            //            this->sendPNG( Helpers::hexStringToVector(paramStr) );
-
         }
-    } else {
+
+
+   }
+
+    else {
         //Serial.printf("Queue empty" );
         delay( 100 ) ;
+
     }
+
 }
 
 

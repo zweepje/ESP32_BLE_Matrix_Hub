@@ -36,6 +36,20 @@ Animation::Animation() {
 static IndexedBitmap tmpbmp(WIDTH, HEIGHT, 8);
 
 
+void Animation::MakeGif( std::vector<uint8_t>& binaryDataVector, IndexedBitmap *start ) {
+
+    //Serial.printf("Inside MakeGif\n" );
+
+    gifEngine->MakeGif( start->getData(), aPalette, numColors, false );
+    //Serial.printf("Inside MakeGif 1\n" );
+    gifEngine->CloseGif();
+    //Serial.printf("Inside MakeGif 2\n" );
+    gifEngine->GetResults(binaryDataVector);
+    //Serial.printf("Inside MakeGif 3\n" );
+
+}
+
+
 void Animation::MakeAnimation( std::vector<uint8_t>& binaryDataVector, IndexedBitmap *start, IndexedBitmap *end ) {
 
     //gifEngine.MakeGif( bmp->getData(), aPalette, numColors, true, 50 );
@@ -48,6 +62,7 @@ void Animation::MakeAnimation( std::vector<uint8_t>& binaryDataVector, IndexedBi
     speed /= 10 ;   // adapt to gif standard of 10ms units
     // start with oldbitmap
     gifEngine->MakeGif( start->getData(), aPalette, numColors, true, speed );
+
     //auto *tmpbmp = new IndexedBitmap(WIDTH, HEIGHT, 8);
     tmpbmp.clear() ;
 

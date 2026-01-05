@@ -185,6 +185,20 @@ bool make_animated_temperature( void* generic_context, std::vector<uint8_t>& bin
 
 }
 
+bool make_kooktime( void* generic_context, std::vector<uint8_t>& binaryDataVector, String timeStr ) {
+
+    Serial.printf("make_kooktime was called %s\n", timeStr.c_str() );
+    GifMaker gifEngine ;
+    MatrixContext* context = static_cast<MatrixContext*>(generic_context);
+    bmp.clear(0) ;
+    tekenString( bmp, timeStr.c_str(), 1, 15, GREEN, largefont2 ) ;
+    Animation anim = Animation();
+    gifEngine.MakeGif( bmp.getData(), aPalette, numColors  ) ;
+    gifEngine.CloseGif();
+    gifEngine.GetResults(binaryDataVector);
+
+    return true ;
+}
 
 
 

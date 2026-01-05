@@ -4,10 +4,12 @@
 
 #ifndef MYIPIXEL_MAIN_H
 #define MYIPIXEL_MAIN_H
-
-
-
 #include "iPixelDevice.h"
+
+#define KOOKWEKKER
+
+
+
 
 struct ClientState {
     // Pointer naar het matrix-object dat deze client bestuurt

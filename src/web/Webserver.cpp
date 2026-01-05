@@ -186,6 +186,12 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
             // Zoek de status van de client
             ClientState& state = clientStates.at(client->id());
             const char* command = doc["command"];
+#ifdef KOOKWEKKER
+            // Put doc in queue for later processing
+            state.assignedMatrix->enqueueCommand(doc);
+            client->text("ACK: Commando in queue geplaatst.");
+
+#else
 
             if ( command==nullptr ) {
                 Serial.printf("command = NULL\n" );
@@ -255,7 +261,6 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 
 
 
-
             if (state.assignedMatrix != nullptr) {
                 //
                 // There is a valid connection with an assigned matrix
@@ -268,6 +273,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
                 Serial.printf("Commando with no matrix <%s> received\n", command);
             }
             break;
+#endif
         }
     }
 }
