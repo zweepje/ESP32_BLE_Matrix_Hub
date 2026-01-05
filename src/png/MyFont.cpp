@@ -21,8 +21,9 @@ FontInfo LargeFontInfo[] =
     FontInfo( '9', 8, 9, 18, 19),
     FontInfo( '0', 8, 9, 27, 19),
     FontInfo( ',', 2, 10, 36, 19),
+    FontInfo( '-', 6, 10, 39, 19),
     FontInfo( '.', 2, 10, 36, 19),
-    FontInfo( ' ', 8, 10, 38, 19)
+    FontInfo( ' ', 8, 10, 45, 19)
 
 };
 
