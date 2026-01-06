@@ -86,6 +86,11 @@ static int writecb(void* pContext, const uint8_t* pData, const size_t numBytes) 
       FileBuffer[FileCount] = pData[i];
       //printf("%02x ",  FileBuffer[FileCount] );
       FileCount++;
+      if ( FileCount>=4096 ) {
+        printf( "++++++++++++++++++++++++++\n") ;
+        printf( "FileBuffer is full !!!!!!!\n") ;
+        printf( "++++++++++++++++++++++++++\n") ;
+      }
     }
     //printf("\nGiffile is now %d bytes\n",   FileCount);
   }else {
@@ -245,7 +250,7 @@ FoundHeight:
   while(cmpPixel(pGIF, pCur, pBef, pCurImageData[MULU16(i, width) + x], pBefImageData[MULU16(i, width) + x]) == 0) {
     ++i;
     if(i > (newTop + newHeight - 1)) {
-      ++x; //(x==width cannot happen as return 0 is trigged in the only possible case before)
+      ++x; //(x==width cannot happen as return 0 is triggered in the only possible case before)
       i = newTop;
     }
   }
@@ -257,7 +262,7 @@ FoundHeight:
   while(cmpPixel(pGIF, pCur, pBef, pCurImageData[MULU16(i, width) + x], pBefImageData[MULU16(i, width) + x]) == 0) {
     ++i;
     if(i > (newTop + newHeight - 1)) {
-      --x; //(x<newLeft cannot happen as return 0 is trigged in the only possible case before)
+      --x; //(x<newLeft cannot happen as return 0 is triggered in the only possible case before)
       i = newTop;
     }
   }
