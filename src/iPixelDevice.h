@@ -69,6 +69,7 @@ public:
     void handleTimerLogic() ;
     void processTimerCommand(StaticJsonDocument<4096>& doc) ;
     void showTime( int seconds ) ;
+    void showClock( int hour, int min, int seconds ) ;
 
 
     //Commands

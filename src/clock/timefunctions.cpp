@@ -37,6 +37,32 @@ void initTime() {
     }
 }
 
+int getSeconds() {
+    time_t now;
+    struct tm timeinfo;
+
+    // Vraag de huidige tijd op (seconds since epoch)
+    time(&now);
+
+    // Converteer de tijd naar de lokale tijdzone (met DST correctie)
+    // De resultaten worden opgeslagen in de timeinfo structuur
+    localtime_r(&now, &timeinfo);
+    return timeinfo.tm_sec;
+}
+
+struct tm timeinfo;
+
+struct tm getTimeInfo() {
+
+    time_t now;
+    // Vraag de huidige tijd op (seconds since epoch)
+    time(&now);
+    // Converteer de tijd naar de lokale tijdzone (met DST correctie)
+    // De resultaten worden opgeslagen in de timeinfo structuur
+    localtime_r(&now, &timeinfo);
+    return timeinfo ;
+}
+
 /**
  * @brief Haalt de actuele, lokaal geformatteerde tijd op als HH:MM.
  * @return Een Arduino String met de tijd, of "Tijd??" als de synchronisatie mislukt.

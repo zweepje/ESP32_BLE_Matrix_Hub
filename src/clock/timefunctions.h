@@ -7,6 +7,8 @@
 
 void initTime();
 String getCurrentTimeString();
+int getSeconds();
+struct tm getTimeInfo() ;
 
 
 

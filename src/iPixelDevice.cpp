@@ -58,6 +58,15 @@ void iPixelDevice::processTimerCommand(StaticJsonDocument<4096>& doc) {
     // updateHomeAssistant();
 }
 
+void iPixelDevice::showClock( int hour, int min, int seconds ) {
+
+    if ( connected ) {
+        std::vector<uint8_t> binaryDataVector;
+        make_clock( binaryDataVector, hour, min, seconds );
+        debugPrintf("Sending clockGIF <%d>\n", seconds );
+        this->sendGIF( binaryDataVector );
+    }
+}
 
 
 void iPixelDevice::showTime( int timerSeconds ) {
@@ -82,7 +91,21 @@ void iPixelDevice::showTime( int timerSeconds ) {
 }
 
 
+bool clockmode = true ;
+int lastnu = -1 ;
+
 void iPixelDevice::handleTimerLogic() {
+
+    if ( clockmode ) {
+        struct tm ti = getTimeInfo() ;
+
+        int nu = ti.tm_sec ;
+        if (nu != lastnu) {
+            lastnu = nu;
+            showClock( ti.tm_hour, ti.tm_min, ti.tm_sec  );
+        }
+        return ;
+    }
 
     // Check of er een seconde voorbij is
     if (isRunning && millis() - lastTick >= 1000) {

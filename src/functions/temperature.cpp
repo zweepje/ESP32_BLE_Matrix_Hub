@@ -88,36 +88,6 @@ bool make_animated_time( void* generic_context, std::vector<uint8_t>& binaryData
 
     Serial.printf("timestring is %s\n", time.c_str() );
     tekenString( bmp, time.c_str(), 1, 15, GREEN, largefont2 ) ;
-/*    String tijdString = time ; //"14:38"; // Voorbeeldtijd
-    String urenString;
-    String minutenString;
-    // Zoek de positie van het scheidingsteken (de dubbelepunt)
-    int scheidingstekenIndex = tijdString.indexOf(':');
-    if (scheidingstekenIndex != -1) {
-        // 1. Uren ophalen (alles vóór de dubbelepunt)
-        // De lengte van de uren is gelijk aan de index van het scheidingsteken
-        urenString = tijdString.substring(0, scheidingstekenIndex);
-
-        // 2. Minuten ophalen (alles ná de dubbelepunt)
-        // Begin op de positie direct na de dubbelepunt (+1) tot het einde
-        minutenString = tijdString.substring(scheidingstekenIndex + 1);
-
-        // Optioneel: Trimmen om eventuele onnodige spaties te verwijderen (goede gewoonte)
-        urenString.trim();
-        minutenString.trim();
-    } else {
-        // Foutafhandeling als de dubbelepunt niet gevonden is
-        Serial.println("Fout: Geen scheidingsteken gevonden in de tijdstring.");
-    }
-
-    Serial.print("Uren: "); Serial.println(urenString);     // Output: 14
-    Serial.print("Minuten: "); Serial.println(minutenString); // Output: 38
-
-    tekenString( bmp, urenString.c_str(), 1, 15, GREEN, largefont ) ;
-    tekenString( bmp, (minutenString.c_str()), 1, 30, GREEN, largefont ) ;
-*/
-
-
 
     Animation anim = Animation();
     anim.MakeAnimation( binaryDataVector, &context->current_bitmap, &bmp ) ;
@@ -186,20 +156,60 @@ bool make_animated_temperature( void* generic_context, std::vector<uint8_t>& bin
 }
 
 
+bool make_clock( std::vector<uint8_t>& binaryDataVector, int hour, int min, int seconds ) {
+
+    const float PI_F = 3.1415926535f;
+    //const float DEG_TO_RAD = PI_F / 180.0f;
+    Serial.printf("make_clock was called %d %d %d seconds\n", hour, min, seconds );
+    bmp.clear(0) ;
+
+    float angle = seconds * 6.0f * static_cast<float>((PI / 180.0f));
+    float centerX = 15.0 ;
+    float centerY = 15.0 ;
+    float length = 13.0 ;
+
+    // 2. Bereken het eindpunt
+    int x1 = round(centerX + length * sin(angle));
+    int y1 = round(centerY - length * cos(angle));
+
+    bmp.drawLine(centerX, centerY, x1, y1, 1);
+
+    // minutes
+    angle = min * 6.0f * static_cast<float>((PI / 180.0f));
+    length = 10.0f;
+    x1 = round(centerX + length * sin(angle));
+    y1 = round(centerY - length * cos(angle));
+    bmp.drawLine(centerX, centerY, x1, y1, 2);
+
+    // hour
+    // hours % 12 zorgt dat 13u, 14u etc. gewoon als 1u, 2u worden behandeld.
+    float hoursDecimal = static_cast<float>(hour % 12) + (static_cast<float>(min) / 60.0f);
+    angle = hoursDecimal * 30.0f * (PI_F / 180.0f);
+    //angle = hour * 6.0f * static_cast<float>((PI / 180.0f));
+    length = 7.0f;
+    x1 = round(centerX + length * sin(angle));
+    y1 = round(centerY - length * cos(angle));
+    bmp.drawLine(centerX, centerY, x1, y1, 2);
+
+
+
+    //tekenString( bmp, timeStr.c_str(), 1, 15, GREEN, largefont2 ) ;
+    Animation anim = Animation();
+    anim.MakeGif( binaryDataVector, &bmp ) ;
+    Serial.printf("make_clock exiting\n" );
+    return true;
+}
 
 
 bool make_kooktime( void* generic_context, std::vector<uint8_t>& binaryDataVector, String timeStr ) {
 
     Serial.printf("make_kooktime was called %s\n", timeStr.c_str() );
-    GifMaker gifEngine ;
+    //GifMaker gifEngine ;
     MatrixContext* context = static_cast<MatrixContext*>(generic_context);
     bmp.clear(0) ;
     tekenString( bmp, timeStr.c_str(), 1, 15, GREEN, largefont2 ) ;
     Animation anim = Animation();
-    gifEngine.MakeGif( bmp.getData(), aPalette, numColors  ) ;
-    gifEngine.CloseGif();
-    gifEngine.GetResults(binaryDataVector);
-
+    anim.MakeGif( binaryDataVector, &bmp ) ;
     return true ;
 }
 

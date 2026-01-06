@@ -41,6 +41,8 @@ public:
      * @brief Stelt de kleurindex van een individuele pixel in.
      */
     void setPixel(int x, int y, uint8_t colorIndex);
+    void drawLine(int x0, int y0, int x1, int y1, uint8_t colorIndex);
+
 
     /**
      * @brief Maakt de hele bitmap leeg met een specifieke kleurindex.
