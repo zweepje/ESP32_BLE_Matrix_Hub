@@ -19,6 +19,7 @@ private:
     int timerSeconds = 0;
     bool isRunning = false;
     unsigned long lastTick = 0;
+    bool LEDstate = true ;
 
 
 

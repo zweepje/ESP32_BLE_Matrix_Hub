@@ -212,6 +212,7 @@ void loop_connected() {
 #endif
       pair.second.queueTick();
     }
+    delay( 1 );
 
 }
 

@@ -40,6 +40,17 @@ void iPixelDevice::processTimerCommand(StaticJsonDocument<4096>& doc) {
         isRunning = false;
         Serial.println("Wekker gereset.");
     }
+    else if ( strcmp(action, "ONOFF" ) == 0 ) {
+
+        if ( LEDstate ) {
+            LEDstate = false ;
+        } else {
+            LEDstate = true ;
+        }
+        setLED( LEDstate );
+        Serial.println("Display On/Off.");
+        return ;
+    }
     else return ; // nothing changed
 
     showTime( timerSeconds );

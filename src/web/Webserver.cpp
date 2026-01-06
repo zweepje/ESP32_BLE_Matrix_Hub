@@ -87,6 +87,13 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
                 Serial.println("Geen mac parameter");
             }
 
+            if (client && client->client()) {
+                client->client()->setNoDelay(true);
+                Serial.println("TCP NoDelay geactiveerd via AsyncClient");
+            }
+
+
+
             Serial.printf("WebSocket Client #%u verbonden.\n", client->id());
             // Voeg nieuwe client toe aan de statusmap
             clientStates[client->id()] = ClientState();
