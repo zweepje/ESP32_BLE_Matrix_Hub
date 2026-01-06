@@ -164,8 +164,8 @@ bool make_clock( std::vector<uint8_t>& binaryDataVector, int hour, int min, int 
     bmp.clear(0) ;
 
     float angle = seconds * 6.0f * static_cast<float>((PI / 180.0f));
-    float centerX = 15.0 ;
-    float centerY = 15.0 ;
+    float centerX = 15.5 ;
+    float centerY = 15.5 ;
     float length = 13.0 ;
 
     // 2. Bereken het eindpunt
