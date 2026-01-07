@@ -1,17 +1,17 @@
 #include "main.h"
-#include "utils/webserial.h"
-#include "global.h"
 #include <Arduino.h>
-#include "utils/webserial.h"
 #include <ImprovWiFiLibrary.h>
-#include <Preferences.h>
-#include "Bluetooth.h"
-#include "iPixelDeviceRegistry.h"
-#include "web/Webserver.h"
 #include <LittleFS.h>
+#include <Preferences.h>
 #include <map>
 #include <string>
+#include "Bluetooth.h"
 #include "clock/timefunctions.h"
+#include "functions/MatrixContext.h"
+#include "global.h"
+#include "iPixelDeviceRegistry.h"
+#include "utils/webserial.h"
+#include "web/Webserver.h"
 
 extern "C" {
 void initfs(void);
@@ -123,6 +123,98 @@ void setup_improv() {
 }
 
 
+//
+// Deze info kan ook in iPixeldevice!!!
+//
+typedef struct display {
+  String MAC ;
+  String type ;
+	int width, height;
+  String function ;
+  iPixelDevice *device;
+} t_display ;
+
+t_display displays[] = {
+  { "2B:46:4E:59:CD:A0", "32x32", 32,32,"temperatuur", NULL },
+  { "C6:2A:E6:06:7D:10", "64x16", 64, 16,"info", NULL },
+  { "70:21:BC:EA:A8:24", "32x32", 32,32,"kookwekker", NULL }
+};
+int numdisplays = sizeof(displays) / sizeof(struct display);
+
+
+iPixelDevice *finddevice( String mac ) {
+
+	for ( int i = 0 ; i < numdisplays ; i++ ) {
+		if ( displays[i].MAC.equalsIgnoreCase(mac)  ) {
+			debugPrintf("Found display\n");
+			return displays[i].device ;
+		}
+	}
+	debugPrintf("Could not find display %s\n", mac.c_str() );
+	return nullptr;
+}
+
+void initdevices() {
+
+	// initialize the iPixeldevices for all the known boards
+	for (int i = 0; i < numdisplays; i++) {
+		const char* macAddressStr = displays[i].MAC.c_str() ;
+		NimBLEAddress bleAddress(macAddressStr, 0);
+		displays[i].device = new iPixelDevice(bleAddress);
+		// create contextdata ( we got to know dimensions of matrix ! )
+		MatrixContext* context = new (std::nothrow) MatrixContext(displays[i].width, displays[i].height, 8);
+		displays[i].device->context_data = static_cast<void*>(context);
+	}
+
+
+}
+
+// De taak die op de achtergrond draait
+void connectionTask(void * pvParameters) {
+
+
+	for(;;) { // Oneindige loop voor de task
+		for (int i = 0; i < numdisplays; i++) {
+
+			//debugPrintf("Testing display %d, %s for %s\n", i, displays[i].MAC.c_str(), displays[i].function.c_str());
+			debugPrintf("Matrix: %s is %s %s\n", displays[i].function.c_str(), ( displays[i].device->connected ? "connected" : "not connected" ),
+			( displays[i].device->connecting ? "and connecting" : "" ) ) ;
+
+
+			//if ( !displays[i].device->connected && !displays[i].device->connecting ) {
+			if ( !displays[i].device->connected  ) {
+				//
+				if ( displays[i].device->connecting ) {
+					// It had 10 seconds to connect, so it fails.
+					// retry
+					if ( displays[i].device->client != nullptr ) {
+					displays[i].device->client->disconnect();
+					}
+				}
+				// start a connection
+				displays[i].device->connectAsync();
+				Serial.printf("Queued BLE connectie met %s\n", displays[i].type.c_str());
+			}
+
+
+
+      //if (!isDisplayConnected(i)) {
+      //  Serial.printf("[Task] Display %d is offline. Scannen...\n", i);
+
+        // Hier voer je de scan/connect logica uit
+        // Deze pauzeert de main loop NIET!
+       // attemptConnection(knownAddresses[i]);
+      //}
+    }
+
+
+    // Wacht 10 seconden voor de volgende check (vTaskDelay gebruikt geen CPU)
+    vTaskDelay(pdMS_TO_TICKS(10000));
+  }
+}
+
+
+
 void setup() {
 
   Serial.begin(115200);
@@ -140,37 +232,26 @@ void setup() {
   size_t psram_size = heap_caps_get_free_size(MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
   Serial.printf("Externe PSRAM Heap: %u bytes\n", psram_size);
 
-  // -----------------------------------------------------
-
-  if (psram_size > 0) {
-    // 3. PSRAM is gedetecteerd, probeer een grote buffer toe te wijzen
-    const size_t TEST_SIZE = 1024 * 512; // 512 KB, dit past NIET in interne DRAM
-
-    Serial.printf("\nProbeer %u KB toe te wijzen in PSRAM...", TEST_SIZE / 1024);
-
-    // Gebruik MALLOC_CAP_SPIRAM om te garanderen dat het geheugen van de PSRAM komt
-    uint8_t *large_buffer = (uint8_t *)heap_caps_malloc(TEST_SIZE, MALLOC_CAP_SPIRAM);
-
-    if (large_buffer != NULL) {
-      // Allocatie gelukt! Schrijf wat data om te controleren
-      memset(large_buffer, 0xAA, TEST_SIZE);
-      Serial.println("✅ Succesvol toegewezen en getest! PSRAM werkt.");
-
-      // Belangrijk: Geef geheugen vrij
-      heap_caps_free(large_buffer);
-    } else {
-      Serial.println("❌ Fout: Allocatie mislukt, ondanks gemelde vrije PSRAM.");
-    }
-  } else {
-    Serial.println("❌ PSRAM is niet gedetecteerd (gemelde grootte is 0).");
-  }
-  Serial.println("-------------------------------------");
 
   setup_wifi_pre();
   setup_improv();
   setup_wifi_post();
 
   initTime();
+  //
+  // Maak de achtergrond-taak aan
+  //
+  xTaskCreatePinnedToCore(
+      connectionTask,   // Functie die uitgevoerd moet worden
+      "ConnManager",    // Naam van de taak
+      4096,             // Stack size in bytes
+      NULL,             // Parameter die je meegeeft
+      1,                // Prioriteit (1 is laag, prima voor dit doel)
+      NULL,             // Task handle
+      0                 // Pin de taak aan Core 0 (Wi-Fi/BT core)
+  );
+
+
 }
 
 
@@ -199,7 +280,7 @@ void loop_connected() {
     // 1. WebSocket onderhoud
     // Nodig om client time-outs af te handelen
     ws.cleanupClients();
-
+/*
     // 2. Queue Verwerking
     // Loop door alle geregistreerde Matrix Controllers
     for (auto& pair : matrixRegistry) {
@@ -208,6 +289,15 @@ void loop_connected() {
       pair.second.update();
       pair.second.queueTick();
     }
+*/
+	for (int i = 0; i < numdisplays; i++) {
+
+		if ( displays[i].device != nullptr ) {
+			displays[i].device->update();
+			displays[i].device->queueTick();
+		}
+	}
+
 
 }
 
@@ -232,11 +322,14 @@ String getResetReason() {
 
 
 void setup_connected() {
+
+	initdevices() ;
+
   init_bluetooth();
   init_webserver();
   WebSerial.setBuffer( 0 );
   WebSerial.begin(&server);
-  delay(2000) ;
+  //delay(2000) ;
 
   // Rapportage zodra WebSerial klaar is
   debugPrintf("--- ESP32-S3 BOOT REPORT ---\n");

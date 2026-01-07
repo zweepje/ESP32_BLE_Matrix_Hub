@@ -9,6 +9,8 @@
 
 #include "iPixelDevice.h"
 
+
+iPixelDevice *finddevice( String mac ) ;
 struct ClientState {
     // Pointer naar het matrix-object dat deze client bestuurt
     iPixelDevice* assignedMatrix = nullptr;

@@ -42,7 +42,7 @@ const unsigned int HEIGHT = 32;
 
 
 
-
+/*
 class BitmapGFX : public Adafruit_GFX {
 public:
     // Wijst naar je IndexedBitmap
@@ -70,7 +70,7 @@ public:
 } ; // BitmapGFX
 
 
-
+*/
 
 // We have to allocate it one time
 static IndexedBitmap bmp(WIDTH, HEIGHT, 8);
@@ -88,36 +88,6 @@ bool make_animated_time( void* generic_context, std::vector<uint8_t>& binaryData
 
     Serial.printf("timestring is %s\n", time.c_str() );
     tekenString( bmp, time.c_str(), 1, 15, GREEN, largefont2 ) ;
-/*    String tijdString = time ; //"14:38"; // Voorbeeldtijd
-    String urenString;
-    String minutenString;
-    // Zoek de positie van het scheidingsteken (de dubbelepunt)
-    int scheidingstekenIndex = tijdString.indexOf(':');
-    if (scheidingstekenIndex != -1) {
-        // 1. Uren ophalen (alles vóór de dubbelepunt)
-        // De lengte van de uren is gelijk aan de index van het scheidingsteken
-        urenString = tijdString.substring(0, scheidingstekenIndex);
-
-        // 2. Minuten ophalen (alles ná de dubbelepunt)
-        // Begin op de positie direct na de dubbelepunt (+1) tot het einde
-        minutenString = tijdString.substring(scheidingstekenIndex + 1);
-
-        // Optioneel: Trimmen om eventuele onnodige spaties te verwijderen (goede gewoonte)
-        urenString.trim();
-        minutenString.trim();
-    } else {
-        // Foutafhandeling als de dubbelepunt niet gevonden is
-        Serial.println("Fout: Geen scheidingsteken gevonden in de tijdstring.");
-    }
-
-    Serial.print("Uren: "); Serial.println(urenString);     // Output: 14
-    Serial.print("Minuten: "); Serial.println(minutenString); // Output: 38
-
-    tekenString( bmp, urenString.c_str(), 1, 15, GREEN, largefont ) ;
-    tekenString( bmp, (minutenString.c_str()), 1, 30, GREEN, largefont ) ;
-*/
-
-
 
     Animation anim = Animation();
     anim.MakeAnimation( binaryDataVector, &context->current_bitmap, &bmp ) ;
@@ -187,7 +157,7 @@ bool make_animated_temperature( void* generic_context, std::vector<uint8_t>& bin
 
 
 
-
+/*
 bool make_temperature( std::vector<uint8_t>& binaryDataVector, float temperature, String title ) {
 
     GifMaker gifEngine ;
@@ -215,3 +185,4 @@ bool make_temperature( std::vector<uint8_t>& binaryDataVector, float temperature
     return true ;
 
 }
+*/

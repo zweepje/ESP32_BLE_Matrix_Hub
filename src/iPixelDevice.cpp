@@ -454,11 +454,21 @@ void iPixelDevice::queueTick() {
                 */
         } else {
             // Foutopsporing: print welke Matrix niet verbonden is
-            Serial.printf("Matrix %s: Queue niet verwerkt. Client (0x%p) verbonden: %s\n",
-                          address.toString().c_str(),
-                          this->client,
-                          (this->client && this->client->isConnected() ? "JA" : "NEE"));
-            delay(100);
+        	// print only oncde
+        	if ( this->connected ) {
+        		Serial.printf("Matrix %s: Queue niet verwerkt. Client (0x%p) verbonden: %s\n",
+							  address.toString().c_str(),
+							  this->client,
+							  (this->client && this->client->isConnected() ? "JA" : "NEE"));
+        	}
+        	//
+        	// mark as unconnected so we can retry
+        	this->connected = false;
+        	this->client->disconnect();
+        	// en gooi het commando weg
+        	queue.erase(queue.begin());
+        	break ; // leave
+
             /*
             if ( !this->client->isConnected() ) {
                 this->connected =false;
