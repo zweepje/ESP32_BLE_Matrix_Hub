@@ -79,12 +79,9 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
             if (request && request->hasParam("mac")) {
                 mac = request->getParam("mac")->value();
                 Serial.println("Client MAC: " + mac);
-                if ( mac=="00:00:00:00:00") {
-                    debugPrintf("ZERO macaddress\n") ;
-                    debugPrintf("###############\n") ;
-                }
             } else {
                 Serial.println("Geen mac parameter");
+            	return;
             }
 
             Serial.printf("WebSocket Client #%u verbonden.\n", client->id());
@@ -96,31 +93,19 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
             // start the BLE connection
             //
             const char* macAddressStr = mac.c_str() ;
-            if (matrixRegistry.count(macAddressStr) == 0) {
+        	NimBLEAddress bleAddress(macAddressStr, 0);
+        	// zoek het iPixelDevice
+			iPixelDevice *targetDevice = finddevice( mac ) ;
+        	if ( targetDevice != nullptr ) {
+        		ClientState& state = clientStates.at(client->id());
+        		state.assignedMatrix = targetDevice;
+        		client->text("ACK: Succesvol toegewezen aan MAC: " + String(macAddressStr));
+        	} else {
 
-                // --- 2. APPARAAT BESTAAT NIET: CREËER & REGISTREER DYNAMISCH ---
+        		Serial.printf("Could not find mac %s\n", macAddressStr);
+        	}
 
-                // a. Converteer de string MAC-adres naar een NimBLEAddress object
-                NimBLEAddress bleAddress(macAddressStr, 0);
 
-                auto result = matrixRegistry.emplace(
-                    macAddressStr,
-                    iPixelDevice(bleAddress)
-                );
-                Serial.printf("Nieuw iPixelDevice aangemaakt voor MAC: %s\n", macAddressStr);
-                iPixelDevice& targetDevice = result.first->second;
-                // size MatrixContext afhankelijk van device! (hoe herkennen we dit type?)
-                MatrixContext* context = new (std::nothrow) MatrixContext(32, 32, 8);
-                targetDevice.context_data = static_cast<void*>(context);
-                // c. Start direct de BLE verbinding voor dit nieuwe apparaat
-                matrixRegistry.at(macAddressStr).connectAsync();
-                Serial.printf("Queued BLE connectie met %s\n", macAddressStr);
-            }
-
-            ClientState& state = clientStates.at(client->id());
-            iPixelDevice& targetDevice = matrixRegistry.at(macAddressStr);
-            state.assignedMatrix = &targetDevice;
-            client->text("ACK: Succesvol toegewezen aan MAC: " + String(macAddressStr));
 
             break;
         }
