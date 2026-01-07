@@ -13,6 +13,7 @@
 #include <string>
 
 #include "clock/timefunctions.h"
+#include "functions/MatrixContext.h"
 
 extern "C" {
 void initfs(void);
