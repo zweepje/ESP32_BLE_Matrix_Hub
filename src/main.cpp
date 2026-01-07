@@ -19,11 +19,10 @@ extern "C" {
 void initfs(void);
 }
 
+
+
 Preferences preferences;
 ImprovWiFi improvSerial(&Serial);
-
-#define MATRIX1_64x16 "C6:2A:E6:06:7D:10"
-#define MATRIX2_32x32 "2B:46:4E:59:CD:A0"
 
 // Globale map om de status van alle verbonden PC's bij te houden
 std::map<uint32_t, ClientState> clientStates; // Key is client ID
@@ -129,19 +128,22 @@ void setup_improv() {
 // Deze info kan ook in iPixeldevice!!!
 //
 typedef struct display {
+  String name ;
   String MAC ;
   String type ;
-	int width, height;
+  int width, height;
   String function ;
   iPixelDevice *device;
 } t_display ;
 
-t_display displays[] = {
-  { "2B:46:4E:59:CD:A0", "32x32", 32,32,"temperatuur", NULL },
-  { "C6:2A:E6:06:7D:10", "64x16", 64, 16,"info", NULL },
-  { "70:21:BC:EA:A8:24", "32x32", 32,32,"kookwekker", NULL }
+
+#define MAX_MATRIX 4
+t_display displays[MAX_MATRIX] = {
+//  { "2B:46:4E:59:CD:A0", "32x32", 32,32,"temperatuur", NULL },
+//  { "C6:2A:E6:06:7D:10", "64x16", 64, 16,"info", NULL },
+//  { "70:21:BC:EA:A8:24", "32x32", 32,32,"kookwekker", NULL }
 };
-int numdisplays = sizeof(displays) / sizeof(struct display);
+int numdisplays = 0;
 
 
 iPixelDevice *finddevice( String mac ) {
@@ -156,19 +158,38 @@ iPixelDevice *finddevice( String mac ) {
 	return nullptr;
 }
 
+extern Preferences prefs ;
+
 void initdevices() {
 
-	// initialize the iPixeldevices for all the known boards
-	for (int i = 0; i < numdisplays; i++) {
-		const char* macAddressStr = displays[i].MAC.c_str() ;
-		NimBLEAddress bleAddress(macAddressStr, 0);
-		displays[i].device = new iPixelDevice(bleAddress);
-		// create contextdata ( we got to know dimensions of matrix ! )
-		MatrixContext* context = new (std::nothrow) MatrixContext(displays[i].width, displays[i].height, 8);
-		displays[i].device->context_data = static_cast<void*>(context);
-	}
+        numdisplays = 0 ;
+        prefs.begin("config", true);
+
+        for (int i = 0 ; i < MAX_MATRIX ; i++ ) {
+
+          bool active = prefs.getBool(("act_" + String(i)).c_str(), false);
+          debugPrintf("Trying  act_%s, value is: %s\n", String(i).c_str(), active?"yes":"no");
 
 
+          if ( active ) {
+            displays[i].name   = prefs.getString(("name_" + String(i)).c_str(), "Matrix " + String(i+1));
+            displays[i].MAC    = prefs.getString(("mac_" + String(i)).c_str(), "");
+            displays[i].function   = prefs.getString(("mode_" + String(i)).c_str(), "tijd");
+            displays[i].type   = prefs.getString(("type_" + String(i)).c_str(), "64x16");
+            displays[i].width  = 32 ;
+            displays[i].height = 32 ;
+
+            const char* macAddressStr = displays[i].MAC.c_str() ;
+            NimBLEAddress bleAddress(macAddressStr, 0);
+            displays[i].device = new iPixelDevice(bleAddress);
+            auto* context = new (std::nothrow) MatrixContext(displays[i].width, displays[i].height, 8);
+            displays[i].device->context_data = static_cast<void*>(context);
+            numdisplays++;
+
+            debugPrintf("Added %s to the active list\n", macAddressStr );
+          }
+        }
+        prefs.end();
 }
 
 // De taak die op de achtergrond draait
@@ -300,10 +321,11 @@ void loop_connected() {
 		if ( displays[i].device != nullptr ) {
 			displays[i].device->update();
 			displays[i].device->queueTick();
+
+		  // als het wekker is:
+		        displays[i].device->handleTimerLogic();
 		}
 	}
-
-
 }
 
 //  iPixelDevice test(BLEAddress("3d:50:0c:1f:6d:ec"));

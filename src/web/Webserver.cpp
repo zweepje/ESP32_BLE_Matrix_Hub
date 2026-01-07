@@ -14,6 +14,140 @@
 #include "ChunkProcessor.h"
 #include "../functions/MatrixContext.h"
 
+#include <Preferences.h>
+
+Preferences prefs;
+
+
+
+const char config_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML><html><head>
+  <title>Matrix Config</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+    .card { background: white; max-width: 400px; margin: auto; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    input, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+    .row { display: flex; align-items: center; justify-content: space-between; }
+    input[type="submit"] { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+  </style>
+</head><body>
+  <div class="card">
+    <h2>Matrix Instellingen</h2>
+    <form action="/save" method="POST">
+      <label>Naam Display:</label>
+      <input type="text" name="name" placeholder="bijv. Woonkamer">
+
+      <label>MAC Adres:</label>
+      <input type="text" name="mac" placeholder="AA:BB:CC:DD:EE:FF">
+
+      <label>Functie:</label>
+      <select name="mode">
+        <option value="tijd">Tijd</option>
+        <option value="temp">Temperatuur</option>
+        <option value="info">Informatie</option>
+      </select>
+
+      <label>Type Matrix:</label>
+      <select name="type">
+        <option value="64x16">64 x 16 (Breed)</option>
+        <option value="32x32">32 x 32 (Vierkant)</option>
+      </select>
+
+      <div class="row">
+        <label>Matrix Actief:</label>
+        <input type="checkbox" name="active" value="1" style="width: 20px;" checked>
+      </div>
+
+      <input type="submit" value="Instellingen Opslaan">
+    </form>
+  </div>
+</body></html>)rawliteral";
+
+
+
+String getDynamicHTML() {
+  prefs.begin("config", true);
+
+  String html = R"rawliteral(
+<!DOCTYPE HTML><html><head>
+  <title>Matrix Control Center</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: sans-serif; background: #eceff1; padding: 20px; color: #333; }
+    .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    h2 { color: #007bff; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+    .matrix-card { border: 1px solid #e0e0e0; padding: 15px; margin-bottom: 20px; border-radius: 8px; background: #fafafa; }
+    label { font-weight: bold; font-size: 0.9em; display: block; margin-top: 10px; }
+    input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+    .active-row { display: flex; align-items: center; margin-top: 10px; background: #e3f2fd; padding: 8px; border-radius: 5px; }
+    .active-row input { width: auto; margin-right: 10px; margin-top: 0; }
+    .btn { background: #28a745; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-size: 1.1em; cursor: pointer; margin-top: 10px; }
+    .btn:hover { background: #218838; }
+  </style>
+</head><body>
+  <div class="container">
+    <h2>Matrix Configuraties</h2>
+    <form action="/save" method="POST">)rawliteral";
+
+  for (int i = 0; i < 4; i++) {
+    // Haal huidige waarden op uit geheugen
+    String m_mac  = prefs.getString(("mac_" + String(i)).c_str(), "");
+    String m_name = prefs.getString(("name_" + String(i)).c_str(), "Matrix " + String(i+1));
+    String m_mode = prefs.getString(("mode_" + String(i)).c_str(), "tijd");
+    String m_type = prefs.getString(("type_" + String(i)).c_str(), "64x16");
+    bool m_active = prefs.getBool(("act_" + String(i)).c_str(), false);
+
+    html += "<div class='matrix-card'>";
+    html += "<h3>Matrix " + String(i+1) + "</h3>";
+
+    html += "<label>Naam:</label>";
+    html += "<input type='text' name='name_" + String(i) + "' value='" + m_name + "'>";
+
+    html += "<label>MAC Adres:</label>";
+    html += "<input type='text' name='mac_" + String(i) + "' value='" + m_mac + "' placeholder='AA:BB:CC:DD:EE:FF'>";
+
+    html += "<label>Functie:</label>";
+    html += "<select name='mode_" + String(i) + "'>";
+    html += "<option value='tijd'" + String(m_mode == "tijd" ? " selected" : "") + ">Klok / Tijd</option>";
+    html += "<option value='temp'" + String(m_mode == "temp" ? " selected" : "") + ">Temperatuur</option>";
+    html += "<option value='info'" + String(m_mode == "info" ? " selected" : "") + ">Informatie / Tekst</option>";
+    html += "</select>";
+
+    html += "<label>Type:</label>";
+    html += "<select name='type_" + String(i) + "'>";
+    html += "<option value='64x16'" + String(m_type == "64x16" ? " selected" : "") + ">64 x 16</option>";
+    html += "<option value='32x32'" + String(m_type == "32x32" ? " selected" : "") + ">32 x 32</option>";
+    html += "</select>";
+
+    html += "<div class='active-row'>";
+    html += "<input type='checkbox' name='act_" + String(i) + "' value='1'" + (m_active ? " checked" : "") + ">";
+    html += "<span>Deze matrix gebruiken</span>";
+    html += "</div>";
+
+    html += "</div>";
+  }
+
+  html += R"rawliteral(
+      <input type="submit" class="btn" value="Alle Instellingen Opslaan">
+    </form>
+  </div>
+</body></html>)rawliteral";
+
+  prefs.end();
+  return html;
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 struct ClientState;
@@ -272,7 +406,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
 
 void init_webserver() {
 
- 	debugPrintf("[Webserver] Initializing webserver...\n") ;
+    debugPrintf("[Webserver] Initializing webserver...\n") ;
     setupBuffers() ; // reserve socket buffer
 
     // Registreer de event handler bij de WebSockets server
@@ -280,8 +414,55 @@ void init_webserver() {
     // Voeg de WebSockets handler toe aan de HTTP server
     server.addHandler(&ws);
     // Start de HTTP/WebSocket serverd
+
+
+
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+   request->send(200, "text/html", getDynamicHTML());
+  });
+
+  // 2. Sla alles op
+  server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request){
+    prefs.begin("config", false);
+
+    for (int i = 0; i < 4; i++) {
+      if (request->hasParam("name_" + String(i), true)) {
+        prefs.putString(("name_" + String(i)).c_str(), request->getParam("name_" + String(i), true)->value());
+        prefs.putString(("mac_" + String(i)).c_str(),  request->getParam("mac_" + String(i), true)->value());
+        prefs.putString(("mode_" + String(i)).c_str(), request->getParam("mode_" + String(i), true)->value());
+        prefs.putString(("type_" + String(i)).c_str(), request->getParam("type_" + String(i), true)->value());
+
+        // Checkbox logica: als param niet aanwezig is, is hij uitgevinkt
+        bool isActive = request->hasParam("act_" + String(i), true);
+        prefs.putBool(("act_" + String(i)).c_str(), isActive);
+      }
+    }
+
+    prefs.end();
+    request->send(200, "text/plain", "Instellingen opgeslagen! Herstarten...");
+    delay(1000);
+    ESP.restart();
+  });
+
+
+
+
+/*
+  // 4. De route om de data van het formulier te verwerken
+  server.on("/test", HTTP_GET, [](AsyncWebServerRequest *request){
+  if (request->hasParam("mac")) {
+    String newMac = request->getParam("mac")->value();
+    Serial.println("Ontvangen MAC via URL: " + newMac);
+    request->send(200, "text/plain", "Ontvangen: " + newMac);
+  } else {
+    request->send(200, "text/plain", "Geen mac parameter gevonden. Gebruik: /test?mac=123");
+  }
+});
+*/
+
+
     server.begin();
     Serial.println("WebSocket Server gestart op ws://" + WiFi.localIP().toString() + "/ws");
-    server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
-	debugPrintf("[Webserver] Webserver initialized!\n") ;
+  //  server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
+  //	debugPrintf("[Webserver] Webserver initialized!\n") ;
 }
