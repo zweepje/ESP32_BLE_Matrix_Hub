@@ -1,7 +1,7 @@
 #include "iPixelDevice.h"
 #include "global.h"
 #include <cstring>
-#include "main.h"
+//#include "main.h"
 
 #include "global.h"
 #include "iPixelCommands.h"
@@ -195,10 +195,10 @@ void iPixelDevice::processQueue() {
         //
         // Check which command
         //
-#ifdef KOOKWEKKER
-        processTimerCommand( doc );
-        return;
-#endif
+        if ( mode == MODE_CLOCK ) {
+          processTimerCommand( doc );
+          return;
+        }
 
 
         // todo: cmd kan null zijn!!
@@ -253,11 +253,31 @@ void iPixelDevice::processQueue() {
             this->sendText(text_str, animation, save_slot, speed, colorR, colorG, colorB, rainbow_mode, matrix_height);
 
         } else if  ( strcmp( cmd, "set_brightness" ) == 0 ) {
+          String br_str = params[0].as<String>();
+          int brightness = br_str.toInt();
+          Serial.printf("Set brightness to: %d", brightness ) ;
+          this->setBrightness( brightness );
 
-            String br_str = params[0].as<String>();
-            int brightness = br_str.toInt();
-            Serial.printf("Set brightness to: %d", brightness ) ;
-            this->setBrightness( brightness );
+        } else if   ( strcmp( cmd, "temp_graph" ) == 0 ) {
+            //
+            // Grafiekje met temperaturen
+            //
+            float dagTemperaturen[24] ;
+            std::vector<uint8_t> binaryDataVector;
+
+            // 1. Pak de referentie naar de array in de JSON
+            JsonArray data = doc["data"];
+
+            // 2. Loop door de waarden heen (maximaal 24)
+            for (int i = 0; i < 24; i++) {
+              dagTemperaturen[i] = data[i].as<float>();
+            }
+            Serial.println("De float[24] array is nu gevuld met nieuwe data!");
+
+
+
+            make_temp_graph( this->context_data,binaryDataVector, dagTemperaturen ) ;
+            //this->sendGIF( binaryDataVector );
 
         } else if  ( strcmp( cmd, "make_time_ani" ) == 0 ) {
 

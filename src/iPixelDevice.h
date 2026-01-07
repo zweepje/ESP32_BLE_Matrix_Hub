@@ -1,13 +1,15 @@
 #pragma once
 
+
 #include <Arduino.h>
-#include <vector>
-#include <NimBLEDevice.h>
-#include <string>
 #include <ArduinoJson.h> // Nodig voor het parsen van de JSON commando's
+#include <NimBLEDevice.h>
+#include "Constants.h"
 #include <cstdint>
 #include <map>
 #include <queue>
+#include <string>
+#include <vector>
 
 
 extern NimBLEUUID serviceUUID;
@@ -38,6 +40,13 @@ public:
     void* context_data;
     // 14 Dec Optimalisatie: MTU bepalen
     uint16_t chunkSize = 200 ;
+
+    // properties
+    MatrixMode mode = MODE_NONE ;
+
+
+
+
 
 
     iPixelDevice(NimBLEAddress pAddress) : address(pAddress) {}

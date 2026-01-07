@@ -75,6 +75,15 @@ public:
 // We have to allocate it one time
 static IndexedBitmap bmp(WIDTH, HEIGHT, 8);
 
+bool make_temp_graph( void* generic_context, std::vector<uint8_t>& binaryDataVector, float temp[24] ) {
+
+	MatrixContext* context = static_cast<MatrixContext*>(generic_context);
+	bmp.clear(0) ;
+
+	
+
+	return true ;
+}
 
 
 bool make_animated_time( void* generic_context, std::vector<uint8_t>& binaryDataVector, String time) {

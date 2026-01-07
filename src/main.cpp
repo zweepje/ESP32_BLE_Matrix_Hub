@@ -1,6 +1,7 @@
 #include "main.h"
 #include "utils/webserial.h"
 #include "global.h"
+#include "Constants.h"
 #include <Arduino.h>
 #include "utils/webserial.h"
 #include <ImprovWiFiLibrary.h>
@@ -39,6 +40,13 @@ uint8_t g_debugFlags = DEBUG_QUEUE | DEBUG_BLE | DEBUG_BLE2;
 // Initialisatie
 
 
+MatrixMode getMode( String mstr ) {
+
+    if (mstr.equalsIgnoreCase("tijd") ) return MODE_CLOCK ;
+    if (mstr.equalsIgnoreCase("info") ) return MODE_INFO ;
+    if (mstr.equalsIgnoreCase("temp") ) return MODE_TEMP ;
+    return MODE_NONE ;
+}
 
 
 
@@ -186,7 +194,13 @@ void initdevices() {
             displays[i].device->context_data = static_cast<void*>(context);
             numdisplays++;
 
-            debugPrintf("Added %s to the active list\n", macAddressStr );
+            // tijd/temp/info
+
+            iPixelDevice *dev = displays[i].device;
+
+            dev->mode = getMode( displays[i].function );
+
+            debugPrintf("Added %s to the active list mode: %d\n", macAddressStr, dev->mode );
           }
         }
         prefs.end();
@@ -318,13 +332,17 @@ void loop_connected() {
 */
 	for (int i = 0; i < numdisplays; i++) {
 
-		if ( displays[i].device != nullptr ) {
-			displays[i].device->update();
-			displays[i].device->queueTick();
+	    iPixelDevice *dev = displays[i].device;
 
-		  // als het wekker is:
-		        displays[i].device->handleTimerLogic();
-		}
+	    if ( dev != nullptr ) {
+	      dev->update();
+	      dev->queueTick();
+
+	      if ( dev->mode == MODE_CLOCK ) {
+		// als het wekker is:
+		dev->handleTimerLogic();
+	      }
+	    }
 	}
 }
 
