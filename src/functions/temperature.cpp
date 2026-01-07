@@ -42,7 +42,7 @@ const unsigned int HEIGHT = 32;
 
 
 
-
+/*
 class BitmapGFX : public Adafruit_GFX {
 public:
     // Wijst naar je IndexedBitmap
@@ -70,7 +70,7 @@ public:
 } ; // BitmapGFX
 
 
-
+*/
 
 // We have to allocate it one time
 static IndexedBitmap bmp(WIDTH, HEIGHT, 8);
@@ -214,7 +214,7 @@ bool make_kooktime( void* generic_context, std::vector<uint8_t>& binaryDataVecto
 }
 
 
-
+/*
 bool make_temperature( std::vector<uint8_t>& binaryDataVector, float temperature, String title ) {
 
     GifMaker gifEngine ;
@@ -242,3 +242,4 @@ bool make_temperature( std::vector<uint8_t>& binaryDataVector, float temperature
     return true ;
 
 }
+*/

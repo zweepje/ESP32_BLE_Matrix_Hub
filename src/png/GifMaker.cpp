@@ -140,27 +140,12 @@ bool GifMaker::GetResults( std::vector<uint8_t>& binaryDataVector ) {
         size_t received_len = getFileCount(pGIF);               // De lengte van de data
 
         //Serial.printf("Vector data at %u, size is %u bytes\n", received_data, received_len );
-/*
-        Serial.printf("Hexdump of gif file\n") ;
-        for ( int i = 0; i < received_len; i++ ) {
-
-            Serial.printf("%02x", received_data[i]);
-        }
-        Serial.printf("\n End of Hexdump of gif file\n") ;
-*/
-
-
 
         if (fillVectorFromCharPtr(binaryDataVector, received_data, received_len)) {
             // De vector is nu gevuld met de bytes
-            Serial.printf("Vector succesvol gevuld, grootte: %u bytes\n", binaryDataVector.size());
-
-            // Roep de functie aan die de vector nodig heeft:
-            // this->sendPNG(binaryDataVector);
+            //Serial.printf("Vector succesvol gevuld, grootte: %u bytes\n", binaryDataVector.size());
         } else {
             Serial.println("Fout bij vullen van de vector.");
         }
-
-
         return true;
     }
