@@ -262,22 +262,22 @@ void iPixelDevice::processQueue() {
             //
             // Grafiekje met temperaturen
             //
-            float dagTemperaturen[24] ;
+            float buitenTemperaturen[24] ;
+            float kamerTemperaturen[24] ;
             std::vector<uint8_t> binaryDataVector;
 
             // 1. Pak de referentie naar de array in de JSON
-            JsonArray data = doc["data"];
+        	JsonArray buitent = doc["data"];
+        	JsonArray kamert = doc["roomdata"];
 
             // 2. Loop door de waarden heen (maximaal 24)
             for (int i = 0; i < 24; i++) {
-              dagTemperaturen[i] = data[i].as<float>();
+              buitenTemperaturen[i] = buitent[i].as<float>();
+              kamerTemperaturen[i] = kamert[i].as<float>();
             }
-            Serial.println("De float[24] array is nu gevuld met nieuwe data!");
-
-
-
-            make_temp_graph( this->context_data,binaryDataVector, dagTemperaturen ) ;
-            //this->sendGIF( binaryDataVector );
+            //Serial.println("De float[24] array is nu gevuld met nieuwe data!");
+            make_temp_graph( this->context_data,binaryDataVector, kamerTemperaturen, buitenTemperaturen ) ;
+            this->sendGIF( binaryDataVector );
 
         } else if  ( strcmp( cmd, "make_time_ani" ) == 0 ) {
 

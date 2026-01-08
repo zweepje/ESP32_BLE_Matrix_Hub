@@ -9,7 +9,7 @@ void initTime();
 String getCurrentTimeString();
 int getSeconds();
 struct tm getTimeInfo() ;
-
+int getHuidigUur();
 
 
 #endif //MYIPIXEL_TIMEFUNCTIONS_H

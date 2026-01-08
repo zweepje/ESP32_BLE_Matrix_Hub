@@ -63,6 +63,13 @@ struct tm getTimeInfo() {
     return timeinfo ;
 }
 
+int getHuidigUur() {
+
+	if (!getLocalTime(&timeinfo)) {
+		return 0;
+	}
+	return timeinfo.tm_hour; // Geeft een integer 0 t/m 23
+}
 /**
  * @brief Haalt de actuele, lokaal geformatteerde tijd op als HH:MM.
  * @return Een Arduino String met de tijd, of "Tijd??" als de synchronisatie mislukt.

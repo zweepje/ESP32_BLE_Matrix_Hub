@@ -19,6 +19,8 @@
 #include "../png/IndexedBitmap.h"
 #include "../png/letterbitmap.h"
 #include "../png/LetterDraw.h"
+#include "clock/timefunctions.h"
+#include "utils/webserial.h"
 
 
 const int    BLACK = 0 ;
@@ -75,12 +77,54 @@ public:
 // We have to allocate it one time
 static IndexedBitmap bmp(WIDTH, HEIGHT, 8);
 
-bool make_temp_graph( void* generic_context, std::vector<uint8_t>& binaryDataVector, float temp[24] ) {
+int tempy( float t ) {
+
+	int y = static_cast<int>( t );
+	y += 7 ;
+	if ( y<0 ) y=0 ;
+	if ( y>31 ) y=31;
+	return 31-y;
+}
+
+
+bool make_temp_graph( void* generic_context, std::vector<uint8_t>& binaryDataVector, float kamertemp[24], float buitentemp[24] ) {
 
 	MatrixContext* context = static_cast<MatrixContext*>(generic_context);
 	bmp.clear(0) ;
 
-	
+	int nhour = getHuidigUur() ;
+	debugPrintf("Uur is nu %d\n", nhour);
+
+	int colorbinnen = 1 ; //red
+	int colorbuiten = 3 ; //blue
+	int coloraxis = 2 ; // green
+
+	int yas = 31-7 ;
+	int xas = 3 ;
+
+	bmp.drawLine( 0, yas, 31, yas, coloraxis );
+	bmp.drawLine( xas, 0, xas, 31, coloraxis );
+
+	int y = tempy( kamertemp[0] );
+	int by = tempy( buitentemp[0] );
+	for ( int i = 1 ; i <= nhour ; i++ ) {
+
+		debugPrintf("kamer Temp %d is %f\n", i, kamertemp[i]);
+		int y2 = tempy( kamertemp[i] );
+		bmp.drawLine(i+xas, y, i+xas+1, y2, colorbinnen);
+		y = y2 ;
+
+		debugPrintf("buiten Temp %d is %f\n", i, buitentemp[i]);
+		int by2 = tempy( buitentemp[i] );
+		bmp.drawLine(i+xas, by, i+xas+1, by2, colorbuiten);
+		by = by2 ;
+	}
+
+	Animation anim = Animation();
+	anim.MakeAnimation( binaryDataVector, &context->current_bitmap, &bmp ) ;
+
+	// keep the last image for animation
+	context->current_bitmap.CopyFromBitmap(bmp);
 
 	return true ;
 }
@@ -206,6 +250,11 @@ bool make_clock( std::vector<uint8_t>& binaryDataVector, int hour, int min, int 
     Animation anim = Animation();
     anim.MakeGif( binaryDataVector, &bmp ) ;
     Serial.printf("make_clock exiting\n" );
+
+
+// todo: oude bitmap bewaren als we gaan animeren?
+
+
     return true;
 }
 
