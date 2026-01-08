@@ -102,8 +102,20 @@ bool make_temp_graph( void* generic_context, std::vector<uint8_t>& binaryDataVec
 	int yas = 31-7 ;
 	int xas = 3 ;
 
-	bmp.drawLine( 0, yas, 31, yas, coloraxis );
+	// draw the X-axis
+	bmp.drawLine( xas-1, yas, xas+24+1, yas, coloraxis );
+	bmp.setPixel( xas+12, yas+1, coloraxis );
+	bmp.setPixel( xas+8, yas+1, coloraxis );
+	bmp.setPixel( xas+18, yas+1, coloraxis );
+
+	// The Y-axis ( takes whole height )
 	bmp.drawLine( xas, 0, xas, 31, coloraxis );
+	bmp.setPixel( xas-1, yas -5, coloraxis );
+	bmp.setPixel( xas-1, yas +5, coloraxis );
+	bmp.setPixel( xas-1, yas -10, coloraxis );
+	bmp.setPixel( xas-1, yas -15, coloraxis );
+	bmp.setPixel( xas-1, yas -20, coloraxis );
+
 
 	int y = tempy( kamertemp[0] );
 	int by = tempy( buitentemp[0] );

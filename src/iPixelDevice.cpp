@@ -10,12 +10,19 @@
 #include "clock/timefunctions.h"
 #include "utils/webserial.h"
 
+
 NimBLEUUID serviceUUID("000000fa-0000-1000-8000-00805f9b34fb");
 NimBLEUUID charUUID("0000fa02-0000-1000-8000-00805f9b34fb");
 
 extern std::map<std::string, iPixelDevice> matrixRegistry;
 
 
+iPixelDevice::iPixelDevice(NimBLEAddress pAddress) :
+		address(pAddress),
+		functionmeter("gifcall"),
+		blemeter("bletcall")
+{
+}
 
 void iPixelDevice::processTimerCommand(StaticJsonDocument<4096>& doc) {
 
@@ -289,6 +296,8 @@ void iPixelDevice::processQueue() {
 
 
         } else if  ( strcmp( cmd, "make_temperature_ani" ) == 0 ) {
+
+        	functionmeter.start() ;
             // parse parameters
             const char* text_str = params[0];
             // fill in defaults
@@ -324,6 +333,7 @@ void iPixelDevice::processQueue() {
             std::vector<uint8_t> binaryDataVector;
             make_animated_temperature( this->context_data, binaryDataVector, temperature, title ) ;
             this->sendGIF( binaryDataVector );
+        	functionmeter.end() ;
 
 
 
@@ -520,7 +530,7 @@ void iPixelDevice::queueTick() {
 
     //Get command from queue
     std::vector<uint8_t> &command = queue.front();
-
+blemeter.start() ;
     Serial.printf("\n%s - Processing BLE queue\n", getLocalTimestamp().c_str() ) ;
     while ( command.size() > 0 ) {
 
@@ -583,6 +593,7 @@ void iPixelDevice::queueTick() {
         	this->client->disconnect();
         	// en gooi het commando weg
         	queue.erase(queue.begin());
+
         	break ; // leave
 
             /*
@@ -595,6 +606,7 @@ void iPixelDevice::queueTick() {
             */
         }
     }
+	blemeter.end() ;
     debugPrintf("\n");
 }
 void iPixelDevice::queuePush(std::vector<uint8_t> command) {

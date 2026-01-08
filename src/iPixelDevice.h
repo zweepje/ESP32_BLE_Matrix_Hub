@@ -10,7 +10,7 @@
 #include <queue>
 #include <string>
 #include <vector>
-
+#include "utils/TimeMeter.h"
 
 extern NimBLEUUID serviceUUID;
 extern NimBLEUUID charUUID;
@@ -44,12 +44,15 @@ public:
     // properties
     MatrixMode mode = MODE_NONE ;
 
+	TimeMeter functionmeter;
+	TimeMeter blemeter;
 
 
 
 
 
-    iPixelDevice(NimBLEAddress pAddress) : address(pAddress) {}
+
+    explicit iPixelDevice(NimBLEAddress pAddress) ;
     void printPrefix();
 
     // queue with received commands
