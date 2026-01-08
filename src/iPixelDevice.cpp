@@ -15,7 +15,7 @@ NimBLEUUID serviceUUID("000000fa-0000-1000-8000-00805f9b34fb");
 NimBLEUUID charUUID("0000fa02-0000-1000-8000-00805f9b34fb");
 
 extern std::map<std::string, iPixelDevice> matrixRegistry;
-
+extern AsyncWebSocket ws;
 
 iPixelDevice::iPixelDevice(NimBLEAddress pAddress) :
 		address(pAddress),
@@ -607,6 +607,7 @@ blemeter.start() ;
         }
     }
 	blemeter.end() ;
+	ws.text(lastNodeRedID, "READY");
     debugPrintf("\n");
 }
 void iPixelDevice::queuePush(std::vector<uint8_t> command) {

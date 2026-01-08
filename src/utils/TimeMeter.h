@@ -40,13 +40,13 @@ public:
 
 	void rapport() {
 		float avg = (float)_totalTime / _counter;
-		Serial.println("--- Prestatie Rapport ---");
+		Serial.println("\n\n--- Prestatie Rapport ---");
 		Serial.printf("Naam:      %s\n", _naam);
 		Serial.printf("Metingen:  %d\n", _counter);
 		Serial.printf("Gemiddeld: %.2f mSec\n", avg);
 		Serial.printf("Max:       %lu mSec\n", _maxTime);
 		Serial.printf("Min:       %lu mSec\n", _minTime);
-		Serial.println("-------------------------");
+		Serial.println("-------------------------\n\n");
 	}
 
 	void reset() {

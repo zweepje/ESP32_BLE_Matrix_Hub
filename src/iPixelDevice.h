@@ -47,7 +47,7 @@ public:
 	TimeMeter functionmeter;
 	TimeMeter blemeter;
 
-
+	uint32_t lastNodeRedID;
 
 
 

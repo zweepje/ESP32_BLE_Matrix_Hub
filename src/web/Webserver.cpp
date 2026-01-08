@@ -312,6 +312,8 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
             // Zoek de status van de client
             ClientState& state = clientStates.at(client->id());
             const char* command = doc["command"];
+        	state.assignedMatrix->lastNodeRedID = client->id();
+
 #ifdef KOOKWEKKER
             // Put doc in queue for later processing
             state.assignedMatrix->enqueueCommand(doc);
