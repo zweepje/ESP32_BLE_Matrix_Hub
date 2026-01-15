@@ -3,8 +3,8 @@
 #define VERSION_H
 
 #define VERSION "1.3.0"
-const char* BUILD_NUMBER = "6";
-const char* GIT_BRANCH = "dev";
-const char* BUILD_DATE = "2026-01-15 16:48:04";
+const char* BUILD_NUMBER = "10";
+const char* GIT_BRANCH = "main";
+const char* BUILD_DATE = "2026-01-15 16:55:11";
 
 #endif
