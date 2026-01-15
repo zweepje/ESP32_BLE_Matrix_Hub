@@ -5,6 +5,7 @@
 .vscode/ipch
 compile_commands.json
 node_modules
+build_no.txt
 /data/
 .parcel-cache
 /old/

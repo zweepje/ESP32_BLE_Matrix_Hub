@@ -1,0 +1,10 @@
+// DIT BESTAND IS AUTOMATISCH GEGENEREERD - NIET HANDMATIG AANPASSEN
+#ifndef VERSION_H
+#define VERSION_H
+
+#define VERSION "1.3.0"
+const char* BUILD_NUMBER = "6";
+const char* GIT_BRANCH = "dev";
+const char* BUILD_DATE = "2026-01-15 16:48:04";
+
+#endif
