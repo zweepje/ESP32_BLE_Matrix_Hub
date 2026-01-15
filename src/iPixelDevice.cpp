@@ -259,7 +259,17 @@ void iPixelDevice::processQueue() {
             // 4. Roep de functie aan met de geparseerde/default waarden
             this->sendText(text_str, animation, save_slot, speed, colorR, colorG, colorB, rainbow_mode, matrix_height);
 
-        } else if  ( strcmp( cmd, "set_brightness" ) == 0 ) {
+       }  else if  ( strcmp( cmd, "set_LED_on" ) == 0 ) {
+
+       		this->setLED( true );
+       		debugPrintf("Setting LED on\n");
+
+       }  else if  ( strcmp( cmd, "set_LED_off" ) == 0 ) {
+
+       		this->setLED( false );
+	       	debugPrintf("Setting LED off\n");
+
+       } else if  ( strcmp( cmd, "set_brightness" ) == 0 ) {
           String br_str = params[0].as<String>();
           int brightness = br_str.toInt();
           Serial.printf("Set brightness to: %d", brightness ) ;
