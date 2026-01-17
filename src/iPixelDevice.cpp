@@ -463,7 +463,8 @@ void iPixelDevice::connectAsync() {
         return;
     }
 
-    _state = CONNECTING;
+	DeviceState prevState = _state;
+	_state = CONNECTING;
     printPrefix();
     debugPrintf("[iPixelDevice] Connecting with %s",address.toString().c_str());
 
@@ -480,7 +481,9 @@ void iPixelDevice::connectAsync() {
 
         printPrefix();
         Serial.println("ERROR: Failed to start BLE connection!");
-        return;
+    	client->disconnect(); // retry later.
+        _state = prevState ;
+    	return;
     }
     connecting = true;
 }

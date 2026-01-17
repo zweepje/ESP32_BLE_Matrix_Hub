@@ -232,6 +232,7 @@ void connectionTask(void * pvParameters) {
 				// start a connection
 				displays[i].device->connectAsync();
 				Serial.printf("Queued BLE connectie met %s\n", displays[i].type.c_str());
+				vTaskDelay(pdMS_TO_TICKS(2000)); // wacht 2 seconden
 			}
 
 
