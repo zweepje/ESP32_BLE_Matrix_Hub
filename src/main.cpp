@@ -299,10 +299,14 @@ void setup() {
 
 }
 
-eButton btnMinutes = OFF;
-eButton btnSeconds = OFF;
-eButton btnStart  = OFF;
 
+
+const int TOUCH_START_STOP = 14; // De pin die mooi bij de rest zit
+const int TOUCH_SECONDS = 13; // De pin die mooi bij de rest zit
+const int TOUCH_MINUTES = 12; // De pin die mooi bij de rest zit
+TouchButton btnMinutes(TOUCH_MINUTES) ;
+TouchButton btnSeconds(TOUCH_SECONDS);
+TouchButton btnStart(TOUCH_START_STOP);
 
 unsigned long previousMillis = 0 ;
 unsigned long interval = 60000 ;
@@ -324,42 +328,10 @@ void loop() {
 }
 
 
-const int TOUCH_START_STOP = 14; // De pin die mooi bij de rest zit
-const int THRESHOLD_START = 60000;
-const int TOUCH_SECONDS = 13; // De pin die mooi bij de rest zit
-const int THRESHOLD_SECONDS = 60000;
-const int TOUCH_MINUTES = 12; // De pin die mooi bij de rest zit
-const int THRESHOLD_MINUTES = 60000;
-
-
-eButton checkbutton( int port, int threshold ) {
-
-	unsigned int val = touchRead(port);
-
-	debugPrintf("Touch value %d ", val);
-	if (val > threshold) {
-		return ON ;
-	} else {
-		return OFF ;
-	}
-}
-
 
 void loop_connected() {
 
 	//debugPrintf(("--- Main Loop ---\n"));
-	//
-	// check touch buttons
-	//
-
-	btnMinutes = checkbutton(TOUCH_MINUTES, THRESHOLD_MINUTES);
-	btnSeconds = checkbutton(TOUCH_SECONDS, THRESHOLD_SECONDS);
-	btnStart  = checkbutton(TOUCH_START_STOP, THRESHOLD_START);
-	debugPrintf("\nminutes %s\n", btnMinutes?"in":"los") ;
-	debugPrintf("seconds %s\n", btnSeconds?"in":"los") ;
-	debugPrintf("startstop %s\n", btnStart?"in":"los") ;
-	debugPrintf("\n\n");
-	delay( 500 );
 
 
     // 1. WebSocket onderhoud
@@ -393,6 +365,7 @@ void loop_connected() {
 			dev->queueTick();
 	    }
 	}
+	//delay(500);
 }
 
 //  iPixelDevice test(BLEAddress("3d:50:0c:1f:6d:ec"));

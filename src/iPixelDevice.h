@@ -58,7 +58,7 @@ public:
 	uint16_t timersettime = 0 ;
 	unsigned long  starttimertime = 0 ;
 
-
+	uint16_t lastdisplaytime = 999 ;
 
 
     explicit iPixelDevice(NimBLEAddress pAddress) ;

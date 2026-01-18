@@ -61,7 +61,7 @@ void iPixelDevice::processTimerCommand(StaticJsonDocument<4096>& doc) {
     else if ( timerSetting ) {
 
     	debugPrintf("Setting timer\n");
-    	showTime( timer );
+ //   	showTime( timer );
 
     }
     // Optioneel: Stuur direct een status update terug naar Home Assistant
@@ -80,6 +80,16 @@ void iPixelDevice::showClock( int hour, int min, int seconds ) {
 
 
 void iPixelDevice::showTime( int timerSeconds ) {
+
+	//
+	// do not send same image twice
+	//
+	if ( timerSeconds == lastdisplaytime  ) {
+		return ;
+	}
+	lastdisplaytime = timerSeconds;
+
+
 
     int m = timerSeconds / 60;
     int s = timerSeconds % 60;
@@ -138,6 +148,7 @@ void iPixelDevice::handleTimerLogic() {
 	showTime(timer);
 
 	return ;
+	/*
     if ( clockmode ) {
         struct tm ti = getTimeInfo() ;
 
@@ -163,6 +174,7 @@ void iPixelDevice::handleTimerLogic() {
             // Hier kun je een buzzer of LED-strip triggeren
         }
     }
+    */
 }
 
 void iPixelDevice::update() {
@@ -209,12 +221,17 @@ void iPixelDevice::handleButtons() {
 	debugPrintf(("handleButtons clock\n") );
 	debugPrintf("timer was %d\n", (int)timer  );
 
-	if ( btnMinutes || btnSeconds ) {
+	bool bmin = btnMinutes.check() ;
+	bool bsec = btnSeconds.check() ;
+	bool bstart = btnStart.check() ;
+
+	if ( bmin || bsec ) {
 		// a button was pressed, go to setting mode
 		_kookwekkkerState = SETTING ;
+
 	}
 
-	if ( btnStart ) {
+	if ( bstart ) {
 
 		if ( timer>0 ) {
 			_kookwekkkerState = RUNNING ;
@@ -226,16 +243,16 @@ void iPixelDevice::handleButtons() {
 	}
 
 
-	if ( btnMinutes == ON && btnSeconds == ON ) {
-		timer = 0 ;
+	if (bmin && bsec) {
+		timer = 0;
 	} else {
-			if ( btnMinutes == ON ) {
-				timer += 60 ;
-			}
+		if (bmin) {
+			timer += 60;
+		}
 
-			if ( btnSeconds == ON ) {
-				timer += 1 ;
-			}
+		if (bsec) {
+			timer += 1;
+		}
 	}
 	debugPrintf("timer is nu %d\n", (int)timer  );
 }
@@ -697,6 +714,7 @@ blemeter.start() ;
         }
     }
 	blemeter.end() ;
+	delay( 200 );
 	ws.text(lastNodeRedID, "READY");
     debugPrintf("\n");
 }
