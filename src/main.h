@@ -8,8 +8,10 @@
 
 #define KOOKWEKKER
 
-
-
+enum eButton { OFF, ON };
+extern eButton btnMinutes ;
+extern eButton btnSeconds ;
+extern eButton btnStart  ;
 
 // forward
 class iPixelDevice ;

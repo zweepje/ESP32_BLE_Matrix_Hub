@@ -282,6 +282,7 @@ void setup() {
   setup_wifi_post();
 
   initTime();
+//	touchSetCycles(0x1000, 0x1000);
   //
   // Maak de achtergrond-taak aan
   //
@@ -297,6 +298,10 @@ void setup() {
 
 
 }
+
+eButton btnMinutes = OFF;
+eButton btnSeconds = OFF;
+eButton btnStart  = OFF;
 
 
 unsigned long previousMillis = 0 ;
@@ -318,9 +323,45 @@ void loop() {
 
 }
 
+
+const int TOUCH_START_STOP = 14; // De pin die mooi bij de rest zit
+const int THRESHOLD_START = 60000;
+const int TOUCH_SECONDS = 13; // De pin die mooi bij de rest zit
+const int THRESHOLD_SECONDS = 60000;
+const int TOUCH_MINUTES = 12; // De pin die mooi bij de rest zit
+const int THRESHOLD_MINUTES = 60000;
+
+
+eButton checkbutton( int port, int threshold ) {
+
+	unsigned int val = touchRead(port);
+
+	debugPrintf("Touch value %d ", val);
+	if (val > threshold) {
+		return ON ;
+	} else {
+		return OFF ;
+	}
+}
+
+
 void loop_connected() {
 
-  //debugPrintf(("--- Main Loop ---\n"));
+	//debugPrintf(("--- Main Loop ---\n"));
+	//
+	// check touch buttons
+	//
+
+	btnMinutes = checkbutton(TOUCH_MINUTES, THRESHOLD_MINUTES);
+	btnSeconds = checkbutton(TOUCH_SECONDS, THRESHOLD_SECONDS);
+	btnStart  = checkbutton(TOUCH_START_STOP, THRESHOLD_START);
+	debugPrintf("\nminutes %s\n", btnMinutes?"in":"los") ;
+	debugPrintf("seconds %s\n", btnSeconds?"in":"los") ;
+	debugPrintf("startstop %s\n", btnStart?"in":"los") ;
+	debugPrintf("\n\n");
+	delay( 500 );
+
+
     // 1. WebSocket onderhoud
     // Nodig om client time-outs af te handelen
     ws.cleanupClients();
@@ -342,13 +383,14 @@ void loop_connected() {
 	    iPixelDevice *dev = displays[i].device;
 
 	    if ( dev != nullptr ) {
-	      dev->update();
-	      dev->queueTick();
 
-	      if ( dev->mode == MODE_CLOCK ) {
-		// als het wekker is:
-		dev->handleTimerLogic();
-	      }
+ 			if ( dev->mode == MODE_CLOCK ) {
+				// als het wekker is:
+				dev->handleTimerLogic();
+			}
+
+			dev->update();
+			dev->queueTick();
 	    }
 	}
 }

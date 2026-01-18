@@ -6,6 +6,7 @@
 #include "global.h"
 #include "iPixelCommands.h"
 #include "Helpers.h"
+#include "main.h"
 #include "functions/temperature.h"
 #include "clock/timefunctions.h"
 #include "utils/webserial.h"
@@ -48,19 +49,21 @@ void iPixelDevice::processTimerCommand(StaticJsonDocument<4096>& doc) {
         Serial.println("Wekker gereset.");
     }
     else if ( strcmp(action, "ONOFF" ) == 0 ) {
-
-        if ( LEDstate ) {
-            LEDstate = false ;
-        } else {
-            LEDstate = true ;
-        }
-        setLED( LEDstate );
-        Serial.println("Display On/Off.");
-        return ;
+	    if ( LEDstate ) {
+	    	LEDstate = false ;
+	    } else {
+	    	LEDstate = true ;
+	    }
+    	setLED( LEDstate );
+    	Serial.println("Display On/Off.");
+    	return ;
     }
-    else return ; // nothing changed
+    else if ( timerSetting ) {
 
-    showTime( timerSeconds );
+    	debugPrintf("Setting timer\n");
+    	showTime( timer );
+
+    }
     // Optioneel: Stuur direct een status update terug naar Home Assistant
     // updateHomeAssistant();
 }
@@ -101,8 +104,40 @@ void iPixelDevice::showTime( int timerSeconds ) {
 bool clockmode = true ;
 int lastnu = -1 ;
 
+
+//
+// Handle state of timer
+//
 void iPixelDevice::handleTimerLogic() {
 
+	switch (_kookwekkkerState ) {
+		case WEKKERIDLE:
+			handleButtons() ;
+			break;
+
+		case SETTING:
+			handleButtons() ;
+			break;
+
+		case RUNNING: {
+			uint16_t elapsed = (millis() - starttimertime) / 1000 ;  // in seconds
+			timer = timersettime - elapsed ;
+			if ( (timersettime - elapsed) <= 0 ) {
+				// Alarm
+				timer = timersettime ;
+				_kookwekkkerState = WEKKERIDLE ;
+				debugPrintf("+++++++++++ ALARM ++++++++++++\n");
+			}
+			break ;
+		}
+		case ALARM:
+		default:
+			break;
+	}
+
+	showTime(timer);
+
+	return ;
     if ( clockmode ) {
         struct tm ti = getTimeInfo() ;
 
@@ -152,6 +187,9 @@ void iPixelDevice::update() {
         case READY:
             // Hier gebeurt het echte werk:
             // Bijvoorbeeld: check of er nieuwe data in de buffer zit om te verzenden.
+    		if ( mode==MODE_CLOCK) {
+    			handleButtons() ;
+    		}
             processQueue();
             break;
 
@@ -164,6 +202,42 @@ void iPixelDevice::update() {
             Serial.printf("Error iPixelDevice\n" );
             break;
     }
+}
+
+void iPixelDevice::handleButtons() {
+
+	debugPrintf(("handleButtons clock\n") );
+	debugPrintf("timer was %d\n", (int)timer  );
+
+	if ( btnMinutes || btnSeconds ) {
+		// a button was pressed, go to setting mode
+		_kookwekkkerState = SETTING ;
+	}
+
+	if ( btnStart ) {
+
+		if ( timer>0 ) {
+			_kookwekkkerState = RUNNING ;
+			starttimertime = millis() ;
+			timersettime = timer ;
+			debugPrintf("timer is started %d\n", (int)timer  );
+		}
+		return ;
+	}
+
+
+	if ( btnMinutes == ON && btnSeconds == ON ) {
+		timer = 0 ;
+	} else {
+			if ( btnMinutes == ON ) {
+				timer += 60 ;
+			}
+
+			if ( btnSeconds == ON ) {
+				timer += 1 ;
+			}
+	}
+	debugPrintf("timer is nu %d\n", (int)timer  );
 }
 //
 // ProcessQueue ( data ontvangen door WS )
@@ -372,12 +446,18 @@ void iPixelDevice::processQueue() {
 
 
    }
-
+/*
     else {
         //Serial.printf("Queue empty" );
         delay( 100 ) ;
 
     }
+    */
+/*	if ( mode == MODE_CLOCK ) {
+
+		showTime( timer ) ;
+	}
+*/
 
 }
 
