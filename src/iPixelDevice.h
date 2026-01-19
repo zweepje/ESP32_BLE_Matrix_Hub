@@ -56,7 +56,8 @@ public:
 	boolean timerSetting = false ;
 	uint16_t timer = 0 ;
 	uint16_t timersettime = 0 ;
-	unsigned long  starttimertime = 0 ;
+	unsigned long starttimertime = 0 ;
+	unsigned long lastactivity = 0 ;
 
 	uint16_t lastdisplaytime = 999 ;
 

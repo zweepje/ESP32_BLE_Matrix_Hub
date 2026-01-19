@@ -8,14 +8,20 @@
 #include "utils/webserial.h"
 
 #define KOOKWEKKER
+//const unsigned long repeat_delay = 1000 ;	// 1 sec
+//const unsigned long repeat_interval = 333 ;	// 1/3 sec
 
 
 struct TouchButton {
 	uint8_t			pin ;
 	touch_value_t	threshold ;
 	u32_t			firstPress ;
-	bool			isOn ;
+	bool			isOn ;			// one time set
+	bool			isPressed ;		// continous
 	bool			thresholdread ;
+
+	bool			repeat ;
+	u32_t			interval ;
 
 	TouchButton( uint8_t pin ) {
 		this->pin = pin;
@@ -32,18 +38,44 @@ struct TouchButton {
 			thresholdread = true ;
 		}
 		touch_value_t current = touchRead( pin );
-		debugPrintf("current %d  threshold %d\n", (int)current, (int)threshold );
+		//debugPrintf("current %d  threshold %d\n", (int)current, (int)threshold );
 		if ( current > ( threshold * 1.15 ) ) {
+			isPressed = true ;
 			if ( !isOn ) {
+				repeat = false ;
+				interval = 0 ;
 				firstPress = millis();	// record starttime
 				isOn = true;
-				return true ;			// only 1 time!
+				return true ;
+			} else {
+				if ( ! repeat ) {
+					if ( millis()-firstPress > 1000 ) {
+						repeat = true ;
+						interval = millis() ;
+						isOn = true ;
+						return true ;
+					} else {
+						isOn = false ;
+						return true ;
+					}
+				} else {
+					if ( millis()-interval > 200 ) {
+						interval = millis() ;
+						isOn = true ;
+						return true ;
+					} else {
+						isOn = false ;
+						return true ;
+					}
+				}
 			}
 			isOn = true ;
 			return false ; // we already gave this info
 
 		} else {
+			repeat = false ;
 			isOn = false ;
+			isPressed = false ;
 			firstPress = 0 ;
 			return false ;
 		}

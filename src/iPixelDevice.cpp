@@ -120,9 +120,32 @@ int lastnu = -1 ;
 //
 void iPixelDevice::handleTimerLogic() {
 
+	if ( ((millis() - lastactivity)/1000 > 10 ) &&
+		 (_kookwekkkerState != ALARM)  &&
+		 (_kookwekkkerState != RUNNING) 	) {
+		//
+		_kookwekkkerState = WEKKERIDLE;
+	}
+
+
 	switch (_kookwekkkerState ) {
+
 		case WEKKERIDLE:
+
+			// When idle, show normal clock
+			{
+				struct tm ti = getTimeInfo() ;
+
+				int nu = ti.tm_sec ;
+				if (nu != lastnu) {
+					lastnu = nu;
+					showClock( ti.tm_hour, ti.tm_min, ti.tm_sec  ) ;
+				}
+			}
+
 			handleButtons() ;
+
+
 			break;
 
 		case SETTING:
@@ -130,6 +153,14 @@ void iPixelDevice::handleTimerLogic() {
 			break;
 
 		case RUNNING: {
+
+			bool bstart = btnStart.check() ;
+			if (bstart) {
+				_kookwekkkerState = WEKKERIDLE ;
+				break ; // do nothing further
+			}
+
+
 			uint16_t elapsed = (millis() - starttimertime) / 1000 ;  // in seconds
 			timer = timersettime - elapsed ;
 			if ( (timersettime - elapsed) <= 0 ) {
@@ -199,9 +230,9 @@ void iPixelDevice::update() {
         case READY:
             // Hier gebeurt het echte werk:
             // Bijvoorbeeld: check of er nieuwe data in de buffer zit om te verzenden.
-    		if ( mode==MODE_CLOCK) {
-    			handleButtons() ;
-    		}
+    //		if ( mode==MODE_CLOCK) {
+    //			handleButtons() ;
+    //		}
             processQueue();
             break;
 
@@ -216,14 +247,20 @@ void iPixelDevice::update() {
     }
 }
 
+
 void iPixelDevice::handleButtons() {
 
-	debugPrintf(("handleButtons clock\n") );
-	debugPrintf("timer was %d\n", (int)timer  );
+	//debugPrintf(("handleButtons clock\n") );
+	//debugPrintf("timer was %d\n", (int)timer  );
 
 	bool bmin = btnMinutes.check() ;
 	bool bsec = btnSeconds.check() ;
 	bool bstart = btnStart.check() ;
+
+	if ( bmin || bsec || bstart ) {
+		lastactivity = millis() ;
+	}
+
 
 	if ( bmin || bsec ) {
 		// a button was pressed, go to setting mode
@@ -243,7 +280,7 @@ void iPixelDevice::handleButtons() {
 	}
 
 
-	if (bmin && bsec) {
+	if ( btnMinutes.isPressed &&  btnSeconds.isPressed ) {
 		timer = 0;
 	} else {
 		if (bmin) {
@@ -254,7 +291,7 @@ void iPixelDevice::handleButtons() {
 			timer += 1;
 		}
 	}
-	debugPrintf("timer is nu %d\n", (int)timer  );
+	//debugPrintf("timer is nu %d\n", (int)timer  );
 }
 //
 // ProcessQueue ( data ontvangen door WS )
