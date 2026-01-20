@@ -55,8 +55,8 @@ struct TouchButton {
 						isOn = true ;
 						return true ;
 					} else {
-						isOn = false ;
-						return true ;
+						isOn = true ;
+						return false ;
 					}
 				} else {
 					if ( millis()-interval > 200 ) {
@@ -64,8 +64,8 @@ struct TouchButton {
 						isOn = true ;
 						return true ;
 					} else {
-						isOn = false ;
-						return true ;
+						isOn = true ;
+						return false ;
 					}
 				}
 			}

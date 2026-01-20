@@ -156,7 +156,8 @@ void iPixelDevice::handleTimerLogic() {
 
 			bool bstart = btnStart.check() ;
 			if (bstart) {
-				_kookwekkkerState = WEKKERIDLE ;
+				lastactivity = millis() ;
+				_kookwekkkerState = SETTING ;
 				break ; // do nothing further
 			}
 
