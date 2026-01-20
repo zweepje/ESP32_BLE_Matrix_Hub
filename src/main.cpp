@@ -283,6 +283,7 @@ void setup() {
   setup_wifi_post();
 
   initTime();
+//	touchSetCycles(0x1000, 0x1000);
   //
   // Maak de achtergrond-taak aan
   //
@@ -299,6 +300,14 @@ void setup() {
 
 }
 
+
+
+const int TOUCH_START_STOP = 14; // De pin die mooi bij de rest zit
+const int TOUCH_SECONDS = 13; // De pin die mooi bij de rest zit
+const int TOUCH_MINUTES = 12; // De pin die mooi bij de rest zit
+TouchButton btnMinutes(TOUCH_MINUTES) ;
+TouchButton btnSeconds(TOUCH_SECONDS);
+TouchButton btnStart(TOUCH_START_STOP);
 
 unsigned long previousMillis = 0 ;
 unsigned long interval = 60000 ;
@@ -319,9 +328,13 @@ void loop() {
 
 }
 
+
+
 void loop_connected() {
 
-  //debugPrintf(("--- Main Loop ---\n"));
+	//debugPrintf(("--- Main Loop ---\n"));
+
+
     // 1. WebSocket onderhoud
     // Nodig om client time-outs af te handelen
     ws.cleanupClients();
@@ -343,15 +356,17 @@ void loop_connected() {
 	    iPixelDevice *dev = displays[i].device;
 
 	    if ( dev != nullptr ) {
-	      dev->update();
-	      dev->queueTick();
 
-	      if ( dev->mode == MODE_CLOCK ) {
-		// als het wekker is:
-		dev->handleTimerLogic();
-	      }
+ 			if ( dev->mode == MODE_CLOCK ) {
+				// als het wekker is:
+				dev->handleTimerLogic();
+			}
+
+			dev->update();
+			dev->queueTick();
 	    }
 	}
+	//delay(500);
 }
 
 //  iPixelDevice test(BLEAddress("3d:50:0c:1f:6d:ec"));

@@ -16,19 +16,22 @@ extern NimBLEUUID serviceUUID;
 extern NimBLEUUID charUUID;
 
 class iPixelDevice : public NimBLEClientCallbacks {
+private:
+	int timerSeconds = 0;
+	bool isRunning = false;
+	unsigned long lastTick = 0;
+	bool LEDstate = true ;
+
+
 
 private:
-    int timerSeconds = 0;
-    bool isRunning = false;
-    unsigned long lastTick = 0;
-    bool LEDstate = true ;
+	std::queue<std::string> commandQueue; // De queue is hier gedeclareerd
+	enum DeviceState { IDLE, CONNECTING, WAITING_FOR_POST, READY, ERROR };
+	DeviceState _state = IDLE;
 
+	enum KookwekkkerState { WEKKERIDLE, SETTING, RUNNING, ALARM };
+	KookwekkkerState _kookwekkkerState = WEKKERIDLE;
 
-
-private:
-    std::queue<std::string> commandQueue; // De queue is hier gedeclareerd
-    enum DeviceState { IDLE, CONNECTING, WAITING_FOR_POST, READY, ERROR };
-    DeviceState _state = IDLE;
 public:
     NimBLEAddress address;
     NimBLEClient *client = nullptr;
@@ -49,7 +52,14 @@ public:
 
 	uint32_t lastNodeRedID;
 
+	boolean timerRunning = false ;
+	boolean timerSetting = false ;
+	uint16_t timer = 0 ;
+	uint16_t timersettime = 0 ;
+	unsigned long starttimertime = 0 ;
+	unsigned long lastactivity = 0 ;
 
+	uint16_t lastdisplaytime = 999 ;
 
 
     explicit iPixelDevice(NimBLEAddress pAddress) ;
@@ -78,8 +88,13 @@ public:
     void processQueue() ;
 
     // kookwekker
+	void handleButtons() ;
+	void processTimerCommand(StaticJsonDocument<4096>& doc) ;
+
+
     void handleTimerLogic() ;
-    void processTimerCommand(StaticJsonDocument<4096>& doc) ;
+	// clock display functions
+
     void showTime( int seconds ) ;
     void showClock( int hour, int min, int seconds ) ;
 
