@@ -21,7 +21,7 @@ extern "C" {
 void initfs(void);
 }
 
-bool debugbuttons = true ;
+bool debugbuttons = false;
 
 Preferences preferences;
 ImprovWiFi improvSerial(&Serial);
@@ -302,7 +302,7 @@ void setup() {
 
 
 
-const int TOUCH_START_STOP = 14; // De pin die mooi bij de rest zit
+const int TOUCH_START_STOP = 1; // De pin die mooi bij de rest zit
 const int TOUCH_SECONDS = 13; // De pin die mooi bij de rest zit
 const int TOUCH_MINUTES = 12; // De pin die mooi bij de rest zit
 TouchButton btnMinutes(TOUCH_MINUTES) ;
