@@ -10,7 +10,7 @@
 #define KOOKWEKKER
 //const unsigned long repeat_delay = 1000 ;	// 1 sec
 //const unsigned long repeat_interval = 333 ;	// 1/3 sec
-
+extern bool debugbuttons;
 
 struct TouchButton {
 	uint8_t			pin ;
@@ -38,7 +38,8 @@ struct TouchButton {
 			thresholdread = true ;
 		}
 		touch_value_t current = touchRead( pin );
-		//debugPrintf("current %d  threshold %d\n", (int)current, (int)threshold );
+		if ( debugbuttons )
+			debugPrintf("current %d  threshold %d\n", (int)current, (int)threshold );
 		if ( current > ( threshold * 1.15 ) ) {
 			isPressed = true ;
 			if ( !isOn ) {

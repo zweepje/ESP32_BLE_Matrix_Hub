@@ -273,14 +273,29 @@ bool make_clock( std::vector<uint8_t>& binaryDataVector, int hour, int min, int 
 
 bool make_kooktime( void* generic_context, std::vector<uint8_t>& binaryDataVector, String timeStr ) {
 
+	timeStr="12";
+
     Serial.printf("make_kooktime was called %s\n", timeStr.c_str() );
     //GifMaker gifEngine ;
     MatrixContext* context = static_cast<MatrixContext*>(generic_context);
     bmp.clear(0) ;
-    tekenString( bmp, timeStr.c_str(), 1, 15, GREEN, largefont2 ) ;
+    tekenString( bmp, timeStr.c_str(), 1, 15, GREEN, bignumbersfont ) ;
     Animation anim = Animation();
     anim.MakeGif( binaryDataVector, &bmp ) ;
     return true ;
+}
+
+
+bool ORGmake_kooktime( void* generic_context, std::vector<uint8_t>& binaryDataVector, String timeStr ) {
+
+	Serial.printf("make_kooktime was called %s\n", timeStr.c_str() );
+	//GifMaker gifEngine ;
+	MatrixContext* context = static_cast<MatrixContext*>(generic_context);
+	bmp.clear(0) ;
+	tekenString( bmp, timeStr.c_str(), 1, 15, GREEN, largefont2 ) ;
+	Animation anim = Animation();
+	anim.MakeGif( binaryDataVector, &bmp ) ;
+	return true ;
 }
 
 

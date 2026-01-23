@@ -7,6 +7,24 @@
 
 #include "letterbitmap.h"
 
+FontInfo BigNumbersInfo[] =
+{
+	FontInfo( ' ', 3, 12, 3, 12),
+	FontInfo( '1', 4, 12, 3, 12),
+	FontInfo( '2', 7, 12, 10, 12),
+	FontInfo( '3', 7, 12, 20, 12),
+	FontInfo( '4', 7, 12, 30, 12),
+	FontInfo( '5', 7, 12, 40, 12),
+	FontInfo( '6', 7, 12, 0, 27),
+	FontInfo( '7', 7, 12, 10, 27),
+	FontInfo( '8', 7, 12, 20, 27),
+	FontInfo( '9', 7, 12, 30, 27),
+	FontInfo( '0', 7, 12, 40, 27),
+	FontInfo( ':', 2, 10, 48, 12),
+	FontInfo( ',', 2, 10, 48, 27),
+
+};
+
 
 FontInfo LargeFontInfo[] =
 {
@@ -79,10 +97,12 @@ FontInfo SmallFontInfo[] =
 
 
 
+int ElementsBigNumberFont = sizeof( BigNumbersInfo ) / sizeof( FontInfo);
 int ElementsLargeFont = sizeof( LargeFontInfo ) / sizeof( FontInfo);
 int ElementsLargeFont2 = sizeof( LargeFont2Info ) / sizeof( FontInfo);
 int ElementsSmallFont = sizeof( SmallFontInfo ) / sizeof( FontInfo);
 
+MyFont bignumbersfont( bignumbersbitmap, 64, BigNumbersInfo, ElementsBigNumberFont );
 MyFont largefont( largefontbitmap, 64, LargeFontInfo, ElementsLargeFont );
 MyFont largefont2( largefontbitmap, 64, LargeFont2Info, ElementsLargeFont2 );
 MyFont smallfont( smallfontbitmap, 128, SmallFontInfo, ElementsSmallFont );

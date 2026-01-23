@@ -35,6 +35,7 @@ class MyFont {
 extern MyFont largefont;    // make it public available
 extern MyFont largefont2;    // make it public available
 extern MyFont smallfont;    // make it public available
+extern MyFont bignumbersfont;
 
 
 #endif //MYIPIXEL_MYFONT_H

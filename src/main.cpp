@@ -21,7 +21,7 @@ extern "C" {
 void initfs(void);
 }
 
-
+bool debugbuttons = true ;
 
 Preferences preferences;
 ImprovWiFi improvSerial(&Serial);
@@ -360,6 +360,7 @@ void loop_connected() {
  			if ( dev->mode == MODE_CLOCK ) {
 				// als het wekker is:
 				dev->handleTimerLogic();
+ 				if ( debugbuttons ) delay( 500 );
 			}
 
 			dev->update();
