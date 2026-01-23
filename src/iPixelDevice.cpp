@@ -680,10 +680,13 @@ void iPixelDevice::queueTick() {
     std::vector<uint8_t> &command = queue.front();
 blemeter.start() ;
     Serial.printf("\n%s - Processing BLE queue\n", getLocalTimestamp().c_str() ) ;
+
+
+
     while ( command.size() > 0 ) {
 
         //Take bytes from command
-        size_t chunks = min((int)this->chunkSize, (int)command.size());
+        size_t chunks = min((int)this->chunkSize-20, (int)command.size());
         Serial.printf("Chunk is %d", chunks ) ;
 
         if ( this->client != nullptr && client->isConnected()) {
@@ -707,6 +710,7 @@ blemeter.start() ;
 
                 // Geef de verbinding even rust om te herstellen van de hik
                 delay(20);
+            	break ;		// leave the while loop, retry the whole!
             }
 
 
