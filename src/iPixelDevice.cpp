@@ -91,20 +91,12 @@ void iPixelDevice::showTime( int timerSeconds ) {
 
 
 
-    int m = timerSeconds / 60;
-    int s = timerSeconds % 60;
-    Serial.printf("Resterend: %02d:%02d\n", m, s);
 
     std::vector<uint8_t> binaryDataVector;
-    char timeBuffer[6]; // Ruimte voor "mm.ss" + de afsluitende '\0'
-    snprintf(timeBuffer, sizeof(timeBuffer), "%02d.%02d", m, s);
 
-    String displayTime = String(timeBuffer);
 
-    debugPrintf("Timestring is <%s>\n", displayTime.c_str() );
-
-    make_kooktime( this->context_data,binaryDataVector, displayTime ) ;
-    debugPrintf("Sending GIF <%s>\n", displayTime.c_str() );
+    make_kooktime( this->context_data,binaryDataVector, timerSeconds ) ;
+    debugPrintf("Sending GIF <%d>\n", timerSeconds );
 
     this->sendGIF( binaryDataVector );
 

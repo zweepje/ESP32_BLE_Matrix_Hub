@@ -46,17 +46,50 @@ void tekenCijfer(IndexedBitmap& bmp, char cijferChar, int startX, int startY, ui
     }
 }
 
-    void tekenString( IndexedBitmap& bmp, const char *cijferStr, int startX, int startY, uint16_t kleur, MyFont font ) {
 
-        for ( int i = 0 ; i < strlen(cijferStr) ; i++) {
+//
+// deprecated
+//
+void tekenString( IndexedBitmap& bmp, const char *cijferStr, int startX, int startY, uint16_t kleur, MyFont font ) {
+#pragma message("LET OP: Gebruik voortaan nieuwetekenString")
 
-            char cijfer = cijferStr[i];
-            tekenCijfer( bmp, cijfer, startX, startY, kleur, font ) ;
+    for ( int i = 0 ; i < strlen(cijferStr) ; i++) {
 
+        char cijfer = cijferStr[i];
+        tekenCijfer( bmp, cijfer, startX, startY, kleur, font ) ;
 
-            FontInfo *info = font.getFontInfo( cijfer );
-            startX += 1 + info->width;
-        }
+        FontInfo *info = font.getFontInfo( cijfer );
+        startX += 1 + info->width;
     }
+}
 
 
+void tekenString( IndexedBitmap& bmp, const char *string, int startX, int startY, uint16_t kleur, stringSpec &spec ) {
+
+	for ( int i = 0 ; i < strlen(string) ; i++) {
+
+		char cijfer = string[i];
+		tekenCijfer( bmp, cijfer, startX, startY, kleur, *spec.font ) ;
+		FontInfo *info = spec.font->getFontInfo( cijfer );
+		startX += spec.spacing + info->width;
+	}
+}
+
+
+
+
+int  calcSize( const char *string, stringSpec &spec ) {
+
+	int len = 0 ;
+
+	for ( int i=0 ; i<strlen(string) ; i++ ) {
+		char karakter = string[i];
+		FontInfo *info = spec.font->getFontInfo( karakter );
+		len += info->width ;
+		if ( i<strlen(string) -1 ) {
+			len += spec.spacing;
+		}
+	}
+
+	return len;
+}

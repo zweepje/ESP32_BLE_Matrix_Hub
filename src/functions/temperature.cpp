@@ -199,6 +199,7 @@ bool make_animated_temperature( void* generic_context, std::vector<uint8_t>& bin
     String temperatureString = tempBuffer;
     Serial.printf("Temperature is %f, string is %s\n", temperature, temperatureString.c_str() );
 
+
     tekenString( bmp, temperatureString.c_str(), 1, 15, GREEN, largefont ) ;
     tekenString( bmp, title.c_str(), 1,28, BLUE, smallfont ) ;
 
@@ -271,22 +272,56 @@ bool make_clock( std::vector<uint8_t>& binaryDataVector, int hour, int min, int 
 }
 
 
-bool make_kooktime( void* generic_context, std::vector<uint8_t>& binaryDataVector, String timeStr ) {
 
-	timeStr="12";
+bool make_kooktime( void* generic_context, std::vector<uint8_t>& binaryDataVector, int time ) {
 
-    Serial.printf("make_kooktime was called %s\n", timeStr.c_str() );
+    Serial.printf("make_kooktime was called %d\n", time );
+
+	int m = time/ 60;
+	int s = time % 60;
+	Serial.printf("Resterend: %02d:%02d\n", m, s);
+	char timeBuffer[6]; // Ruimte voor "mm.ss" + de afsluitende '\0'
+
+
+
+
     //GifMaker gifEngine ;
     MatrixContext* context = static_cast<MatrixContext*>(generic_context);
     bmp.clear(0) ;
-    tekenString( bmp, timeStr.c_str(), 1, 15, GREEN, bignumbersfont ) ;
-    Animation anim = Animation();
+
+	if ( m == 0 ) {
+		snprintf(timeBuffer, sizeof(timeBuffer), "%02d",  s);
+		String displayTime = String(timeBuffer);
+		debugPrintf("Timestring is <%s>\n", displayTime.c_str() );
+		stringSpec spec = { &bignumbersfont, false, 2 };
+		int len = calcSize( displayTime.c_str(), spec );
+		int startX = ( 31 - len ) / 2 ;
+		int color = GREEN ;
+		if ( s<30 ) {
+			color = BLUE ;
+			if ( s<10 ) {
+				color = RED ;
+			}
+		}
+		tekenString( bmp, displayTime.c_str(), startX, 15, color, spec ) ;
+
+	} else {
+		snprintf(timeBuffer, sizeof(timeBuffer), "%02d:%02d", m, s);
+		String displayTime = String(timeBuffer);
+		debugPrintf("Timestring is <%s>\n", displayTime.c_str() );
+
+		stringSpec spec = { &largefont2, false, 1 };
+		int len = calcSize( displayTime.c_str(), spec );
+		int startX = ( 31 - len ) / 2 ;
+		tekenString( bmp, displayTime.c_str(), startX, 15, GREEN, spec ) ;
+	}Animation anim = Animation();
     anim.MakeGif( binaryDataVector, &bmp ) ;
     return true ;
 }
 
 
-bool ORGmake_kooktime( void* generic_context, std::vector<uint8_t>& binaryDataVector, String timeStr ) {
+
+bool orgmake_kooktime( void* generic_context, std::vector<uint8_t>& binaryDataVector, String timeStr ) {
 
 	Serial.printf("make_kooktime was called %s\n", timeStr.c_str() );
 	//GifMaker gifEngine ;
