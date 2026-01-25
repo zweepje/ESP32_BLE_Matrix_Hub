@@ -25,7 +25,7 @@ extern "C" {
 void initfs(void);
 }
 
-bool debugbuttons = true;
+bool debugbuttons = false;
 
 Preferences preferences;
 ImprovWiFi improvSerial(&Serial);
