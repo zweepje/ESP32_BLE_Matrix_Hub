@@ -16,12 +16,16 @@
 #include "clock/timefunctions.h"
 #include "functions/MatrixContext.h"
 #include "version.h"
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include "oleddisplay.h"
 
 extern "C" {
 void initfs(void);
 }
 
-bool debugbuttons = false;
+bool debugbuttons = true;
 
 Preferences preferences;
 ImprovWiFi improvSerial(&Serial);
@@ -49,7 +53,32 @@ MatrixMode getMode( String mstr ) {
     return MODE_NONE ;
 }
 
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 32
+#define OLED_ADDR    0x3C
 
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+bool hasDisplay = false;
+
+
+
+// FUNCTIE 2: Schrijf tekst naar het scherm (veilig)
+void updateScherm(String regel1, String regel2) {
+	if (!hasDisplay) return; // Doe niks als er geen scherm is
+
+	display.clearDisplay();
+	display.setTextSize(1);
+	display.setTextColor(SSD1306_WHITE);
+
+	display.setCursor(0, 0);
+	display.println(regel1);
+
+	display.setTextSize(2); // Grotere tekst voor de tijd/status
+	display.setCursor(0, 12);
+	display.println(regel2);
+
+	display.display();
+}
 
 
 void onImprovWiFiErrorCb(ImprovTypes::Error err) {
@@ -297,6 +326,26 @@ void setup() {
       0                 // Pin de taak aan Core 0 (Wi-Fi/BT core)
   );
 
+	initdisplay();
+
+
+	// Forceer de pinnen die we willen gebruiken
+	Wire.begin(8, 9);
+
+	// Eerst de pinnen instellen!
+	delay(100); // Geef de hardware even de tijd
+
+	// Nu pas de check uitvoeren
+	if (checkDisplay()) {
+		display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+		Serial.print("Display available\n");
+
+	} else {
+		Serial.print("Display not detected\n");
+
+	}
+	wisScherm();
+
 
 }
 
@@ -310,7 +359,7 @@ TouchButton btnSeconds(TOUCH_SECONDS);
 TouchButton btnStart(TOUCH_START_STOP);
 
 unsigned long previousMillis = 0 ;
-unsigned long interval = 60000 ;
+unsigned long interval = 1000 ;
 
 void loop() {
 
@@ -321,8 +370,9 @@ void loop() {
       String time = getCurrentTimeString();
 
       debugPrintf( "======== Time is: %s ========\n",time.c_str() );
-
-  }
+  		schrijfTekst( "           ", 10, 10, 2 ) ;
+  		schrijfTekst( time.c_str(), 10, 10, 2 ) ;
+  	}
 
   loop_connected();
 
@@ -409,5 +459,58 @@ void setup_connected() {
   // De MTU die we op 14 dec wilden checken:
   debugPrintf("[BLE] Auto-MTU Detection: Ready\n");
   debugPrintf("----------------------------\n");
+/*
+	debugPrintf("----------------------------\n");
 
+	if ( checkDisplay() ) {
+
+		debugPrintf("Display beschikbaar\n") ;
+
+	} else {
+		debugPrintf("Geen display\n") ;
+
+
+	}
+	debugPrintf("----------------------------\n");
+*/
+}
+void esetup() {
+	Serial.begin(115200);
+	delay(2000); // Wacht even tot de Serial Monitor klaar is
+	Serial.println("\nI2C Scanner gestart");
+	initdisplay();
+
+
+	// Forceer de pinnen die we willen gebruiken
+	Wire.begin(8, 9);
+
+	// Eerst de pinnen instellen!
+	delay(100); // Geef de hardware even de tijd
+
+	// Nu pas de check uitvoeren
+	if (checkDisplay()) {
+		display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+		Serial.print("Display available");
+
+	}
+	wisScherm();
+}
+
+void kloop() {
+	byte error, address;
+	int nDevices = 0;
+
+	for(address = 1; address < 127; address++ ) {
+		Wire.beginTransmission(address);
+		error = Wire.endTransmission();
+
+		if (error == 0) {
+			Serial.print("I2C apparaat gevonden op adres 0x");
+			if (address < 16) Serial.print("0");
+			Serial.println(address, HEX);
+			nDevices++;
+		}
+	}
+	if (nDevices == 0) Serial.println("Geen I2C apparaten gevonden\n");
+	delay(5000);
 }

@@ -5,6 +5,7 @@
 #ifndef MYIPIXEL_MAIN_H
 #define MYIPIXEL_MAIN_H
 #include "iPixelDevice.h"
+#include "oleddisplay.h"
 #include "utils/webserial.h"
 
 #define KOOKWEKKER
@@ -32,14 +33,20 @@ struct TouchButton {
 	}
 
 	bool check() {
-
 		if ( !thresholdread ) {
 			threshold = touchRead(pin);
 			thresholdread = true ;
 		}
 		touch_value_t current = touchRead( pin );
-		if ( debugbuttons )
+		if ( debugbuttons ) {
 			debugPrintf("current %d  threshold %d\n", (int)current, (int)threshold );
+			if ( displayAvailable && pin==1 ) {
+				char buffer[32] ;
+				snprintf(buffer, sizeof(buffer), "Munt 1: %d", current);
+				wisScherm();
+				schrijfTekst( buffer, 10, 10, 1 ) ;
+			}
+		}
 		if ( current > ( threshold * 1.15 ) ) {
 			isPressed = true ;
 			if ( !isOn ) {
