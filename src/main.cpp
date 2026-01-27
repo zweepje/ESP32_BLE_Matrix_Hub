@@ -20,6 +20,9 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include "oleddisplay.h"
+#include "i2c/I2CSetup.h"
+#include "audio/I2SSetup.h"
+#include "audio/WavPlayer.h"
 
 extern "C" {
 void initfs(void);
@@ -44,6 +47,7 @@ void setup_wifi_post();
 uint8_t g_debugFlags = DEBUG_QUEUE | DEBUG_BLE | DEBUG_BLE2;
 // Initialisatie
 
+WavPlayer player;
 
 MatrixMode getMode( String mstr ) {
 
@@ -282,7 +286,6 @@ void connectionTask(void * pvParameters) {
 }
 
 
-
 void setup() {
 
   Serial.begin(115200);
@@ -346,6 +349,24 @@ void setup() {
 	}
 	wisScherm();
 
+	if (!LittleFS.begin()) {
+		Serial.println("LittleFS mount failed");
+		return;
+	}
+
+	setupI2C(8, 9);   // ✅ alleen I2C
+	setupI2S();       // ✅ alleen audio
+	Serial.println("Start playing\n");
+
+	WavPlayer player;
+	wisScherm();
+	schrijfTekst( "start play", 10,10,2 );
+	//player.play("/beep.wav");
+	Serial.println("Playing done\n");
+	wisScherm();
+	schrijfTekst( "done", 10,10,2 );
+	delay(5000);
+
 
 }
 
@@ -359,7 +380,7 @@ TouchButton btnSeconds(TOUCH_SECONDS);
 TouchButton btnStart(TOUCH_START_STOP);
 
 unsigned long previousMillis = 0 ;
-unsigned long interval = 1000 ;
+unsigned long interval = 10000 ;
 
 void loop() {
 
@@ -370,7 +391,7 @@ void loop() {
       String time = getCurrentTimeString();
 
       debugPrintf( "======== Time is: %s ========\n",time.c_str() );
-  		schrijfTekst( "           ", 10, 10, 2 ) ;
+  		wisScherm();
   		schrijfTekst( time.c_str(), 10, 10, 2 ) ;
   	}
 
@@ -382,25 +403,8 @@ void loop() {
 
 void loop_connected() {
 
-	//debugPrintf(("--- Main Loop ---\n"));
-
-
-    // 1. WebSocket onderhoud
-    // Nodig om client time-outs af te handelen
     ws.cleanupClients();
-/*
-    // 2. Queue Verwerking
-    // Loop door alle geregistreerde Matrix Controllers
-    for (auto& pair : matrixRegistry) {
-      // pair.second is een referentie naar het iPixelDevice object
-      //pair.second.processQueue();
-      pair.second.update();
-#ifdef KOOKWEKKER
-      pair.second.handleTimerLogic() ;
-#endif
-      pair.second.queueTick();
-    }
-*/
+
 	for (int i = 0; i < numdisplays; i++) {
 
 	    iPixelDevice *dev = displays[i].device;
@@ -420,10 +424,6 @@ void loop_connected() {
 	//delay(500);
 }
 
-//  iPixelDevice test(BLEAddress("3d:50:0c:1f:6d:ec"));
-//2F:9F:9C:9C:51:AC
-
-
 
 String getResetReason() {
   esp_reset_reason_t reason = esp_reset_reason();
@@ -435,7 +435,8 @@ String getResetReason() {
     case ESP_RST_TASK_WDT:return "Task Watchdog (Hung)";
     case ESP_RST_BROWNOUT:return "Brownout (Voltage Drop)";
     default:              return "Unknown Reset Reason";
-  }}
+  }
+}
 
 
 
@@ -444,73 +445,20 @@ void setup_connected() {
 
 	initdevices() ;
 
-  init_bluetooth();
-  init_webserver();
-  WebSerial.setBuffer( 0 );
-  WebSerial.begin(&server);
-  //delay(2000) ;
+	init_bluetooth();
+	init_webserver();
+	WebSerial.setBuffer( 0 );
+	WebSerial.begin(&server);
+	//delay(2000) ;
 
-  // Rapportage zodra WebSerial klaar is
-  debugPrintf("--- ESP32-S3 BOOT REPORT ---\n");
-  debugPrintf("[SYS] Reset Reason: %s\n", getResetReason().c_str());
-  debugPrintf("[SYS] Free Heap: %u bytes\n", ESP.getFreeHeap());
-  debugPrintf("[WIFI] Connected! IP: %s (RSSI: %d)\n", WiFi.localIP().toString().c_str(), WiFi.RSSI());
+	// Rapportage zodra WebSerial klaar is
+	debugPrintf("--- ESP32-S3 BOOT REPORT ---\n");
+	debugPrintf("[SYS] Reset Reason: %s\n", getResetReason().c_str());
+	debugPrintf("[SYS] Free Heap: %u bytes\n", ESP.getFreeHeap());
+	debugPrintf("[WIFI] Connected! IP: %s (RSSI: %d)\n", WiFi.localIP().toString().c_str(), WiFi.RSSI());
 
-  // De MTU die we op 14 dec wilden checken:
-  debugPrintf("[BLE] Auto-MTU Detection: Ready\n");
-  debugPrintf("----------------------------\n");
-/*
+	// De MTU die we op 14 dec wilden checken:
+	debugPrintf("[BLE] Auto-MTU Detection: Ready\n");
 	debugPrintf("----------------------------\n");
 
-	if ( checkDisplay() ) {
-
-		debugPrintf("Display beschikbaar\n") ;
-
-	} else {
-		debugPrintf("Geen display\n") ;
-
-
-	}
-	debugPrintf("----------------------------\n");
-*/
-}
-void esetup() {
-	Serial.begin(115200);
-	delay(2000); // Wacht even tot de Serial Monitor klaar is
-	Serial.println("\nI2C Scanner gestart");
-	initdisplay();
-
-
-	// Forceer de pinnen die we willen gebruiken
-	Wire.begin(8, 9);
-
-	// Eerst de pinnen instellen!
-	delay(100); // Geef de hardware even de tijd
-
-	// Nu pas de check uitvoeren
-	if (checkDisplay()) {
-		display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-		Serial.print("Display available");
-
-	}
-	wisScherm();
-}
-
-void kloop() {
-	byte error, address;
-	int nDevices = 0;
-
-	for(address = 1; address < 127; address++ ) {
-		Wire.beginTransmission(address);
-		error = Wire.endTransmission();
-
-		if (error == 0) {
-			Serial.print("I2C apparaat gevonden op adres 0x");
-			if (address < 16) Serial.print("0");
-			Serial.println(address, HEX);
-			nDevices++;
-		}
-	}
-	if (nDevices == 0) Serial.println("Geen I2C apparaten gevonden\n");
-	delay(5000);
 }
