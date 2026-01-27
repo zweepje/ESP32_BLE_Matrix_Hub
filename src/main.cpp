@@ -20,6 +20,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include "oleddisplay.h"
+#include "audio/AudioPlayer.h"
 #include "i2c/I2CSetup.h"
 #include "audio/I2SSetup.h"
 #include "audio/WavPlayer.h"
@@ -47,7 +48,9 @@ void setup_wifi_post();
 uint8_t g_debugFlags = DEBUG_QUEUE | DEBUG_BLE | DEBUG_BLE2;
 // Initialisatie
 
-WavPlayer player;
+//WavPlayer player;
+AudioPlayer audio;
+
 
 MatrixMode getMode( String mstr ) {
 
@@ -362,6 +365,7 @@ void setup() {
 	wisScherm();
 	schrijfTekst( "start play", 10,10,2 );
 	//player.play("/beep.wav");
+	audio.startPlay("/alarm.wav");
 	Serial.println("Playing done\n");
 	wisScherm();
 	schrijfTekst( "done", 10,10,2 );

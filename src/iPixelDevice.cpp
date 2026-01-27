@@ -10,7 +10,9 @@
 #include "functions/temperature.h"
 #include "clock/timefunctions.h"
 #include "utils/webserial.h"
+#include "audio/AudioPlayer.h"
 
+extern AudioPlayer audio ;
 
 NimBLEUUID serviceUUID("000000fa-0000-1000-8000-00805f9b34fb");
 NimBLEUUID charUUID("0000fa02-0000-1000-8000-00805f9b34fb");
@@ -159,12 +161,22 @@ void iPixelDevice::handleTimerLogic() {
 			if ( (timersettime - elapsed) <= 0 ) {
 				// Alarm
 				timer = timersettime ;
-				_kookwekkkerState = WEKKERIDLE ;
+				_kookwekkkerState = ALARM ;
 				debugPrintf("+++++++++++ ALARM ++++++++++++\n");
+				audio.startPlay("/alarm.wav");
 			}
 			break ;
 		}
 		case ALARM:
+			// determine if alarm has to be stopped
+			//handleButtons();
+			//audio.startPlay("/alarm.wav");
+			// check if still playing, or start again
+			if ( ! audio.isPlaying() ) {
+				audio.startPlay("/alarm.wav");
+			}
+			handleButtons() ;
+
 		default:
 			break;
 	}
@@ -252,6 +264,14 @@ void iPixelDevice::handleButtons() {
 
 	if ( bmin || bsec || bstart ) {
 		lastactivity = millis() ;
+	}
+
+	if ( _kookwekkkerState == ALARM ) {
+
+		if ( bmin || bsec || bstart ) {
+			_kookwekkkerState = SETTING ;
+			audio.stop();
+		}
 	}
 
 

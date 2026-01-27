@@ -8,8 +8,8 @@
 class WavPlayer {
 public:
 	WavPlayer(i2s_port_t port = I2S_NUM_0);
+	bool play(const char* path, volatile bool* stopFlag = nullptr);
 
-	bool play(const char* path);
 
 private:
 	i2s_port_t i2s_port;

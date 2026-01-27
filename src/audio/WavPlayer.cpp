@@ -38,7 +38,7 @@ bool WavPlayer::parseWavHeader(File& file, uint32_t& sampleRate) {
     return true;
 }
 
-bool WavPlayer::play(const char* path) {
+bool WavPlayer::play(const char* path, volatile bool* stopFlag) {
     File file = LittleFS.open(path, "r");
     if (!file) {
         Serial.println("WAV open failed");
@@ -63,11 +63,22 @@ bool WavPlayer::play(const char* path) {
     int16_t mono_buffer[BLOCK_SAMPLES];
     int16_t stereo_buffer[BLOCK_SAMPLES * 2];
 
+
     while (true) {
+
+        if (stopFlag && *stopFlag) {
+            Serial.println("Playback aborted");
+            break;
+        }
+
         int bytesRead = file.read(
             (uint8_t*)mono_buffer,
             BLOCK_SAMPLES * sizeof(int16_t)
         );
+
+        if (bytesRead <= 0) break;
+
+
 
         if (bytesRead <= 0) break;
 
