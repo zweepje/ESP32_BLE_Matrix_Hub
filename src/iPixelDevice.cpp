@@ -6,10 +6,13 @@
 #include "global.h"
 #include "iPixelCommands.h"
 #include "Helpers.h"
+#include "main.h"
 #include "functions/temperature.h"
 #include "clock/timefunctions.h"
 #include "utils/webserial.h"
+#include "audio/AudioPlayer.h"
 
+extern AudioPlayer audio ;
 
 NimBLEUUID serviceUUID("000000fa-0000-1000-8000-00805f9b34fb");
 NimBLEUUID charUUID("0000fa02-0000-1000-8000-00805f9b34fb");
@@ -48,19 +51,21 @@ void iPixelDevice::processTimerCommand(StaticJsonDocument<4096>& doc) {
         Serial.println("Wekker gereset.");
     }
     else if ( strcmp(action, "ONOFF" ) == 0 ) {
-
-        if ( LEDstate ) {
-            LEDstate = false ;
-        } else {
-            LEDstate = true ;
-        }
-        setLED( LEDstate );
-        Serial.println("Display On/Off.");
-        return ;
+	    if ( LEDstate ) {
+	    	LEDstate = false ;
+	    } else {
+	    	LEDstate = true ;
+	    }
+    	setLED( LEDstate );
+    	Serial.println("Display On/Off.");
+    	return ;
     }
-    else return ; // nothing changed
+    else if ( timerSetting ) {
 
-    showTime( timerSeconds );
+    	debugPrintf("Setting timer\n");
+ //   	showTime( timer );
+
+    }
     // Optioneel: Stuur direct een status update terug naar Home Assistant
     // updateHomeAssistant();
 }
@@ -78,20 +83,22 @@ void iPixelDevice::showClock( int hour, int min, int seconds ) {
 
 void iPixelDevice::showTime( int timerSeconds ) {
 
-    int m = timerSeconds / 60;
-    int s = timerSeconds % 60;
-    Serial.printf("Resterend: %02d:%02d\n", m, s);
+	//
+	// do not send same image twice
+	//
+	if ( timerSeconds == lastdisplaytime  ) {
+		return ;
+	}
+	lastdisplaytime = timerSeconds;
+
+
+
 
     std::vector<uint8_t> binaryDataVector;
-    char timeBuffer[6]; // Ruimte voor "mm.ss" + de afsluitende '\0'
-    snprintf(timeBuffer, sizeof(timeBuffer), "%02d.%02d", m, s);
 
-    String displayTime = String(timeBuffer);
 
-    debugPrintf("Timestring is <%s>\n", displayTime.c_str() );
-
-    make_kooktime( this->context_data,binaryDataVector, displayTime ) ;
-    debugPrintf("Sending GIF <%s>\n", displayTime.c_str() );
+    make_kooktime( this->context_data,binaryDataVector, timerSeconds ) ;
+    debugPrintf("Sending GIF <%d>\n", timerSeconds );
 
     this->sendGIF( binaryDataVector );
 
@@ -101,8 +108,83 @@ void iPixelDevice::showTime( int timerSeconds ) {
 bool clockmode = true ;
 int lastnu = -1 ;
 
+
+//
+// Handle state of timer
+//
 void iPixelDevice::handleTimerLogic() {
 
+	if ( ((millis() - lastactivity)/1000 > 10 ) &&
+		 (_kookwekkkerState != ALARM)  &&
+		 (_kookwekkkerState != RUNNING) 	) {
+		//
+		_kookwekkkerState = WEKKERIDLE;
+	}
+
+
+	switch (_kookwekkkerState ) {
+
+		case WEKKERIDLE:
+
+			// When idle, show normal clock
+			{
+				struct tm ti = getTimeInfo() ;
+
+				int nu = ti.tm_sec ;
+				if (nu != lastnu) {
+					lastnu = nu;
+					showClock( ti.tm_hour, ti.tm_min, ti.tm_sec  ) ;
+				}
+			}
+
+			handleButtons() ;
+
+
+			break;
+
+		case SETTING:
+			handleButtons() ;
+			break;
+
+		case RUNNING: {
+
+			bool bstart = btnStart.check() ;
+			if (bstart) {
+				lastactivity = millis() ;
+				_kookwekkkerState = SETTING ;
+				break ; // do nothing further
+			}
+
+
+			uint16_t elapsed = (millis() - starttimertime) / 1000 ;  // in seconds
+			timer = timersettime - elapsed ;
+			if ( (timersettime - elapsed) <= 0 ) {
+				// Alarm
+				timer = timersettime ;
+				_kookwekkkerState = ALARM ;
+				debugPrintf("+++++++++++ ALARM ++++++++++++\n");
+				audio.startPlay("/alarm.wav");
+			}
+			break ;
+		}
+		case ALARM:
+			// determine if alarm has to be stopped
+			//handleButtons();
+			//audio.startPlay("/alarm.wav");
+			// check if still playing, or start again
+			if ( ! audio.isPlaying() ) {
+				audio.startPlay("/alarm.wav");
+			}
+			handleButtons() ;
+
+		default:
+			break;
+	}
+
+	showTime(timer);
+
+	return ;
+	/*
     if ( clockmode ) {
         struct tm ti = getTimeInfo() ;
 
@@ -128,6 +210,7 @@ void iPixelDevice::handleTimerLogic() {
             // Hier kun je een buzzer of LED-strip triggeren
         }
     }
+    */
 }
 
 void iPixelDevice::update() {
@@ -152,6 +235,9 @@ void iPixelDevice::update() {
         case READY:
             // Hier gebeurt het echte werk:
             // Bijvoorbeeld: check of er nieuwe data in de buffer zit om te verzenden.
+    //		if ( mode==MODE_CLOCK) {
+    //			handleButtons() ;
+    //		}
             processQueue();
             break;
 
@@ -164,6 +250,61 @@ void iPixelDevice::update() {
             Serial.printf("Error iPixelDevice\n" );
             break;
     }
+}
+
+
+void iPixelDevice::handleButtons() {
+
+	//debugPrintf(("handleButtons clock\n") );
+	//debugPrintf("timer was %d\n", (int)timer  );
+
+	bool bmin = btnMinutes.check() ;
+	bool bsec = btnSeconds.check() ;
+	bool bstart = btnStart.check() ;
+
+	if ( bmin || bsec || bstart ) {
+		lastactivity = millis() ;
+	}
+
+	if ( _kookwekkkerState == ALARM ) {
+
+		if ( bmin || bsec || bstart ) {
+			_kookwekkkerState = SETTING ;
+			audio.stop();
+		}
+	}
+
+
+	if ( bmin || bsec ) {
+		// a button was pressed, go to setting mode
+		_kookwekkkerState = SETTING ;
+
+	}
+
+	if ( bstart ) {
+
+		if ( timer>0 ) {
+			_kookwekkkerState = RUNNING ;
+			starttimertime = millis() ;
+			timersettime = timer ;
+			debugPrintf("timer is started %d\n", (int)timer  );
+		}
+		return ;
+	}
+
+
+	if ( btnMinutes.isPressed &&  btnSeconds.isPressed ) {
+		timer = 0;
+	} else {
+		if (bmin) {
+			timer += 60;
+		}
+
+		if (bsec) {
+			timer += 1;
+		}
+	}
+	//debugPrintf("timer is nu %d\n", (int)timer  );
 }
 //
 // ProcessQueue ( data ontvangen door WS )
@@ -372,12 +513,18 @@ void iPixelDevice::processQueue() {
 
 
    }
-
+/*
     else {
         //Serial.printf("Queue empty" );
         delay( 100 ) ;
 
     }
+    */
+/*	if ( mode == MODE_CLOCK ) {
+
+		showTime( timer ) ;
+	}
+*/
 
 }
 
@@ -463,7 +610,8 @@ void iPixelDevice::connectAsync() {
         return;
     }
 
-    _state = CONNECTING;
+	DeviceState prevState = _state;
+	_state = CONNECTING;
     printPrefix();
     debugPrintf("[iPixelDevice] Connecting with %s",address.toString().c_str());
 
@@ -480,7 +628,9 @@ void iPixelDevice::connectAsync() {
 
         printPrefix();
         Serial.println("ERROR: Failed to start BLE connection!");
-        return;
+    	client->disconnect(); // retry later.
+        _state = prevState ;
+    	return;
     }
     connecting = true;
 }
@@ -542,10 +692,13 @@ void iPixelDevice::queueTick() {
     std::vector<uint8_t> &command = queue.front();
 blemeter.start() ;
     Serial.printf("\n%s - Processing BLE queue\n", getLocalTimestamp().c_str() ) ;
+
+
+
     while ( command.size() > 0 ) {
 
         //Take bytes from command
-        size_t chunks = min((int)this->chunkSize, (int)command.size());
+        size_t chunks = min((int)this->chunkSize-20, (int)command.size());
         Serial.printf("Chunk is %d", chunks ) ;
 
         if ( this->client != nullptr && client->isConnected()) {
@@ -569,6 +722,7 @@ blemeter.start() ;
 
                 // Geef de verbinding even rust om te herstellen van de hik
                 delay(20);
+            	break ;		// leave the while loop, retry the whole!
             }
 
 
@@ -617,6 +771,7 @@ blemeter.start() ;
         }
     }
 	blemeter.end() ;
+	delay( 200 );
 	ws.text(lastNodeRedID, "READY");
     debugPrintf("\n");
 }

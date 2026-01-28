@@ -8,3 +8,4 @@ void init_bluetooth() {
     NimBLEDevice::init("ESP32");
     Serial.println("Bluetooth initialized!");
 }
+

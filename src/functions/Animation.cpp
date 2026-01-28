@@ -35,12 +35,12 @@ Animation::Animation() {
 
 static IndexedBitmap tmpbmp(WIDTH, HEIGHT, 8);
 
-
 void Animation::MakeGif( std::vector<uint8_t>& binaryDataVector, IndexedBitmap *start ) {
 
     //Serial.printf("Inside MakeGif\n" );
 
-    gifEngine->MakeGif( start->getData(), aPalette, numColors, false );
+//    gifEngine->MakeGif( start->getData(), aPalette, numColors, false );
+    gifEngine->MakeGif( start->getData(), aPalette, numColors, true, 100000 );
     //Serial.printf("Inside MakeGif 1\n" );
     gifEngine->CloseGif();
     //Serial.printf("Inside MakeGif 2\n" );

@@ -60,13 +60,13 @@ static void initFrameConfig(CGIF_FrameConfig* pConfig, uint8_t* pImageData, uint
         Serial.printf("Allocating buffer\n" );
 
         buffersize = 4096; // Bijvoorbeeld 1 MB
-        buffer = (uint8_t*)heap_caps_malloc(buffersize, MALLOC_CAP_SPIRAM);
-
+ //       buffer = (uint8_t*)heap_caps_malloc(buffersize, MALLOC_CAP_SPIRAM);
+        buffer = (uint8_t*)malloc( buffersize );
         if (buffer == NULL) {
-            Serial.printf("FATAL: Kon geen SPRAM alloceren!\n");
+            Serial.printf("FATAL: Kon geen RAM alloceren!\n");
             Serial.printf("--------------------------------\n");
         } else {
-            Serial.printf("Succesvol %u bytes in SPRAM gealloceerd op adres %p\n", buffersize, buffer);
+            Serial.printf("Succesvol %u bytes in RAM gealloceerd op adres %p\n", buffersize, buffer);
             Serial.printf("----------------------------------------------------------------\n", buffersize, buffer);
 
         }
