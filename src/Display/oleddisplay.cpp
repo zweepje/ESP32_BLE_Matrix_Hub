@@ -15,27 +15,6 @@ void wisScherm() {
 }
 
 
-// FUNCTIE 1: Check of het scherm fysiek reageert
-bool checkDisplay() {
-	// Probeer verbinding te maken
-	Wire.beginTransmission(0x3C);
-	byte error = Wire.endTransmission();
-
-	if (error == 0) {
-		Serial.println("Succes: Scherm gevonden!");
-		//
-		displayAvailable = true;
-		return true;
-	}
-	else if (error == 4) {
-		Serial.println("Fout: Onbekende fout op de I2C bus (Check je draden!)");
-	}
-	else {
-		Serial.print("Fout: Geen scherm op 0x3C, error code: ");
-		Serial.println(error);
-	}
-	return false;
-}
 
 // 2. Functie om tekst te schrijven
 // x, y: positie (0,0 is linksboven)

@@ -18,12 +18,14 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include "oleddisplay.h"
+#include "Display/oleddisplay.h"
 #include "audio/AudioPlayer.h"
 #include "i2c/I2CSetup.h"
 #include "audio/I2SSetup.h"
 #include "audio/WavPlayer.h"
 #include "esp_wifi.h"
+#include "Display/Display.h"
+
 extern "C" {
 void initfs(void);
 }
@@ -43,6 +45,7 @@ void loop_connected();
 void setup_connected();
 void setup_wifi_post();
 
+Display *display;
 
 uint8_t g_debugFlags = DEBUG_QUEUE | DEBUG_BLE | DEBUG_BLE2;
 // Initialisatie
@@ -59,35 +62,13 @@ MatrixMode getMode( String mstr ) {
     return MODE_NONE ;
 }
 
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 32
-#define OLED_ADDR    0x3C
 
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 bool hasDisplay = false;
 
 
 touch_value_t touchRead(int p) {
 	return 0 ;
 }
-// FUNCTIE 2: Schrijf tekst naar het scherm (veilig)
-void updateScherm(String regel1, String regel2) {
-	if (!hasDisplay) return; // Doe niks als er geen scherm is
-
-	display.clearDisplay();
-	display.setTextSize(1);
-	display.setTextColor(SSD1306_WHITE);
-
-	display.setCursor(0, 0);
-	display.println(regel1);
-
-	display.setTextSize(2); // Grotere tekst voor de tijd/status
-	display.setCursor(0, 12);
-	display.println(regel2);
-
-	display.display();
-}
-
 
 
 
@@ -297,32 +278,19 @@ void setup() {
   // 2. Controleer de totale beschikbare PSRAM (externe heap)
   size_t psram_size = heap_caps_get_free_size(MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
   Serial.printf("Externe PSRAM Heap: %u bytes\n", psram_size);
+
+
+
 	// Forceer de pinnen die we willen gebruiken
 	Wire.begin(8, 9);
-	initdisplay();  // lege functie!
-	if (checkDisplay()) {
-		display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-		Serial.print("Display available\n");
 
-	} else {
-		Serial.print("Display not detected\n");
-
-	}
-
-	wisScherm();
-	schrijfTekst( "Wifi", 10,10,2 );
-
-  setup_wifi_post();
-
-
-	wisScherm();
-	schrijfTekst( "Done", 10,10,2 );
-
+	  setup_wifi_post();
 
   initTime();
   //
   // Maak de achtergrond-taak aan
   //
+
   xTaskCreatePinnedToCore(
       connectionTask,   // Functie die uitgevoerd moet worden
       "ConnManager",    // Naam van de taak
@@ -334,22 +302,13 @@ void setup() {
   );
 
 
+	display = new Display();    // can only start after i2c assigned!
 
-
-
-	// Eerst de pinnen instellen!
-	delay(100); // Geef de hardware even de tijd
-
-	// Nu pas de check uitvoeren
-	if (checkDisplay()) {
-		display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+	if (display->isAvailable() ) {
 		Serial.print("Display available\n");
-
 	} else {
 		Serial.print("Display not detected\n");
-
 	}
-	wisScherm();
 
 	if (!LittleFS.begin()) {
 		Serial.println("LittleFS mount failed");
@@ -361,13 +320,13 @@ void setup() {
 	Serial.println("Start playing\n");
 
 	WavPlayer player;
-	wisScherm();
-	schrijfTekst( "start play", 10,10,2 );
+//	wisScherm();
+	//schrijfTekst( "start play", 10,10,2 );
 	//player.play("/beep.wav");
 	audio.startPlay("/alarm.wav");
 	Serial.println("Playing done\n");
-	wisScherm();
-	schrijfTekst( "done", 10,10,2 );
+//	wisScherm();
+//	schrijfTekst( "done", 10,10,2 );
 	delay(5000);
 
 
@@ -394,8 +353,8 @@ void loop() {
       String time = getCurrentTimeString();
 
       debugPrintf( "======== Time is: %s ========\n",time.c_str() );
-  		wisScherm();
-  		schrijfTekst( time.c_str(), 10, 10, 2 ) ;
+  		//wisScherm();
+  		//schrijfTekst( time.c_str(), 10, 10, 2 ) ;
   	}
 
   loop_connected();

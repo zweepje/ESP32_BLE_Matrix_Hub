@@ -8,8 +8,6 @@
 
 extern bool displayAvailable;
 
-void initdisplay();
-bool checkDisplay();
 void displayiets() ;
 void wisScherm()  ;
 void schrijfTekst(String tekst, int x, int y, int grootte);

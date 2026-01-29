@@ -5,7 +5,7 @@
 #ifndef MYIPIXEL_MAIN_H
 #define MYIPIXEL_MAIN_H
 #include "iPixelDevice.h"
-#include "oleddisplay.h"
+#include "Display/oleddisplay.h"
 #include "utils/webserial.h"
 
 #define KOOKWEKKER
