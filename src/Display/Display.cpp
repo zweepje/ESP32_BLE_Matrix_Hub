@@ -50,11 +50,38 @@ bool Display::isAvailable() {
 
 void Display::SetIp( String ip ) {
 	ipaddress = ip;
+	Update() ;
 }
 
 void Display::SetStatus( String stat ) {
 	status = stat;
+	Update() ;
 }
+
+void Display::SetTime( String time ) {
+	this->time = time;
+	Update() ;
+}
+
+void Display::Update() {
+
+	if ( !available ) { return;}
+	// wis de buffer
+	oleddisplay->clearDisplay();
+	oleddisplay->setTextSize(1);
+	oleddisplay->setTextColor(SSD1306_WHITE);
+	oleddisplay->setCursor(5, 1 );
+	oleddisplay->print(ipaddress);
+	oleddisplay->setCursor(5, 10 );
+	oleddisplay->print(status);
+	oleddisplay->setCursor(5, 20 );
+	oleddisplay->print(time);
+
+	oleddisplay->display();
+
+
+}
+
 
 void Display::display() {
 

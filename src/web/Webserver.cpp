@@ -18,6 +18,107 @@
 
 Preferences prefs;
 
+const char wekker_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>Wekker instellen</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .card {
+      max-width: 320px;
+      margin: auto;
+      padding: 20px;
+      background: #222;
+      border-radius: 8px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      font-size: 18px;
+      margin-top: 5px;
+      border-radius: 4px;
+      border: none;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .row input {
+      flex: 1;
+    }
+
+    input[type="checkbox"] {
+      transform: scale(1.3);
+      margin-right: 8px;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      font-size: 16px;
+      background: #0a84ff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+    }
+
+    button:active {
+      background: #0066cc;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Wekker</h1>
+
+  <div class="card">
+    <form action="/setAlarm" method="GET">
+
+      <label>Tijd</label>
+      <div class="row">
+        <input type="number" name="hour" min="0" max="23" required placeholder="Uur">
+        <input type="number" name="minute" min="0" max="59" required placeholder="Min">
+      </div>
+
+      <label>
+        <input type="checkbox" name="repeat" value="1">
+        Elke dag herhalen
+      </label>
+
+      <button type="submit">Opslaan</button>
+    </form>
+  </div>
+
+</body>
+</html>
+)rawliteral";
+
 
 
 const char config_html[] PROGMEM = R"rawliteral(
@@ -423,6 +524,7 @@ void init_webserver() {
    request->send(200, "text/html", getDynamicHTML());
   });
 
+
   // 2. Sla alles op
   server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request){
     prefs.begin("config", false);
@@ -438,14 +540,28 @@ void init_webserver() {
         bool isActive = request->hasParam("act_" + String(i), true);
         prefs.putBool(("act_" + String(i)).c_str(), isActive);
       }
-    }
-
-    prefs.end();
+    }   prefs.end();
     request->send(200, "text/plain", "Instellingen opgeslagen! Herstarten...");
     delay(1000);
     ESP.restart();
   });
 
+
+	server.on("/wekker", HTTP_GET, [](AsyncWebServerRequest *request){
+		request->send(200, "text/html", wekker_html );
+	});
+
+
+	server.on("/setAlarm", HTTP_GET, [](AsyncWebServerRequest *request) {
+
+	  int hour = request->getParam("hour")->value().toInt();
+	  int minute = request->getParam("minute")->value().toInt();
+	  bool repeat = request->hasParam("repeat");
+
+	  Serial.printf("Alarm: %02d:%02d repeat=%d\n", hour, minute, repeat);
+
+	  request->send(200, "text/plain", "Wekker ingesteld");
+	});
 
 
 

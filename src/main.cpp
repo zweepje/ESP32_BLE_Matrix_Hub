@@ -287,8 +287,12 @@ void setup() {
 	} else {
 		Serial.print("Display not detected\n");
 	}
-
+	display->SetStatus("IP config");
 	setup_wifi_post();
+	display->SetIp(WiFi.localIP().toString());
+	display->SetStatus("Wifi configured");
+
+
 
   initTime();
   //
@@ -339,21 +343,25 @@ TouchButton btnSeconds(TOUCH_SECONDS);
 TouchButton btnStart(TOUCH_START_STOP);
 
 unsigned long previousMillis = 0 ;
-unsigned long interval = 10000 ;
+unsigned long interval = 1000 ;  // each second
+unsigned int cnt = 0 ;
 
 void loop() {
 
   unsigned long currentMillis = millis();
   // Controleer of er 60 seconden zijn verstreken sinds de laatste afdruk
   if (currentMillis - previousMillis >= interval) {
-      previousMillis = currentMillis;
-      String time = getCurrentTimeString();
-
-      debugPrintf( "======== Time is: %s ========\n",time.c_str() );
+	  previousMillis = currentMillis;
+  	String time = getCurrentTimeString();
+	cnt++ ;
+  	if ( cnt>=10 ) {
+  		cnt = 0 ;
+  		debugPrintf( "======== Time is: %s ========\n",time.c_str() );
   		//wisScherm();
   		//schrijfTekst( time.c_str(), 10, 10, 2 ) ;
   	}
-
+  	display->SetTime( time.c_str() );
+  }
   loop_connected();
 
 }
