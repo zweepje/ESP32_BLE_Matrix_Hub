@@ -12,15 +12,16 @@ Display::Display() {
 	Serial.println("start is available!");
 	ipaddress = "x.x.x.x";
 	oleddisplay = new Adafruit_SSD1306(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+	available = false ;
 	if ( CheckDisplay() ){
-		Serial.println("displau  is available!");
 		oleddisplay->begin(SSD1306_SWITCHCAPVCC, 0x3C);
-		Serial.println("displau  is done!");
 	};
 }
 
 
 bool Display::CheckDisplay() {
+
+	available = false;
 
 	Wire.begin(8, 9);
 	delay(100);
@@ -30,8 +31,7 @@ bool Display::CheckDisplay() {
 	if (error == 0) {
 		Serial.println("Succes: Scherm gevonden!");
 		//
-		displayAvailable = true;
-		return true;
+		available = true;
 	}
 	else if (error == 4) {
 		Serial.println("Fout: Onbekende fout op de I2C bus (Check je draden!)");
@@ -40,7 +40,7 @@ bool Display::CheckDisplay() {
 		Serial.print("Fout: Geen scherm op 0x3C, error code: ");
 		Serial.println(error);
 	}
-	return false;
+	return available;
 }
 
 bool Display::isAvailable() {

@@ -259,7 +259,7 @@ void connectionTask(void * pvParameters) {
 void setup() {
 
   Serial.begin(115200);
-  delay(500); // Wacht even op de seriële monitor
+  delay(2000); // Wacht even op de seriële monitor
 	Serial.println("ESP - BLE matrix HUB");
 	Serial.println("================================");
 	Serial.printf("Software Versie: %s\n", VERSION);
@@ -280,11 +280,15 @@ void setup() {
   Serial.printf("Externe PSRAM Heap: %u bytes\n", psram_size);
 
 
+	display = new Display();    // can only start after i2c assigned!
 
-	// Forceer de pinnen die we willen gebruiken
-	Wire.begin(8, 9);
+	if (display->isAvailable() ) {
+		Serial.print("Display available\n");
+	} else {
+		Serial.print("Display not detected\n");
+	}
 
-	  setup_wifi_post();
+	setup_wifi_post();
 
   initTime();
   //
@@ -302,13 +306,6 @@ void setup() {
   );
 
 
-	display = new Display();    // can only start after i2c assigned!
-
-	if (display->isAvailable() ) {
-		Serial.print("Display available\n");
-	} else {
-		Serial.print("Display not detected\n");
-	}
 
 	if (!LittleFS.begin()) {
 		Serial.println("LittleFS mount failed");

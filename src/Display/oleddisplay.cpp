@@ -4,8 +4,6 @@
 
 extern Adafruit_SSD1306 display;
 
-bool displayAvailable = false;
-
 void initdisplay() {
 }
 

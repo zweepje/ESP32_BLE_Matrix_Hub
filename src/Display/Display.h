@@ -11,7 +11,7 @@ class Display {
 
 	String ipaddress;
 	String status ;
-	bool available = false;
+	bool available ;
 	Adafruit_SSD1306 *oleddisplay ;
 
 public:

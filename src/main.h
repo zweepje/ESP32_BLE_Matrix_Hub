@@ -43,12 +43,13 @@ struct TouchButton {
 		touch_value_t current = touchRead( pin );
 		if ( debugbuttons ) {
 			debugPrintf("current %d  threshold %d\n", (int)current, (int)threshold );
-			if ( displayAvailable && pin==1 ) {
+/*			if ( displayAvailable && pin==1 ) {
 				char buffer[32] ;
 				snprintf(buffer, sizeof(buffer), "Munt 1: %d", current);
 				wisScherm();
 				schrijfTekst( buffer, 10, 10, 1 ) ;
 			}
+			*/
 		}
 		if ( current > ( threshold * 1.15 ) ) {
 			isPressed = true ;
