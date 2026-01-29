@@ -108,11 +108,25 @@ void iPixelDevice::showTime( int timerSeconds ) {
 bool clockmode = true ;
 int lastnu = -1 ;
 
+void iPixelDevice::handleWekker() {
+
+	struct tm ti = getTimeInfo() ;
+	debugPrintf("++++++++++ Handle Wekker +++++++++++\n");
+
+	int nu = ti.tm_sec ;
+	if (nu != lastnu) {
+		lastnu = nu;
+		showClock( ti.tm_hour, ti.tm_min, ti.tm_sec  ) ;
+	}
+}
+
 
 //
 // Handle state of timer
 //
 void iPixelDevice::handleTimerLogic() {
+
+	debugPrintf("++++++++++ Handle handleTimerLogic +++++++++++\n");
 
 	if ( ((millis() - lastactivity)/1000 > 10 ) &&
 		 (_kookwekkkerState != ALARM)  &&
@@ -343,7 +357,7 @@ void iPixelDevice::processQueue() {
         //
         // Check which command
         //
-        if ( mode == MODE_CLOCK ) {
+        if ( mode == MODE_KOOKWEKKER ) {
           processTimerCommand( doc );
           return;
         }

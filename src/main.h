@@ -8,7 +8,7 @@
 #include "Display/oleddisplay.h"
 #include "utils/webserial.h"
 
-#define KOOKWEKKER
+//#define KOOKWEKKER
 //const unsigned long repeat_delay = 1000 ;	// 1 sec
 //const unsigned long repeat_interval = 333 ;	// 1/3 sec
 extern bool debugbuttons;

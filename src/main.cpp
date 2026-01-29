@@ -56,9 +56,13 @@ AudioPlayer audio;
 
 MatrixMode getMode( String mstr ) {
 
-    if (mstr.equalsIgnoreCase("tijd") ) return MODE_CLOCK ;
+
+	debugPrintf("Mode string is %s\n", mstr.c_str());
+    if (mstr.equalsIgnoreCase("kookwekker") ) return MODE_KOOKWEKKER ;
     if (mstr.equalsIgnoreCase("info") ) return MODE_INFO ;
-    if (mstr.equalsIgnoreCase("temp") ) return MODE_TEMP ;
+	if (mstr.equalsIgnoreCase("temp") ) return MODE_TEMP ;
+	if (mstr.equalsIgnoreCase("wekker") ) return MODE_WEKKER ;
+	//delay( 50000);
     return MODE_NONE ;
 }
 
@@ -186,10 +190,12 @@ void initdevices() {
           if ( active ) {
             displays[i].name   = prefs.getString(("name_" + String(i)).c_str(), "Matrix " + String(i+1));
             displays[i].MAC    = prefs.getString(("mac_" + String(i)).c_str(), "");
-            displays[i].function   = prefs.getString(("mode_" + String(i)).c_str(), "tijd");
+            displays[i].function   = prefs.getString(("mode_" + String(i)).c_str(), "default");
             displays[i].type   = prefs.getString(("type_" + String(i)).c_str(), "64x16");
             displays[i].width  = 32 ;
             displays[i].height = 32 ;
+
+          	debugPrintf("---- functions is %s\n", displays[i].function.c_str());
 
             const char* macAddressStr = displays[i].MAC.c_str() ;
             NimBLEAddress bleAddress(macAddressStr, 0);
@@ -369,19 +375,24 @@ void loop() {
 void loop_connected() {
 
     ws.cleanupClients();
-
+	delay(500);
 	for (int i = 0; i < numdisplays; i++) {
 
 	    iPixelDevice *dev = displays[i].device;
 
 	    if ( dev != nullptr ) {
 
- 			if ( dev->mode == MODE_CLOCK ) {
+	    	debugPrintf("mode is %d\n", dev->mode );
+
+ 			if ( dev->mode == MODE_KOOKWEKKER  ) {
 				// als het wekker is:
 				dev->handleTimerLogic();
  				if ( debugbuttons ) delay( 500 );
-			}
+			} else
+			if (dev->mode == MODE_WEKKER) {
 
+					dev->handleWekker() ;
+			}
 			dev->update();
 			dev->queueTick();
 	    }

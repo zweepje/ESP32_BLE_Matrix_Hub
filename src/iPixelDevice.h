@@ -92,8 +92,9 @@ public:
 	void processTimerCommand(StaticJsonDocument<4096>& doc) ;
 
 
+	// wekker/kookwekker display functions
     void handleTimerLogic() ;
-	// clock display functions
+	void handleWekker() ;
 
     void showTime( int seconds ) ;
     void showClock( int hour, int min, int seconds ) ;

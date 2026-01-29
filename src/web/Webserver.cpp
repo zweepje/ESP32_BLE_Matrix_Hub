@@ -144,11 +144,11 @@ const char config_html[] PROGMEM = R"rawliteral(
 
       <label>Functie:</label>
       <select name="mode">
-        <option value="tijd">Tijd</option>
+        <option value="kookwekker">KookWekker</option>
         <option value="temp">Temperatuur</option>
         <option value="info">Informatie</option>
+		<option value="wekker">Wekker</option>
       </select>
-
       <label>Type Matrix:</label>
       <select name="type">
         <option value="64x16">64 x 16 (Breed)</option>
@@ -210,9 +210,10 @@ String getDynamicHTML() {
 
     html += "<label>Functie:</label>";
     html += "<select name='mode_" + String(i) + "'>";
-    html += "<option value='tijd'" + String(m_mode == "tijd" ? " selected" : "") + ">Klok / Tijd</option>";
+    html += "<option value='wekker'" + String(m_mode == "wekker" ? " selected" : "") + ">Wekker / Tijd</option>";
     html += "<option value='temp'" + String(m_mode == "temp" ? " selected" : "") + ">Temperatuur</option>";
     html += "<option value='info'" + String(m_mode == "info" ? " selected" : "") + ">Informatie / Tekst</option>";
+    html += "<option value='kookwekker'" + String(m_mode == "kookwekker" ? " selected" : "") + ">Kookwekker / Tekst</option>";
     html += "</select>";
 
     html += "<label>Type:</label>";
@@ -529,12 +530,18 @@ void init_webserver() {
   server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request){
     prefs.begin("config", false);
 
+  	debugPrintf("serveron\n");
     for (int i = 0; i < 4; i++) {
       if (request->hasParam("name_" + String(i), true)) {
+  	debugPrintf("1serveron\n");
         prefs.putString(("name_" + String(i)).c_str(), request->getParam("name_" + String(i), true)->value());
+  	debugPrintf("2serveron\n");
         prefs.putString(("mac_" + String(i)).c_str(),  request->getParam("mac_" + String(i), true)->value());
+  	debugPrintf("s3erveron\n");
         prefs.putString(("mode_" + String(i)).c_str(), request->getParam("mode_" + String(i), true)->value());
+  	debugPrintf("s4erveron mode %s\n", request->getParam("mode_" + String(i), true)->value().c_str()) ;
         prefs.putString(("type_" + String(i)).c_str(), request->getParam("type_" + String(i), true)->value());
+    debugPrintf("5serveron\n");
 
         // Checkbox logica: als param niet aanwezig is, is hij uitgevinkt
         bool isActive = request->hasParam("act_" + String(i), true);

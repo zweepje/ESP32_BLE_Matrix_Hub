@@ -7,9 +7,10 @@
 
 enum MatrixMode {
   MODE_NONE = 0 ,
-  MODE_CLOCK = 1,
+  MODE_KOOKWEKKER = 1,
   MODE_TEMP = 2,
-  MODE_INFO = 3
+  MODE_INFO = 3,
+  MODE_WEKKER = 4
 } ;
 
 
