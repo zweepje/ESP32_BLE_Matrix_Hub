@@ -108,8 +108,8 @@ void setup_wifi_post() {
     return;
   }
 */
-	String ssid = "Palamedes_ExtraWiFi2G" ;
-	String pass = "Poetiniseenlul" ;
+  String ssid = "Palamedes_ExtraWiFi2G" ;
+  String pass = "Poetiniseenlul" ;
 
 
 	WiFi.mode(WIFI_STA);
@@ -278,7 +278,7 @@ void connectionTask(void * pvParameters) {
 void setup() {
 
   Serial.begin(115200);
-  delay(5000); // Wacht even op de seriële monitor
+  delay(500); // Wacht even op de seriële monitor
 	Serial.println("ESP - BLE matrix HUB");
 	Serial.println("================================");
 	Serial.printf("Software Versie: %s\n", VERSION);
@@ -320,7 +320,6 @@ void setup() {
 
 
   initTime();
-//	touchSetCycles(0x1000, 0x1000);
   //
   // Maak de achtergrond-taak aan
   //
@@ -403,8 +402,6 @@ void loop() {
 
 }
 
-
-
 void loop_connected() {
 
     ws.cleanupClients();
@@ -425,8 +422,11 @@ void loop_connected() {
 			dev->queueTick();
 	    }
 	}
-	//delay(500);
 }
+
+//  iPixelDevice test(BLEAddress("3d:50:0c:1f:6d:ec"));
+//2F:9F:9C:9C:51:AC
+
 
 
 String getResetReason() {

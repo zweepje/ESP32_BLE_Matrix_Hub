@@ -4,14 +4,14 @@
 
 #define I2S_PORT   I2S_NUM_0
 
-#if 0
-#define I2S_BCK_IO 15
-#define I2S_WS_IO  16
-#define I2S_DO_IO  17
-#else
+#ifdef ESP32_C3
 #define I2S_BCK_IO 3
 #define I2S_WS_IO  2
 #define I2S_DO_IO  4
+#else
+#define I2S_BCK_IO 15
+#define I2S_WS_IO  16
+#define I2S_DO_IO  17
 #endif
 
 void setupI2S() {
