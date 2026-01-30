@@ -266,6 +266,7 @@ void setup() {
   Serial.begin(115200);
   delay(2000); // Wacht even op de seriële monitor
 	Serial.println("ESP - BLE matrix HUB");
+	Serial.println("TESTTESTTESTTESTTEST");
 	Serial.println("================================");
 	Serial.printf("Software Versie: %s\n", VERSION);
 	Serial.printf("Build Nummer:    %s\n", BUILD_NUMBER);

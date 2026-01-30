@@ -86,7 +86,7 @@ bool WavPlayer::play(const char* path, volatile bool* stopFlag) {
 
         // Mono → stereo
         for (int i = 0; i < samples; i++) {
-            int16_t s = (mono_buffer[i] * 5 )/100 ;        // apply volume (10%)
+            int16_t s = (mono_buffer[i] * 50 )/100 ;        // apply volume (10%)
             stereo_buffer[i * 2]     = s;
             stereo_buffer[i * 2 + 1] = s;
         }
