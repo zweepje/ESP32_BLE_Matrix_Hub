@@ -534,18 +534,12 @@ void init_webserver() {
   server.on("/save", HTTP_POST, [](AsyncWebServerRequest *request){
     prefs.begin("config", false);
 
-  	debugPrintf("serveron\n");
     for (int i = 0; i < 4; i++) {
       if (request->hasParam("name_" + String(i), true)) {
-  	debugPrintf("1serveron\n");
         prefs.putString(("name_" + String(i)).c_str(), request->getParam("name_" + String(i), true)->value());
-  	debugPrintf("2serveron\n");
         prefs.putString(("mac_" + String(i)).c_str(),  request->getParam("mac_" + String(i), true)->value());
-  	debugPrintf("s3erveron\n");
-        prefs.putString(("mode_" + String(i)).c_str(), request->getParam("mode_" + String(i), true)->value());
-  	debugPrintf("s4erveron mode %s\n", request->getParam("mode_" + String(i), true)->value().c_str()) ;
+        prefs.putString(("mode_" + String(i)).c_str(), request->getParam("mode_" + String(i), true)->value());debugPrintf("s4erveron mode %s\n", request->getParam("mode_" + String(i), true)->value().c_str()) ;
         prefs.putString(("type_" + String(i)).c_str(), request->getParam("type_" + String(i), true)->value());
-    debugPrintf("5serveron\n");
 
         // Checkbox logica: als param niet aanwezig is, is hij uitgevinkt
         bool isActive = request->hasParam("act_" + String(i), true);

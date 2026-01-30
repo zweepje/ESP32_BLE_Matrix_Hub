@@ -195,7 +195,6 @@ void initdevices() {
             displays[i].width  = 32 ;
             displays[i].height = 32 ;
 
-          	debugPrintf("---- functions is %s\n", displays[i].function.c_str());
 
             const char* macAddressStr = displays[i].MAC.c_str() ;
             NimBLEAddress bleAddress(macAddressStr, 0);
