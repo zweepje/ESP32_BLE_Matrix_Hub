@@ -89,8 +89,10 @@ public:
 
     // kookwekker
 	void handleButtons() ;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 	void processTimerCommand(StaticJsonDocument<4096>& doc) ;
-
+#pragma GCC diagnostic pop
 
 	// wekker/kookwekker display functions
     void handleTimerLogic() ;

@@ -27,8 +27,10 @@ iPixelDevice::iPixelDevice(NimBLEAddress pAddress) :
 {
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 void iPixelDevice::processTimerCommand(StaticJsonDocument<4096>& doc) {
-
+#pragma GCC diagnostic pop
     const char* action = doc["action"];
 
     debugPrintf("TimerCommand received <%s>\n", action );

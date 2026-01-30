@@ -473,10 +473,14 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventTyp
                     //
                     // Now we can push the complete command to the queue
                     //
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
                     DynamicJsonDocument doc(databuffer->size() + 512);
+
+
                     doc["command"] = "send_gif";
                     JsonArray params = doc.createNestedArray("params");
-
+#pragma GCC diagnostic pop
                     params.add((char*)databuffer->data());
 
                     state.assignedMatrix->enqueueCommand(doc);
