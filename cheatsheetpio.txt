@@ -1,0 +1,51 @@
+============================================================
+PLATFORMIO CLI CHEATSHEET - PIXEL WEKKER PROJECT
+============================================================
+
+# BASIS: BOUWEN EN UPLOADEN
+# -------------------------
+# Bouw de firmware voor een specifieke chip:
+pio run -e <env>
+
+# Upload de firmware naar de chip:
+pio run -e <env> -t upload
+
+# Open de Serial Monitor:
+pio device monitor
+
+
+# FILESYSTEM (LITTLEFS / DATA MAP):
+# ---------------------------------
+# Maak de image van je /data map:
+pio run -e <env> -t buildfs
+
+# Upload de data (HTML/config) naar de chip:
+pio run -e <env> -t uploadfs
+
+
+# CLEANING & ONDERHOUD:
+# ---------------------
+# Verwijder alle build bestanden (Clean):
+pio run -t clean
+
+# Volledige reset (verwijdert de .pio map):
+# Windows (PowerShell): 
+Remove-Item -Recurse -Force .pio
+# Mac/Linux: 
+rm -rf .pio
+
+# Herinitialiseer CLion koppeling (Re-init):
+pio init --ide clion
+
+
+# COMBINATIES (POWER-USER):
+# -------------------------
+# Clean, Upload firmware EN start monitor:
+pio run -e <env> -t clean && pio run -e <env> -t upload && pio device monitor
+
+# Alleen filesystem en firmware uploaden (snelste herstart):
+pio run -e <env> -t uploadfs && pio run -e <env> -t upload
+
+============================================================
+Let op: Vervang <env> door 'esp32c3' of 'esp32s3'.
+============================================================
