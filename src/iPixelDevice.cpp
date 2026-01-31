@@ -3,6 +3,8 @@
 #include <cstring>
 //#include "main.h"
 
+#include <Preferences.h>
+
 #include "global.h"
 #include "iPixelCommands.h"
 #include "Helpers.h"
@@ -19,6 +21,8 @@ NimBLEUUID charUUID("0000fa02-0000-1000-8000-00805f9b34fb");
 
 extern std::map<std::string, iPixelDevice> matrixRegistry;
 extern AsyncWebSocket ws;
+
+extern volatile bool alarmChanged ;
 
 iPixelDevice::iPixelDevice(NimBLEAddress pAddress) :
 		address(pAddress),
@@ -109,7 +113,8 @@ void iPixelDevice::showTime( int timerSeconds ) {
 
 bool clockmode = true ;
 int lastnu = -1 ;
-
+int lastminute = -1 ;
+Preferences alarmprefs;
 void iPixelDevice::handleWekker() {
 
 	struct tm ti = getTimeInfo() ;
@@ -119,6 +124,31 @@ void iPixelDevice::handleWekker() {
 	if (nu != lastnu) {
 		lastnu = nu;
 		showClock( ti.tm_hour, ti.tm_min, ti.tm_sec  ) ;
+		nu = ti.tm_min ;
+		lastminute = nu ;
+		// check if time expired
+		if ( alarmChanged ) {
+
+			// read the new alarm times
+			alarmprefs.begin("alarm", false);
+			this->alarm_hour = alarmprefs.getInt( "alarm_hour" , 12 );
+			this->alarm_minute = alarmprefs.getInt( "alarm_minute", 0 );
+			alarmprefs.end();
+			debugPrintf("Alarm changed %d:%d\n",this->alarm_hour, this->alarm_minute);
+			alarmChanged = false ; // read the new value
+			this->alarm_set = true ;	// zou ook in prefs moeten staan!!!
+		}
+		if ( this->alarm_set &&
+			ti.tm_min == this->alarm_minute &&
+			ti.tm_hour == this->alarm_hour ) {
+			//
+			// Alarm tijd
+			//
+			debugPrintf("------------------------------====================\n");
+			audio.startPlay("/alarm.wav");
+			this->alarm_set = false ;	 // turn off alarm!!
+		}
+
 	}
 }
 

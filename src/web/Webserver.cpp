@@ -17,6 +17,7 @@
 #include <Preferences.h>
 
 Preferences prefs;
+volatile bool alarmChanged = false;
 
 const char wekker_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
@@ -562,6 +563,12 @@ void init_webserver() {
 	  int hour = request->getParam("hour")->value().toInt();
 	  int minute = request->getParam("minute")->value().toInt();
 	  bool repeat = request->hasParam("repeat");
+
+		prefs.begin("alarm", false);
+		prefs.putInt( "alarm_hour" , hour );
+		prefs.putInt( "alarm_minute" , minute );
+		prefs.end();
+		alarmChanged = true;
 
 	  Serial.printf("Alarm: %02d:%02d repeat=%d\n", hour, minute, repeat);
 

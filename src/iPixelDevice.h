@@ -61,6 +61,9 @@ public:
 
 	uint16_t lastdisplaytime = 999 ;
 
+	uint8_t alarm_minute  = 0 ;
+	uint8_t alarm_hour = 0 ;
+	bool    alarm_set = false ;
 
     explicit iPixelDevice(NimBLEAddress pAddress) ;
     void printPrefix();
