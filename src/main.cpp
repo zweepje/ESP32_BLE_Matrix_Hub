@@ -264,17 +264,16 @@ void connectionTask(void * pvParameters) {
 void setup() {
 
   Serial.begin(115200);
-  delay(2000); // Wacht even op de seriële monitor
+  delay(200); // Wacht even op de seriële monitor
 	Serial.println("ESP - BLE matrix HUB");
 	Serial.println("TESTTESTTESTTESTTEST");
 	Serial.println("================================");
 	Serial.printf("Software Versie: %s\n", VERSION);
 	Serial.printf("Build Nummer:    %s\n", BUILD_NUMBER);
 	Serial.printf("Git Branch:      %s\n", GIT_BRANCH);
+	Serial.printf("Board:           %s\n", BOARD);
 	Serial.printf("Build Datum:     %s\n", BUILD_DATE);
 	Serial.println("================================");
-  delay(500); // for debug
-
 
   Serial.println("\n--- PSRAM/Geheugen Status ---");
   // 1. Controleer de totale beschikbare DRAM (interne heap)
@@ -334,7 +333,7 @@ void setup() {
 	Serial.println("Playing done\n");
 //	wisScherm();
 //	schrijfTekst( "done", 10,10,2 );
-	delay(5000);
+	delay(1000);
 
 
 }

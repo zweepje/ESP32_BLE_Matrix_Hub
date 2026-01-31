@@ -2,16 +2,8 @@ import subprocess
 import datetime
 import os
 import configparser
+Import("env")
 
-
-def get_version_from_ini():
-    config = configparser.ConfigParser()
-    config.read('platformio.ini')
-    # We zoeken naar 'custom_version' in de [env:...] secties
-    for section in config.sections():
-        if section.startswith("env:") and "custom_version" in config[section]:
-            return config[section]["custom_version"]
-    return "1.0.0"
 
 
 # 1. Haal de Git branch op
@@ -30,10 +22,11 @@ except FileNotFoundError:
 with open("build_no.txt", "w") as f:
     f.write(str(build_no))
 
-print("PreBuild Script running")
-version = get_version_from_ini()
-print(version)
+version = env.GetProjectOption("custom_version", "1.0.0")
+print(f"--- Bouwen van versie: {version} ---")
 
+# Haalt de architectuur/MCU op (bijv. "esp32c3" of "esp32s3")
+mcu = env.BoardConfig().get("build.mcu")
 
 # 3. Schrijf version.h
 with open("include/version.h", "w") as f:
@@ -42,6 +35,7 @@ with open("include/version.h", "w") as f:
     f.write(f'#define VERSION "{version}"\n')
     f.write(f'const char* BUILD_NUMBER = "{build_no}";\n')
     f.write(f'const char* GIT_BRANCH = "{branch}";\n')
+    f.write(f'const char* BOARD = "{mcu}";\n')
     f.write(f'const char* BUILD_DATE = "{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}";\n')
     f.write("\n#endif")
 
