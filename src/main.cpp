@@ -76,6 +76,36 @@ touch_value_t touchRead(int p) {
 	return 0 ;
 }
 
+#include <NimBLEDevice.h>
+
+void scanBLEDevices() {
+	Serial.println("BLE Scan gestart...");
+	NimBLEScan* pBLEScan = NimBLEDevice::getScan();
+
+	// FIX 1: start() geeft een bool, geen resultaten.
+	pBLEScan->start(5, false);
+	NimBLEScanResults results = pBLEScan->getResults();
+
+	Serial.printf("Scan klaar. %d apparaten gevonden:\n", results.getCount());
+
+	for (int i = 0; i < results.getCount(); i++) {
+		// FIX 2: Gebruik NimBLEAdvertisedDevice* (pointer)
+		const NimBLEAdvertisedDevice* device = results.getDevice(i);
+
+		String name = device->getName().c_str(); // Gebruik -> ipv .
+		if (name == "") name = "Onbekend";
+
+		Serial.printf("[%d] Naam: %s | Adres: %s | RSSI: %d\n",
+					  i,
+					  name.c_str(),
+					  device->getAddress().toString().c_str(),
+					  device->getRSSI());
+	}
+	pBLEScan->clearResults();
+}
+
+
+
 
 
 void setup_wifi_post() {

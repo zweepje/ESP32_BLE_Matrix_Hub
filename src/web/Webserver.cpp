@@ -13,7 +13,9 @@
 
 #include "ChunkProcessor.h"
 #include "../functions/MatrixContext.h"
-
+#include <NimBLEDevice.h>
+#include <NimBLEScan.h>
+#include <NimBLEAdvertisedDevice.h>
 #include <Preferences.h>
 
 Preferences prefs;
@@ -571,7 +573,44 @@ void init_webserver() {
         request->send(200, "text/plain", "Instellingen opgeslagen!");
     });
 
+    server.on("/scan-ble", HTTP_GET, [](AsyncWebServerRequest *request){
+    NimBLEScan* pBLEScan = NimBLEDevice::getScan();
 
+    // Optimalisatie voor betere vangst
+    pBLEScan->setActiveScan(true);
+    pBLEScan->setInterval(100);
+    pBLEScan->setWindow(99);
+    pBLEScan->setDuplicateFilter(false); // Laat alles zien, ook dubbelen
+
+    Serial.println("Start 5s BLE scan...");
+    pBLEScan->start(5, false); // Iets langer scannen (5s)
+
+    NimBLEScanResults results = pBLEScan->getResults();
+    int count = results.getCount();
+
+    String html = "<html><head><meta charset='UTF-8'></head><body style='font-family:sans-serif; background:#1a1a1a; color:white;'>";
+    html += "<h1>Gevonden: " + String(count) + " apparaten</h1>";
+
+    if (count > 0) {
+        html += "<table border='1' style='width:100%; border-collapse:collapse;'>";
+        html += "<tr><th>Naam</th><th>RSSI</th><th>Adres</th></tr>";
+        for (int i = 0; i < count; i++) {
+            const NimBLEAdvertisedDevice* device = results.getDevice(i);
+            String name = device->getName().c_str();
+            if (name == "") name = "[Onbekend]";
+
+            html += "<tr><td>" + name + "</td><td>" + String(device->getRSSI()) + "</td><td>" + String(device->getAddress().toString().c_str()) + "</td></tr>";
+        }
+        html += "</table>";
+    } else {
+        html += "<p>Nog steeds niets gevonden. Probeer je telefoon op het Bluetooth-menu te zetten.</p>";
+    }
+
+    html += "<br><a href='/' style='color:#00adb5;'>Terug</a></body></html>";
+    request->send(200, "text/html", html);
+
+    pBLEScan->clearResults();
+});
 /*
   // 4. De route om de data van het formulier te verwerken
   server.on("/test", HTTP_GET, [](AsyncWebServerRequest *request){
