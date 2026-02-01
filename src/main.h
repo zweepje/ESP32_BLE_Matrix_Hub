@@ -16,6 +16,20 @@ typedef uint32_t touch_value_t;
 
 touch_value_t touchRead( int p) ;
 
+// De cache voor onze instellingen
+struct AlarmSettings {
+	int minOnce;
+	bool enOnce;
+	int minWork;
+	bool enWork;
+	int minWeekend;
+	bool enWeekend;
+};
+extern AlarmSettings activeAlarms;
+extern volatile bool alarmChanged ;
+
+
+
 struct TouchButton {
 	uint8_t			pin ;
 	touch_value_t	threshold ;

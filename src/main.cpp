@@ -52,6 +52,8 @@ uint8_t g_debugFlags = DEBUG_QUEUE | DEBUG_BLE | DEBUG_BLE2;
 
 //WavPlayer player;
 AudioPlayer audio;
+AlarmSettings activeAlarms;
+volatile bool alarmChanged = false ;
 
 
 MatrixMode getMode( String mstr ) {
@@ -350,7 +352,42 @@ unsigned long previousMillis = 0 ;
 unsigned long interval = 1000 ;  // each second
 unsigned int cnt = 0 ;
 
+
+void updateAlarmCache() {
+	preferences.begin("alarm-clock", true); // true = read-only mode
+
+	activeAlarms.minOnce = preferences.getInt("min_once", -1);
+	activeAlarms.enOnce  = preferences.getBool("en_once", false);
+
+	activeAlarms.minWork = preferences.getInt("min_work", -1);
+	activeAlarms.enWork  = preferences.getBool("en_work", false);
+
+	activeAlarms.minWeekend = preferences.getInt("min_weekend", -1);
+	activeAlarms.enWeekend  = preferences.getBool("en_weekend", false);
+
+	preferences.end();
+	Serial.println("RAM-cache bijgewerkt met nieuwe alarmtijden.");
+}
+
+
+
+
+
+
+
+
+
+
+
+
 void loop() {
+
+	if (alarmChanged) {
+		alarmChanged = false;
+		updateAlarmCache();
+	}
+
+
 
   unsigned long currentMillis = millis();
   // Controleer of er 60 seconden zijn verstreken sinds de laatste afdruk

@@ -22,7 +22,7 @@ NimBLEUUID charUUID("0000fa02-0000-1000-8000-00805f9b34fb");
 extern std::map<std::string, iPixelDevice> matrixRegistry;
 extern AsyncWebSocket ws;
 
-extern volatile bool alarmChanged ;
+
 
 iPixelDevice::iPixelDevice(NimBLEAddress pAddress) :
 		address(pAddress),
@@ -110,6 +110,48 @@ void iPixelDevice::showTime( int timerSeconds ) {
 
 }
 
+extern Preferences preferences;
+void triggerAlarm() {
+
+	debugPrintf("------------------------------====================\n");
+	audio.startPlay("/alarm.wav");
+}
+
+
+
+
+void checkAlarm() {
+	struct tm timeinfo;
+	if(!getLocalTime(&timeinfo)) return;
+
+	int currentTotalMin = (timeinfo.tm_hour * 60) + timeinfo.tm_min;
+	int dag = timeinfo.tm_wday;
+
+	// 1. Check EENMALIG (Morgen) - Gebruikt nu de struct in RAM
+	if (activeAlarms.enOnce && currentTotalMin == activeAlarms.minOnce) {
+		triggerAlarm();
+
+		// Speciaal geval: het eenmalige alarm moet in de flash UIT
+		preferences.begin("alarm-clock", false);
+		preferences.putBool("en_once", false);
+		preferences.end();
+
+		// En ook in onze cache uitzetten
+		activeAlarms.enOnce = false;
+	}
+
+	// 2. Check WERKDAGEN (RAM check)
+	if (dag >= 1 && dag <= 5 && activeAlarms.enWork) {
+		if (currentTotalMin == activeAlarms.minWork) triggerAlarm();
+	}
+
+	// 3. Check WEEKEND (RAM check)
+	if ((dag == 0 || dag == 6) && activeAlarms.enWeekend) {
+		if (currentTotalMin == activeAlarms.minWeekend) triggerAlarm();
+	}
+}
+
+
 
 bool clockmode = true ;
 int lastnu = -1 ;
@@ -127,6 +169,8 @@ void iPixelDevice::handleWekker() {
 		nu = ti.tm_min ;
 		lastminute = nu ;
 		// check if time expired
+		checkAlarm() ;
+#if 0
 		if ( alarmChanged ) {
 
 			// read the new alarm times
@@ -148,7 +192,7 @@ void iPixelDevice::handleWekker() {
 			audio.startPlay("/alarm.wav");
 			this->alarm_set = false ;	 // turn off alarm!!
 		}
-
+#endif
 	}
 }
 

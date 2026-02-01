@@ -17,109 +17,87 @@
 #include <Preferences.h>
 
 Preferences prefs;
-volatile bool alarmChanged = false;
+
 
 const char wekker_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
-<html lang="nl">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Wekker instellen</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
-      margin: 0;
-      padding: 20px;
-    }
-
-    h1 {
-      text-align: center;
-    }
-
-    .card {
-      max-width: 320px;
-      margin: auto;
-      padding: 20px;
-      background: #222;
-      border-radius: 8px;
-    }
-
-    label {
-      display: block;
-      margin-top: 15px;
-      font-size: 14px;
-    }
-
-    input[type="number"] {
-      width: 100%;
-      padding: 8px;
-      font-size: 18px;
-      margin-top: 5px;
-      border-radius: 4px;
-      border: none;
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-    }
-
-    .row input {
-      flex: 1;
-    }
-
-    input[type="checkbox"] {
-      transform: scale(1.3);
-      margin-right: 8px;
-    }
-
-    button {
-      width: 100%;
-      margin-top: 20px;
-      padding: 12px;
-      font-size: 16px;
-      background: #0a84ff;
-      color: white;
-      border: none;
-      border-radius: 6px;
-    }
-
-    button:active {
-      background: #0066cc;
-    }
-  </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: white; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 400px; padding: 20px; }
+        .card { background: #2d2d2d; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 5px solid #444; }
+        .active-border { border-left-color: #00adb5 !important; }
+        h2 { margin: 0; color: #eee; font-size: 1.1rem; }
+        .days { font-size: 0.8rem; color: #888; margin-bottom: 10px; display: block; }
+        .row { display: flex; align-items: center; justify-content: space-between; }
+        input[type="time"] { border: none; padding: 8px; border-radius: 5px; font-size: 1rem; background: #444; color: white; }
+        input[type="submit"] { width: 100%; background: #00adb5; color: white; border: none; padding: 15px; border-radius: 5px; font-size: 1.1rem; cursor: pointer; margin-top: 10px; }
+    </style>
 </head>
-
 <body>
-
-  <h1>Wekker</h1>
-
-  <div class="card">
-    <form action="/setAlarm" method="GET">
-
-      <label>Tijd</label>
-      <div class="row">
-        <input type="number" name="hour" min="0" max="23" required placeholder="Uur">
-        <input type="number" name="minute" min="0" max="59" required placeholder="Min">
-      </div>
-
-      <label>
-        <input type="checkbox" name="repeat" value="1">
-        Elke dag herhalen
-      </label>
-
-      <button type="submit">Opslaan</button>
-    </form>
-  </div>
-
+    <div class="container">
+        <h1>PixelWekker</h1>
+        <form action="/save-alarm" method="POST">
+            <div class="card" style="border-left-color: #ff5722;">
+                <h2>Morgen</h2>
+                <span class="days">Eenmalig alarm</span>
+                <div class="row">
+                    <input type="time" name="time_once" value="%TIME_ONCE%">
+                    <label><input type="checkbox" name="en_once" %CHECK_ONCE%> Aan</label>
+                </div>
+            </div>
+            <div class="card active-border">
+                <h2>Werkdagen</h2>
+                <span class="days">Maandag t/m Vrijdag</span>
+                <div class="row">
+                    <input type="time" name="time_work" value="%TIME_WORK%">
+                    <label><input type="checkbox" name="en_work" %CHECK_WORK%> Aan</label>
+                </div>
+            </div>
+            <div class="card active-border">
+                <h2>Weekend</h2>
+                <span class="days">Zaterdag & Zondag</span>
+                <div class="row">
+                    <input type="time" name="time_weekend" value="%TIME_WEND%">
+                    <label><input type="checkbox" name="en_weekend" %CHECK_WEND%> Aan</label>
+                </div>
+            </div>
+            <input type="submit" value="Opslaan">
+        </form>
+    </div>
 </body>
 </html>
 )rawliteral";
 
+extern Preferences preferences;
+
+String processor(const String& var) {
+    preferences.begin("alarm-clock", true);
+    String result = "";
+
+    // Helper om minuten (int) naar "HH:MM" (String) om te zetten
+    auto minToTimeStr = [](int totalMinutes) -> String {
+        if (totalMinutes < 0) return "07:00";
+        int h = totalMinutes / 60;
+        int m = totalMinutes % 60;
+        char buf[6];
+        sprintf(buf, "%02d:%02d", h, m);
+        return String(buf);
+    };
+
+    if (var == "TIME_ONCE")   result = minToTimeStr(preferences.getInt("min_once", 360));
+    else if (var == "TIME_WORK")   result = minToTimeStr(preferences.getInt("min_work", 420));
+    else if (var == "TIME_WEND")   result = minToTimeStr(preferences.getInt("min_weekend", 540));
+
+    else if (var == "CHECK_ONCE")  result = preferences.getBool("en_once", false) ? "checked" : "";
+    else if (var == "CHECK_WORK")  result = preferences.getBool("en_work", false) ? "checked" : "";
+    else if (var == "CHECK_WEND")  result = preferences.getBool("en_weekend", false) ? "checked" : "";
+
+    preferences.end();
+    return result;
+}
 
 
 const char config_html[] PROGMEM = R"rawliteral(
@@ -553,28 +531,45 @@ void init_webserver() {
   });
 
 
-	server.on("/wekker", HTTP_GET, [](AsyncWebServerRequest *request){
-		request->send(200, "text/html", wekker_html );
-	});
+    server.on("/wekker", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send_P(200, "text/html", wekker_html, processor);
+});
+    server.on("/save-alarm", HTTP_POST, [](AsyncWebServerRequest *request){
+        // Hulpfunctie om "HH:MM" om te zetten naar minuten (int)
+        auto timeToMin = [](String t) -> int {
+            if (t.length() < 5) return -1;
+            int h = t.substring(0, 2).toInt();
+            int m = t.substring(3, 5).toInt();
+            return (h * 60) + m;
+        };
 
+        prefs.begin("alarm-clock", false);
 
-	server.on("/setAlarm", HTTP_GET, [](AsyncWebServerRequest *request) {
+        // 1. Morgen (Eenmalig)
+        if (request->hasParam("time_once", true)) {
+            prefs.putInt("min_once", timeToMin(request->getParam("time_once", true)->value()));
+        }
+        prefs.putBool("en_once", request->hasParam("en_once", true));
 
-	  int hour = request->getParam("hour")->value().toInt();
-	  int minute = request->getParam("minute")->value().toInt();
-	  bool repeat = request->hasParam("repeat");
+        // 2. Werkdagen
+        if (request->hasParam("time_work", true)) {
+            prefs.putInt("min_work", timeToMin(request->getParam("time_work", true)->value()));
+        }
+        prefs.putBool("en_work", request->hasParam("en_work", true));
 
-		prefs.begin("alarm", false);
-		prefs.putInt( "alarm_hour" , hour );
-		prefs.putInt( "alarm_minute" , minute );
-		prefs.end();
-		alarmChanged = true;
+        // 3. Weekend
+        if (request->hasParam("time_weekend", true)) {
+            prefs.putInt("min_weekend", timeToMin(request->getParam("time_weekend", true)->value()));
+        }
+        prefs.putBool("en_weekend", request->hasParam("en_weekend", true));
 
-	  Serial.printf("Alarm: %02d:%02d repeat=%d\n", hour, minute, repeat);
+        prefs.end();
 
-	  request->send(200, "text/plain", "Wekker ingesteld");
-	});
+        // Signaleer de main loop dat de instellingen zijn gewijzigd
+        alarmChanged = true;
 
+        request->send(200, "text/plain", "Instellingen opgeslagen!");
+    });
 
 
 /*
