@@ -53,6 +53,13 @@ uint8_t g_debugFlags = DEBUG_QUEUE | DEBUG_BLE | DEBUG_BLE2;
 //WavPlayer player;
 AudioPlayer audio;
 
+const int TOUCH_START_STOP = 1; // De pin die mooi bij de rest zit
+const int TOUCH_SECONDS = 13; // De pin die mooi bij de rest zit
+const int TOUCH_MINUTES = 12; // De pin die mooi bij de rest zit
+TouchButton btnMinutes(TOUCH_MINUTES) ;
+TouchButton btnSeconds(TOUCH_SECONDS);
+TouchButton btnStart(TOUCH_START_STOP);
+
 
 MatrixMode getMode( String mstr ) {
 
@@ -334,17 +341,14 @@ void setup() {
 //	schrijfTekst( "done", 10,10,2 );
 	delay(1000);
 
+	pinMode(TOUCH_START_STOP, INPUT);
+	pinMode(TOUCH_SECONDS, INPUT);
+	pinMode(TOUCH_MINUTES, INPUT);
+
 
 }
 
 
-
-const int TOUCH_START_STOP = 1; // De pin die mooi bij de rest zit
-const int TOUCH_SECONDS = 13; // De pin die mooi bij de rest zit
-const int TOUCH_MINUTES = 12; // De pin die mooi bij de rest zit
-TouchButton btnMinutes(TOUCH_MINUTES) ;
-TouchButton btnSeconds(TOUCH_SECONDS);
-TouchButton btnStart(TOUCH_START_STOP);
 
 unsigned long previousMillis = 0 ;
 unsigned long interval = 1000 ;  // each second
