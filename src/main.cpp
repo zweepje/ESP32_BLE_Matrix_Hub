@@ -25,6 +25,9 @@
 #include "audio/WavPlayer.h"
 #include "esp_wifi.h"
 #include "Display/Display.h"
+#include <WiFi.h>
+#include <PubSubClient.h>
+
 
 extern "C" {
 void initfs(void);
@@ -33,6 +36,12 @@ void initfs(void);
 bool debugbuttons = false;
 
 Preferences preferences;
+
+WiFiClient espClient;
+PubSubClient mqttClient(espClient);
+const char* mqtt_server = "192.168.100.29"; // jouw HA IP
+const char* mqtt_user = "mqtt_esp32";
+const char* mqtt_pass = "trombone";
 
 
 // Globale map om de status van alle verbonden PC's bij te houden
@@ -441,7 +450,64 @@ void updateAlarmCache() {
 }
 
 
+void mqttReconnect() {
 
+	mqttClient.setBufferSize(1024);
+
+	while (!mqttClient.connected()) {
+		Serial.println("MQTT verbinden...");
+
+		if (mqttClient.connect(
+			"kookwekker",
+			mqtt_user,
+			mqtt_pass,
+			"kookwekker/status",
+			0,
+			true,
+			"offline"
+		)) {
+			Serial.println("MQTT connected");
+
+			delay(500); // belangrijk!
+/*
+			mqttClient.publish(
+			  "homeassistant/binary_sensor/test_device/config",
+			  "{\"name\":\"Test Device\",\"state_topic\":\"kookwekker/status\"}",
+			  true
+			);
+*/
+
+
+			const char* payload =
+			"{"
+			"\"name\":\"Kookwekker Online\","
+			"\"state_topic\":\"kookwekker/status\","
+			"\"payload_on\":\"online\","
+			"\"payload_off\":\"offline\","
+			"\"unique_id\":\"kookwekker_status_1\","
+			"\"device\":{"
+			"\"identifiers\":[\"kookwekker_esp32\"],"
+			"\"name\":\"Kookwekker\""
+			"}"
+			"}";
+
+			mqttClient.publish(
+				 "homeassistant/binary_sensor/kookwekker_status/config",
+					payload,
+					true
+			);
+
+			mqttClient.publish("kookwekker/status", "online", true);
+
+
+
+
+		} else {
+			Serial.println("MQTT failed, retry...");
+			delay(2000);
+		}
+	}
+}
 
 
 
@@ -503,6 +569,19 @@ void loop_connected() {
 			dev->queueTick();
 	    }
 	}
+
+	if (!mqttClient.connected()) {
+		mqttReconnect();
+	}
+	mqttClient.publish("kookwekker/status", "online", true);
+	mqttClient.publish("kookwekker/poes", "miauw", true);
+
+
+	mqttClient.publish("kookwekker/remaining", "120", true);
+
+
+
+	mqttClient.loop();
 }
 
 //  iPixelDevice test(BLEAddress("3d:50:0c:1f:6d:ec"));
@@ -523,6 +602,22 @@ String getResetReason() {
   }
 }
 
+void mqttCallback(char* topic, byte* payload, unsigned int length) {
+	String msg;
+	for (int i = 0; i < length; i++) msg += (char)payload[i];
+
+	String t = String(topic);
+
+	Serial.printf("MQTT ontvangen: %s = %s\n", t.c_str(), msg.c_str());
+
+	if (numdisplays == 0) return;
+	iPixelDevice* dev = displays[0].device;
+	if (!dev) return;
+
+	//if (t == "kookwekker/start") dev->startTimer();
+	//if (t == "kookwekker/stop") dev->stopTimer();
+	//if (t == "kookwekker/set_time") dev->setTimer(msg.toInt());
+}
 
 
 
@@ -545,5 +640,9 @@ void setup_connected() {
 	// De MTU die we op 14 dec wilden checken:
 	debugPrintf("[BLE] Auto-MTU Detection: Ready\n");
 	debugPrintf("----------------------------\n");
+
+
+	mqttClient.setServer(mqtt_server, 1883);
+	mqttClient.setCallback(mqttCallback);
 
 }
