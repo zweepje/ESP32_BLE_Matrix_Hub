@@ -55,6 +55,13 @@ AudioPlayer audio;
 AlarmSettings activeAlarms;
 volatile bool alarmChanged = false ;
 
+const int TOUCH_START_STOP = 1; // De pin die mooi bij de rest zit
+const int TOUCH_SECONDS = 13; // De pin die mooi bij de rest zit
+const int TOUCH_MINUTES = 12; // De pin die mooi bij de rest zit
+TouchButton btnMinutes(TOUCH_MINUTES) ;
+TouchButton btnSeconds(TOUCH_SECONDS);
+TouchButton btnStart(TOUCH_START_STOP);
+
 
 MatrixMode getMode( String mstr ) {
 
@@ -125,6 +132,7 @@ void setup_wifi_post() {
     return;
   }
 */
+
   String ssid = "Palamedes_ExtraWiFi2G" ;
   String pass = "Poetiniseenlul" ;
 
@@ -167,6 +175,7 @@ void setup_wifi_post() {
 
   Serial.print("[WiFi] IP: ");
   Serial.println(WiFi.localIP());
+  
   setup_connected();
 }
 
@@ -292,7 +301,35 @@ void connectionTask(void * pvParameters) {
   }
 }
 
+void debugsetup() {
+	Serial.begin(115200);
 
+	delay(500); // Wacht even op de seriële monitor
+	Serial.println("ESP - BLE matrix HUB");
+	Serial.println("================================");
+	Serial.printf("Software Versie: %s\n", VERSION);
+	Serial.printf("Build Nummer:    %s\n", BUILD_NUMBER);
+	Serial.printf("Git Branch:      %s\n", GIT_BRANCH);
+	Serial.printf("Board:           %s\n", BOARD);
+	Serial.printf("Build Datum:     %s\n", BUILD_DATE);
+	Serial.println("================================");
+
+	Serial.println("\n--- PSRAM/Geheugen Status ---");
+	// 1. Controleer de totale beschikbare DRAM (interne heap)
+	size_t dram_heap = heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+	Serial.printf("Interne DRAM Heap: %u bytes\n", dram_heap);
+
+	// 2. Controleer de totale beschikbare PSRAM (externe heap)
+	size_t psram_size = heap_caps_get_free_size(MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+	Serial.printf("Externe PSRAM Heap: %u bytes\n", psram_size);
+
+
+	Serial.println("Init BLE...");
+	NimBLEDevice::init("ESP32");
+	Serial.println("BLE OK");
+}
+
+void noloop() {}
 void setup() {
 
   Serial.begin(115200);
@@ -360,23 +397,27 @@ void setup() {
 //	wisScherm();
 	//schrijfTekst( "start play", 10,10,2 );
 	//player.play("/beep.wav");
-	audio.startPlay("/alarm.wav");
+
+	//
+	// indicate we are ready.
+	//
+//	audio.startPlay("/alarm.wav");
+
+
+
 	Serial.println("Playing done\n");
 //	wisScherm();
 //	schrijfTekst( "done", 10,10,2 );
 	delay(1000);
 
+	pinMode(TOUCH_START_STOP, INPUT);
+	pinMode(TOUCH_SECONDS, INPUT);
+	pinMode(TOUCH_MINUTES, INPUT);
+
 
 }
 
 
-
-const int TOUCH_START_STOP = 1; // De pin die mooi bij de rest zit
-const int TOUCH_SECONDS = 13; // De pin die mooi bij de rest zit
-const int TOUCH_MINUTES = 12; // De pin die mooi bij de rest zit
-TouchButton btnMinutes(TOUCH_MINUTES) ;
-TouchButton btnSeconds(TOUCH_SECONDS);
-TouchButton btnStart(TOUCH_START_STOP);
 
 unsigned long previousMillis = 0 ;
 unsigned long interval = 1000 ;  // each second

@@ -32,7 +32,6 @@ extern volatile bool alarmChanged ;
 
 struct TouchButton {
 	uint8_t			pin ;
-	touch_value_t	threshold ;
 	u32_t			firstPress ;
 	bool			isOn ;			// one time set
 	bool			isPressed ;		// continous
@@ -43,29 +42,21 @@ struct TouchButton {
 
 	TouchButton( uint8_t pin ) {
 		this->pin = pin;
-		threshold = touchRead( pin ) ;
 		firstPress = 0 ;
 		isOn = false ;
-		thresholdread = false;
+		isPressed = false;
+		repeat = false ;
+		interval = 0 ;
 	}
 
 	bool check() {
-		if ( !thresholdread ) {
-			threshold = touchRead(pin);
-			thresholdread = true ;
-		}
-		touch_value_t current = touchRead( pin );
+
+		int val = digitalRead(pin);
+
 		if ( debugbuttons ) {
-			debugPrintf("current %d  threshold %d\n", (int)current, (int)threshold );
-/*			if ( displayAvailable && pin==1 ) {
-				char buffer[32] ;
-				snprintf(buffer, sizeof(buffer), "Munt 1: %d", current);
-				wisScherm();
-				schrijfTekst( buffer, 10, 10, 1 ) ;
-			}
-			*/
+			Serial.printf("pin  %d :  %d\n", pin, val );
 		}
-		if ( current > ( threshold * 1.15 ) ) {
+		if ( val == HIGH ) {
 			isPressed = true ;
 			if ( !isOn ) {
 				repeat = false ;
