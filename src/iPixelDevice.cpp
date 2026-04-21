@@ -1,7 +1,9 @@
 #include "iPixelDevice.h"
 #include "global.h"
 #include <cstring>
+#include "utils/mqtthelpers.h"
 //#include "main.h"
+
 
 #include <Preferences.h>
 
@@ -644,12 +646,15 @@ void iPixelDevice::onConnect(NimBLEClient *pClient) {
    // Serial.println("On Connect, connection lijkt goed te zijn!");
 
 
+
 }
 
 void iPixelDevice::onConnectFail(NimBLEClient* pClient, int reason) {
 
     Serial.println("############### Connection Failed! ###############");
     Serial.printf("Reason %d\n", reason);
+	publish_status( 0, false ) ;
+
 }
 
 
@@ -659,6 +664,8 @@ void iPixelDevice::onDisconnect(NimBLEClient *pClient) {
     printPrefix();
     Serial.println("############### Disconnected! ###############");
     connected = false;
+	publish_status( 0, false ) ;
+
 }
 
 
@@ -696,7 +703,7 @@ void iPixelDevice::connectAsync() {
         Serial.println("WARN: Already connected!");
         return;
     }
-
+	publish_status(0,false);
 	DeviceState prevState = _state;
 	_state = CONNECTING;
     printPrefix();
@@ -754,6 +761,8 @@ void iPixelDevice::postconnect() {
     debugPrintf("[iPixelDevice] Connected with %s\n",address.toString().c_str());
     debugPrintf("[iPixelDevice] MTU is %d, chunksize %d\n", mtu, chunkSize);
     _state = READY;  // ready for commands
+	publish_status( 0, true ) ;
+
 
 }
 

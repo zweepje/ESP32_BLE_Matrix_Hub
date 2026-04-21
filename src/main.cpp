@@ -27,6 +27,7 @@
 #include "Display/Display.h"
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <utils/mqtthelpers.h>
 
 
 extern "C" {
@@ -312,34 +313,200 @@ void connectionTask(void * pvParameters) {
   }
 }
 
-void debugsetup() {
-	Serial.begin(115200);
 
-	delay(500); // Wacht even op de seriële monitor
-	Serial.println("ESP - BLE matrix HUB");
-	Serial.println("================================");
-	Serial.printf("Software Versie: %s\n", VERSION);
-	//Serial.printf("Software Versie: %s\n", "2.6.6.6");
-	Serial.printf("Build Nummer:    %s\n", BUILD_NUMBER);
-	Serial.printf("Git Branch:      %s\n", GIT_BRANCH);
-	Serial.printf("Board:           %s\n", BOARD);
-	Serial.printf("Build Datum:     %s\n", BUILD_DATE);
-	Serial.println("================================");
+void mqttBinarySensor() {
+	// Construct the topic and payload
+	char topic[100];
+	int id = 0;
 
-	Serial.println("\n--- PSRAM/Geheugen Status ---");
-	// 1. Controleer de totale beschikbare DRAM (interne heap)
-	size_t dram_heap = heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-	Serial.printf("Interne DRAM Heap: %u bytes\n", dram_heap);
-
-	// 2. Controleer de totale beschikbare PSRAM (externe heap)
-	size_t psram_size = heap_caps_get_free_size(MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-	Serial.printf("Externe PSRAM Heap: %u bytes\n", psram_size);
+	snprintf(topic, sizeof(topic), "homeassistant/binary_sensor/%s_matrix_%d_status/config", devicename, id);
 
 
-	Serial.println("Init BLE...");
-	NimBLEDevice::init("ESP32");
-	Serial.println("BLE OK");
+
+
+	const char* payload = R"(
+		{
+			"name":"Matrix %d Status",
+			"state_topic":"%s_matrix_%d/status",
+			"payload_on": "online",
+			"payload_off": "offline",
+
+			"unique_id":"%s_matrix_%d_status",
+			"device":{
+				"identifiers":["%s"]
+				"name": "%s",
+				"model": "ESP32 Matrix Controller"
+			}
+		}
+		)";
+
+
+	//	const char* payload = "{\"name\":\"Matrix %d Status\",\"state_topic\":\"%s_matrix_%d/status\",\"unique_id\":\"%s_matrix_%d_status\",\"device\":{\"identifiers\":[\"%s\"]}}";
+	char finalPayload[200];
+	snprintf(finalPayload, sizeof(finalPayload),
+		payload,
+		id,           // Matrix %d
+		devicename,   // %s_matrix
+		id,           // %d
+		devicename,   // %s_matrix
+		id,           // %d
+		devicename,    // identifiers
+		devicename    // identifiers
+	);
+
+	debugPrintf("Publishing: \n<%s>\n<%s>\n", topic, finalPayload ) ;
+
+	// Publish the config
+	mqttClient.publish(topic, finalPayload, true );
+
+
+	publish_status( 0, false ) ;
+	/*	mqttClient.publish(
+		  "ESP32_KEUKEN/matrix/0/status",
+		  "offline",
+		  true
+		);
+		*/
 }
+
+
+void mqttReconnect() {
+
+    mqttClient.setBufferSize(1024);
+
+    while (!mqttClient.connected()) {
+        Serial.println("MQTT verbinden...");
+
+        // Basis naam van dit device
+        const char* base = devicename;   // bv "ESP32_KITCHEN"
+
+        // Topics
+        String statusTopic = String(base) + "/status";
+        String configTopic = "homeassistant/binary_sensor/" + String(base) + "_status/config";
+
+        // Connect met Last Will
+        if (mqttClient.connect(
+                base,                      // client ID (uniek!)
+                mqtt_user,
+                mqtt_pass,
+                statusTopic.c_str(),       // LWT topic
+                0,
+                true,
+                "offline"                  // LWT payload
+        )) {
+            Serial.println("MQTT connected");
+
+            delay(500); // HA laten "landen"
+
+            // JSON payload maken (VEILIG met snprintf)
+            char payload[512];
+
+            snprintf(payload, sizeof(payload),
+                "{"
+                "\"name\":\"%s\","
+                "\"state_topic\":\"%s\","
+                "\"payload_on\":\"online\","
+                "\"payload_off\":\"offline\","
+                "\"unique_id\":\"%s_status\","
+                "\"device\":{"
+                    "\"identifiers\":[\"%s\"],"
+                    "\"name\":\"%s\","
+                    "\"model\":\"ESP32 Matrix Controller\""
+                "}"
+                "}",
+                base,                       // name
+                statusTopic.c_str(),        // state_topic
+                base,                       // unique_id
+                base,                       // identifiers
+                base                        // device name
+            );
+
+            // 🔥 Discovery publish (MOET retained zijn!)
+            mqttClient.publish(
+                configTopic.c_str(),
+                payload,
+                true
+            );
+
+            // Online status
+            mqttClient.publish(statusTopic.c_str(), "online", true);
+     // Subscribe voor toekomstige commands
+            String subTopic = String(base) + "/#";
+            mqttClient.subscribe(subTopic.c_str());
+
+
+
+        	//
+        	// enumerate all displays
+        	//
+        	for (int i = 0; i < numdisplays; i++) {
+        		iPixelDevice *dev = displays[i].device;
+
+				if ( i==0 && dev==nullptr ) {
+					debugPrintf("Device is still null!!!!");
+				}
+
+
+        		if ( dev != nullptr ) {
+        			// this device is configured
+        			debugPrintf("mqtt for devicemode is %d\n", dev->mode );
+        			debugPrintf("MODE_KOOKWEKKER is %d\n", MODE_KOOKWEKKER);
+
+					//delay( 200 );
+        			if ( dev->mode == MODE_KOOKWEKKER  ) {
+        				// als het wekker is:
+        				debugPrintf("Device to configure for mqtt detected\n");
+        				debugPrintf("Waarom print ik niet?\n");
+
+
+        				mqttBinarySensor() ;
+        				/*
+
+        				// Construct the topic and payload
+        				char topic[100];
+        				int id = i ;
+
+        				snprintf(topic, sizeof(topic), "homeassistant/sensor/%s_matrix_%d_status/config", devicename, id);
+
+        				const char* payload = "{\"name\":\"Matrix %d Status\",\"state_topic\":\"%s_matrix_%d/status\",\"unique_id\":\"%s_matrix_%d_status\",\"device\":{\"identifiers\":[\"%s\"]}}";
+        				char finalPayload[200];
+        				snprintf(finalPayload, sizeof(finalPayload),
+							payload,
+							id,           // Matrix %d
+							devicename,   // %s_matrix
+							id,           // %d
+							devicename,   // %s_matrix
+							id,           // %d
+							devicename    // identifiers
+						);
+
+        				debugPrintf("Publishing: \n<%s>\n<%s>\n", topic, finalPayload ) ;
+
+        				// Publish the config
+        				mqttClient.publish(topic, finalPayload, true );
+        				mqttClient.publish(
+						  "ESP32_KEUKEN/matrix/0/status",
+						  "offline",   // of clock / ticker
+						  true
+						);
+						*/
+
+        			} else
+        				if (dev->mode == MODE_WEKKER) {
+        				}
+        		}
+        		debugPrintf("not configuring device %d, mode is %d\n", i, dev->mode );
+
+        	}
+        }
+        else {
+            debugPrintf("MQTT failed, retry...\n");
+            delay(2000);
+        }
+    }
+}
+
+
 
 void noloop() {}
 void setup() {
@@ -377,6 +544,7 @@ void setup() {
 	display->SetIp(WiFi.localIP().toString());
 	display->SetStatus("Wifi configured");
 
+	mqttReconnect();
 
 
   initTime();
@@ -453,107 +621,6 @@ void updateAlarmCache() {
 }
 
 
-void mqttReconnect() {
-
-    mqttClient.setBufferSize(1024);
-
-    while (!mqttClient.connected()) {
-        Serial.println("MQTT verbinden...");
-
-        // Basis naam van dit device
-        const char* base = devicename;   // bv "ESP32_KITCHEN"
-
-        // Topics
-        String statusTopic = String(base) + "/status";
-        String configTopic = "homeassistant/binary_sensor/" + String(base) + "_status/config";
-
-        // Connect met Last Will
-        if (mqttClient.connect(
-                base,                      // client ID (uniek!)
-                mqtt_user,
-                mqtt_pass,
-                statusTopic.c_str(),       // LWT topic
-                0,
-                true,
-                "offline"                  // LWT payload
-        )) {
-            Serial.println("MQTT connected");
-
-            delay(500); // HA laten "landen"
-
-            // JSON payload maken (VEILIG met snprintf)
-            char payload[512];
-
-            snprintf(payload, sizeof(payload),
-                "{"
-                "\"name\":\"%s\","
-                "\"state_topic\":\"%s\","
-                "\"payload_on\":\"online\","
-                "\"payload_off\":\"offline\","
-                "\"unique_id\":\"%s_status\","
-                "\"device\":{"
-                    "\"identifiers\":[\"%s\"],"
-                    "\"name\":\"%s\","
-                    "\"model\":\"ESP32 Matrix Controller\""
-                "}"
-                "}",
-                base,                       // name
-                statusTopic.c_str(),        // state_topic
-                base,                       // unique_id
-                base,                       // identifiers
-                base                        // device name
-            );
-
-            // 🔥 Discovery publish (MOET retained zijn!)
-            mqttClient.publish(
-                configTopic.c_str(),
-                payload,
-                true
-            );
-
-            // Online status
-            mqttClient.publish(statusTopic.c_str(), "online", true);
-
-            // Subscribe voor toekomstige commands
-            String subTopic = String(base) + "/#";
-            mqttClient.subscribe(subTopic.c_str());
-
-
-        	//
-        	// enumerate all displays
-        	//
-        	for (int i = 0; i < numdisplays; i++) {
-        		iPixelDevice *dev = displays[i].device;
-
-				if ( i==0 && dev==nullptr ) {
-					debugPrintf("Device is still null!!!!");
-				}
-
-
-        		if ( dev != nullptr ) {
-        			// this device is configured
-        			debugPrintf("mqtt for devicemode is %d\n", dev->mode );
-        			debugPrintf("MODE_KOOKWEKKER is %d\n", MODE_KOOKWEKKER);
-
-					//delay( 200 );
-        			if ( dev->mode == MODE_KOOKWEKKER  ) {
-        				// als het wekker is:
-        				debugPrintf("Device to configure for mqtt detected\n");
-        				debugPrintf("Waarom print ik niet?\n");
-        			} else
-        				if (dev->mode == MODE_WEKKER) {
-        				}
-        		}
-        		debugPrintf("not configuring device %d, mode is %d\n", i, dev->mode );
-
-        	}
-        }
-        else {
-            debugPrintf("MQTT failed, retry...\n");
-            delay(2000);
-        }
-    }
-}
 
 
 
