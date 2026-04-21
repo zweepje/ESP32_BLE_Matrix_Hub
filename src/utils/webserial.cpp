@@ -6,9 +6,17 @@
 #include <WebSerial.h>
 #include <WString.h>
 
-// Functie prototype
-void debugPrintf(const char *format, ...) {
 
+static boolean firstprint = true ;
+SemaphoreHandle_t serialMutex;
+
+// Functie prototype
+void orgdebugPrintf(const char *format, ...) {
+
+    if ( firstprint ) {
+        firstprint = false;
+        serialMutex = xSemaphoreCreateMutex();
+    }
 
     char loc_res[256]; // Buffer voor de geformatteerde tekst
     va_list arg;
@@ -27,16 +35,39 @@ void debugPrintf(const char *format, ...) {
             vsnprintf(buffer, len + 1, format, arg);
 
             // 1. Stuur naar de fysieke Seriële poort
+            // Serial.print(buffer);
+            xSemaphoreTake(serialMutex, portMAX_DELAY);
             Serial.print(buffer);
+            xSemaphoreGive(serialMutex);
 
             // 2. Stuur naar de WebSerial interface
-           WebSerial.print(buffer);
+         //  WebSerial.print(buffer);
 
             free(buffer);
         }
     }
     va_end(arg);
+}
 
+void debugPrintf(const char *format, ...) {
+
+    if (firstprint) {
+        firstprint = false;
+        serialMutex = xSemaphoreCreateMutex();
+    }
+
+    char buffer[256];  // vaste buffer → stabiel!
+
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+
+    xSemaphoreTake(serialMutex, portMAX_DELAY);
+    Serial.print(buffer);
+    Serial.flush();
+    delay( 20 );
+    xSemaphoreGive(serialMutex);
 }
 
 

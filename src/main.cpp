@@ -43,6 +43,8 @@ const char* mqtt_server = "192.168.100.29"; // jouw HA IP
 const char* mqtt_user = "mqtt_esp32";
 const char* mqtt_pass = "trombone";
 
+const char* devicename = "ESP32_KEUKEN";
+
 
 // Globale map om de status van alle verbonden PC's bij te houden
 std::map<uint32_t, ClientState> clientStates; // Key is client ID
@@ -102,7 +104,7 @@ void scanBLEDevices() {
 	pBLEScan->start(5, false);
 	NimBLEScanResults results = pBLEScan->getResults();
 
-	Serial.printf("Scan klaar. %d apparaten gevonden:\n", results.getCount());
+	debugPrintf("Scan klaar. %d apparaten gevonden:\n", results.getCount());
 
 	for (int i = 0; i < results.getCount(); i++) {
 		// FIX 2: Gebruik NimBLEAdvertisedDevice* (pointer)
@@ -111,7 +113,7 @@ void scanBLEDevices() {
 		String name = device->getName().c_str(); // Gebruik -> ipv .
 		if (name == "") name = "Onbekend";
 
-		Serial.printf("[%d] Naam: %s | Adres: %s | RSSI: %d\n",
+		debugPrintf("[%d] Naam: %s | Adres: %s | RSSI: %d\n",
 					  i,
 					  name.c_str(),
 					  device->getAddress().toString().c_str(),
@@ -317,6 +319,7 @@ void debugsetup() {
 	Serial.println("ESP - BLE matrix HUB");
 	Serial.println("================================");
 	Serial.printf("Software Versie: %s\n", VERSION);
+	//Serial.printf("Software Versie: %s\n", "2.6.6.6");
 	Serial.printf("Build Nummer:    %s\n", BUILD_NUMBER);
 	Serial.printf("Git Branch:      %s\n", GIT_BRANCH);
 	Serial.printf("Board:           %s\n", BOARD);
@@ -342,7 +345,7 @@ void noloop() {}
 void setup() {
 
   Serial.begin(115200);
-  delay(200); // Wacht even op de seriële monitor
+  delay(2000); // Wacht even op de seriële monitor
 	Serial.println("ESP - BLE matrix HUB");
 	Serial.println("================================");
 	Serial.printf("Software Versie: %s\n", VERSION);
@@ -452,65 +455,105 @@ void updateAlarmCache() {
 
 void mqttReconnect() {
 
-	mqttClient.setBufferSize(1024);
+    mqttClient.setBufferSize(1024);
 
-	while (!mqttClient.connected()) {
-		Serial.println("MQTT verbinden...");
+    while (!mqttClient.connected()) {
+        Serial.println("MQTT verbinden...");
 
-		if (mqttClient.connect(
-			"kookwekker",
-			mqtt_user,
-			mqtt_pass,
-			"kookwekker/status",
-			0,
-			true,
-			"offline"
-		)) {
-			Serial.println("MQTT connected");
+        // Basis naam van dit device
+        const char* base = devicename;   // bv "ESP32_KITCHEN"
 
-			delay(500); // belangrijk!
-/*
-			mqttClient.publish(
-			  "homeassistant/binary_sensor/test_device/config",
-			  "{\"name\":\"Test Device\",\"state_topic\":\"kookwekker/status\"}",
-			  true
-			);
-*/
+        // Topics
+        String statusTopic = String(base) + "/status";
+        String configTopic = "homeassistant/binary_sensor/" + String(base) + "_status/config";
+
+        // Connect met Last Will
+        if (mqttClient.connect(
+                base,                      // client ID (uniek!)
+                mqtt_user,
+                mqtt_pass,
+                statusTopic.c_str(),       // LWT topic
+                0,
+                true,
+                "offline"                  // LWT payload
+        )) {
+            Serial.println("MQTT connected");
+
+            delay(500); // HA laten "landen"
+
+            // JSON payload maken (VEILIG met snprintf)
+            char payload[512];
+
+            snprintf(payload, sizeof(payload),
+                "{"
+                "\"name\":\"%s\","
+                "\"state_topic\":\"%s\","
+                "\"payload_on\":\"online\","
+                "\"payload_off\":\"offline\","
+                "\"unique_id\":\"%s_status\","
+                "\"device\":{"
+                    "\"identifiers\":[\"%s\"],"
+                    "\"name\":\"%s\","
+                    "\"model\":\"ESP32 Matrix Controller\""
+                "}"
+                "}",
+                base,                       // name
+                statusTopic.c_str(),        // state_topic
+                base,                       // unique_id
+                base,                       // identifiers
+                base                        // device name
+            );
+
+            // 🔥 Discovery publish (MOET retained zijn!)
+            mqttClient.publish(
+                configTopic.c_str(),
+                payload,
+                true
+            );
+
+            // Online status
+            mqttClient.publish(statusTopic.c_str(), "online", true);
+
+            // Subscribe voor toekomstige commands
+            String subTopic = String(base) + "/#";
+            mqttClient.subscribe(subTopic.c_str());
 
 
-			const char* payload =
-			"{"
-			"\"name\":\"Kookwekker Online\","
-			"\"state_topic\":\"kookwekker/status\","
-			"\"payload_on\":\"online\","
-			"\"payload_off\":\"offline\","
-			"\"unique_id\":\"kookwekker_status_1\","
-			"\"device\":{"
-			"\"identifiers\":[\"kookwekker_esp32\"],"
-			"\"name\":\"Kookwekker\""
-			"}"
-			"}";
+        	//
+        	// enumerate all displays
+        	//
+        	for (int i = 0; i < numdisplays; i++) {
+        		iPixelDevice *dev = displays[i].device;
 
-			mqttClient.publish(
-				 "homeassistant/binary_sensor/kookwekker_status/config",
-					payload,
-					true
-			);
-
-			mqttClient.publish("kookwekker/status", "online", true);
+				if ( i==0 && dev==nullptr ) {
+					debugPrintf("Device is still null!!!!");
+				}
 
 
+        		if ( dev != nullptr ) {
+        			// this device is configured
+        			debugPrintf("mqtt for devicemode is %d\n", dev->mode );
+        			debugPrintf("MODE_KOOKWEKKER is %d\n", MODE_KOOKWEKKER);
 
+					//delay( 200 );
+        			if ( dev->mode == MODE_KOOKWEKKER  ) {
+        				// als het wekker is:
+        				debugPrintf("Device to configure for mqtt detected\n");
+        				debugPrintf("Waarom print ik niet?\n");
+        			} else
+        				if (dev->mode == MODE_WEKKER) {
+        				}
+        		}
+        		debugPrintf("not configuring device %d, mode is %d\n", i, dev->mode );
 
-		} else {
-			Serial.println("MQTT failed, retry...");
-			delay(2000);
-		}
-	}
+        	}
+        }
+        else {
+            debugPrintf("MQTT failed, retry...\n");
+            delay(2000);
+        }
+    }
 }
-
-
-
 
 
 
@@ -525,7 +568,7 @@ void loop() {
 	}
 
 
-
+	// once per minite log......
   unsigned long currentMillis = millis();
   // Controleer of er 60 seconden zijn verstreken sinds de laatste afdruk
   if (currentMillis - previousMillis >= interval) {
@@ -540,9 +583,13 @@ void loop() {
   	}
   	display->SetTime( time.c_str() );
   }
+
+
   loop_connected();
 
 }
+
+int lcnt=0 ;
 
 void loop_connected() {
 
@@ -573,15 +620,19 @@ void loop_connected() {
 	if (!mqttClient.connected()) {
 		mqttReconnect();
 	}
+
+	/*
 	mqttClient.publish("kookwekker/status", "online", true);
 	mqttClient.publish("kookwekker/poes", "miauw", true);
 
 
 	mqttClient.publish("kookwekker/remaining", "120", true);
+	*/
 
-
-
-	mqttClient.loop();
+	lcnt++ ;
+	if ( lcnt%10 == 0 ) {
+		mqttClient.loop();
+	}
 }
 
 //  iPixelDevice test(BLEAddress("3d:50:0c:1f:6d:ec"));
@@ -608,7 +659,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 
 	String t = String(topic);
 
-	Serial.printf("MQTT ontvangen: %s = %s\n", t.c_str(), msg.c_str());
+	debugPrintf("MQTT ontvangen: %s = %s\n", t.c_str(), msg.c_str());
 
 	if (numdisplays == 0) return;
 	iPixelDevice* dev = displays[0].device;

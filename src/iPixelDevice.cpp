@@ -22,12 +22,18 @@ NimBLEUUID charUUID("0000fa02-0000-1000-8000-00805f9b34fb");
 extern std::map<std::string, iPixelDevice> matrixRegistry;
 extern AsyncWebSocket ws;
 
+void connectBluetooth() {
+    // Placeholder implementation
+}
 
+void disconnectBluetooth() {
+    // Placeholder implementation
+}
 
 iPixelDevice::iPixelDevice(NimBLEAddress pAddress) :
-		address(pAddress),
-		functionmeter("gifcall"),
-		blemeter("bletcall")
+        address(pAddress),
+        functionmeter("gifcall"),
+        blemeter("bletcall")
 {
 }
 
@@ -38,7 +44,6 @@ void iPixelDevice::processTimerCommand(StaticJsonDocument<4096>& doc) {
     const char* action = doc["action"];
 
     debugPrintf("TimerCommand received <%s>\n", action );
-
 
     if (strcmp(action, "INC_MIN") == 0) {
         timerSeconds += 60;
@@ -57,18 +62,18 @@ void iPixelDevice::processTimerCommand(StaticJsonDocument<4096>& doc) {
         Serial.println("Wekker gereset.");
     }
     else if ( strcmp(action, "ONOFF" ) == 0 ) {
-	    if ( LEDstate ) {
-	    	LEDstate = false ;
-	    } else {
-	    	LEDstate = true ;
-	    }
-    	setLED( LEDstate );
-    	Serial.println("Display On/Off.");
-    	return ;
+        if ( LEDstate ) {
+            LEDstate = false ;
+        } else {
+            LEDstate = true ;
+        }
+        setLED( LEDstate );
+        Serial.println("Display On/Off.");
+        return ;
     }
     else if ( timerSetting ) {
 
-    	debugPrintf("Setting timer\n");
+        debugPrintf("Setting timer\n");
  //   	showTime( timer );
 
     }
@@ -98,10 +103,7 @@ void iPixelDevice::showTime( int timerSeconds ) {
 	lastdisplaytime = timerSeconds;
 
 
-
-
     std::vector<uint8_t> binaryDataVector;
-
 
     make_kooktime( this->context_data,binaryDataVector, timerSeconds ) ;
     debugPrintf("Sending GIF <%d>\n", timerSeconds );
@@ -116,8 +118,6 @@ void triggerAlarm() {
 	debugPrintf("------------------------------====================\n");
 	audio.startPlay("/alarm.wav");
 }
-
-
 
 
 void checkAlarm() {
@@ -401,7 +401,6 @@ void iPixelDevice::handleButtons() {
 //
 void iPixelDevice::processQueue() {
 
-
     //Serial.write("ProcessQueue: " );
 
     // 1. Controleer of er verbinding is en of de queue niet leeg is
@@ -617,8 +616,6 @@ void iPixelDevice::processQueue() {
 */
 
 }
-
-
 
 void iPixelDevice::printPrefix() {
     Serial.print("[iPixelDevice] [");

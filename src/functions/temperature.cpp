@@ -151,7 +151,7 @@ bool make_animated_time( void* generic_context, std::vector<uint8_t>& binaryData
     //
     bmp.clear(0) ;
 
-    Serial.printf("timestring is %s\n", time.c_str() );
+    debugPrintf("timestring is %s\n", time.c_str() );
     tekenString( bmp, time.c_str(), 1, 15, GREEN, largefont2 ) ;
 
     Animation anim = Animation();
