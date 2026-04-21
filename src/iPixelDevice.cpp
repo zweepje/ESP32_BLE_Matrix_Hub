@@ -226,6 +226,7 @@ void iPixelDevice::handleTimerLogic() {
 				if (nu != lastnu) {
 					lastnu = nu;
 					showClock( ti.tm_hour, ti.tm_min, ti.tm_sec  ) ;
+					publish_time( 0,    ti.tm_min, ti.tm_sec);
 				}
 			}
 

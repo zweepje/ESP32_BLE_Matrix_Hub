@@ -7,6 +7,7 @@
 
 
 void publish_status( int matrixid, boolean state ) ;
+void publish_time(int matrixid, int hour, int minute) ;
 
 
 

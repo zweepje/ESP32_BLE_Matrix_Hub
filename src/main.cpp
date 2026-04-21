@@ -319,30 +319,27 @@ void mqttBinarySensor() {
 	char topic[100];
 	int id = 0;
 
+
+	//
+	// Status of matrix
+	//
 	snprintf(topic, sizeof(topic), "homeassistant/binary_sensor/%s_matrix_%d_status/config", devicename, id);
-
-
-
-
 	const char* payload = R"(
 		{
 			"name":"Matrix %d Status",
-			"state_topic":"%s_matrix_%d/status",
+			"state_topic":"%s/matrix/%d/status",
 			"payload_on": "online",
 			"payload_off": "offline",
-
 			"unique_id":"%s_matrix_%d_status",
 			"device":{
-				"identifiers":["%s"]
+				"identifiers":["%s"],
 				"name": "%s",
 				"model": "ESP32 Matrix Controller"
 			}
 		}
 		)";
 
-
-	//	const char* payload = "{\"name\":\"Matrix %d Status\",\"state_topic\":\"%s_matrix_%d/status\",\"unique_id\":\"%s_matrix_%d_status\",\"device\":{\"identifiers\":[\"%s\"]}}";
-	char finalPayload[200];
+	char finalPayload[512];
 	snprintf(finalPayload, sizeof(finalPayload),
 		payload,
 		id,           // Matrix %d
@@ -355,18 +352,48 @@ void mqttBinarySensor() {
 	);
 
 	debugPrintf("Publishing: \n<%s>\n<%s>\n", topic, finalPayload ) ;
-
 	// Publish the config
 	mqttClient.publish(topic, finalPayload, true );
-
-
 	publish_status( 0, false ) ;
-	/*	mqttClient.publish(
-		  "ESP32_KEUKEN/matrix/0/status",
-		  "offline",
-		  true
-		);
-		*/
+
+	//
+	// time display
+	//
+	const char* payload1 = R"({
+  "name": "Matrix %d Time",
+  "state_topic": "%s/matrix/%d/time",
+  "unique_id": "%s_matrix_%d_time",
+  "device": {
+    "identifiers": ["%s"],
+    "name": "%s",
+    "model": "ESP32 Matrix Controller"
+  }
+		})";
+
+	snprintf(finalPayload, sizeof(finalPayload),
+		payload1,
+		id,
+		devicename,
+		id,
+		devicename,
+		id,
+		devicename,
+		devicename
+	);
+
+	snprintf(topic, sizeof(topic),
+		"homeassistant/sensor/%s_matrix_%d_time/config",
+		devicename, id
+	);
+
+	mqttClient.publish(topic, finalPayload, true);
+
+	publish_time(0 , 11, 22);
+
+	Serial.println("---- TIME CONFIG ----");
+	Serial.println(finalPayload);
+	Serial.println("---------------------");
+
 }
 
 
