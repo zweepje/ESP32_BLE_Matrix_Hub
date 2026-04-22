@@ -800,9 +800,7 @@ String getResetReason() {
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
 
 
-	debugPrintf("Topic: <%s>", topic );
-
-
+	debugPrintf("Callback for Topic: <%s>", topic );
 	String msg;
 	for (int i = 0; i < length; i++) msg += (char)payload[i];
 
@@ -814,6 +812,43 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 	if (numdisplays == 0) return;
 	iPixelDevice* dev = displays[0].device;
 	if (!dev) return;
+
+
+
+	// voorbeeld: ESP32_KEUKEN/matrix/0/set
+
+	int p1 = t.indexOf('/');
+	int p2 = t.indexOf('/', p1 + 1);
+	int p3 = t.indexOf('/', p2 + 1);
+
+	String module = t.substring(p1 + 1, p2);			// matrix
+	int id = t.substring(p2 + 1, p3).toInt();			// id
+	String action = t.substring(p3 + 1);								// commando
+
+	dev = displays[id].device;
+	if ( dev==nullptr ) return;
+
+	if ( action == "set" ) {
+
+
+		String msg;
+		msg.reserve(length);
+
+		for (unsigned int i = 0; i < length; i++) {
+			msg += (char)payload[i];
+		}
+		publishNumber( id,"runtime", msg.c_str() );
+		dev->timer = msg.toInt();
+
+
+
+		debugPrintf("+++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+		debugPrintf(" Set commando ontvangen, timer %d\n", dev->timer) ;
+		debugPrintf("+++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+		debugPrintf("+++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+
+
+	}
 
 	//if (t == "kookwekker/start") dev->startTimer();
 	//if (t == "kookwekker/stop") dev->stopTimer();
