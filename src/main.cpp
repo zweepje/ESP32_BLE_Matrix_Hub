@@ -313,6 +313,49 @@ void connectionTask(void * pvParameters) {
   }
 }
 
+void mqtt_button() {
+
+	char topic[100];
+	int id = 0;
+
+	const char* payload = R"({
+		  "name": "Matrix %d Start",
+		  "command_topic": "%s/matrix/%d/command",
+		  "payload_press": "start",
+		  "unique_id": "%s_matrix_%d_start",
+		  "device": {
+		    "identifiers": ["%s"],
+		    "name": "%s"
+		  }
+	})";
+
+	char finalPayload[300];
+
+	snprintf(finalPayload, sizeof(finalPayload),
+		payload,
+		id,           // Matrix %d
+		devicename,   // %s
+		id,           // %d
+		devicename,   // %s
+		id,           // %d
+		devicename,   // identifiers
+		devicename    // device name
+	);
+
+
+
+	snprintf(topic, sizeof(topic),
+				"homeassistant/button/%s_matrix_%d_start/config",
+				devicename, id  );
+
+	mqttClient.publish(topic, finalPayload, true);
+
+	mqttClient.subscribe("ESP32_KEUKEN/matrix/0/command");
+	mqttClient.subscribe("ESP32_KEUKEN/matrix/0/set");
+}
+
+
+
 
 void mqttBinarySensor() {
 	// Construct the topic and payload
@@ -355,7 +398,7 @@ void mqttBinarySensor() {
 	// Publish the config
 	mqttClient.publish(topic, finalPayload, true );
 	publish_status( 0, false ) ;
-
+	/*
 	//
 	// time display
 	//
@@ -393,7 +436,7 @@ void mqttBinarySensor() {
 	Serial.println("---- TIME CONFIG ----");
 	Serial.println(finalPayload);
 	Serial.println("---------------------");
-
+*/
 }
 
 
@@ -459,7 +502,7 @@ void mqttReconnect() {
             mqttClient.publish(statusTopic.c_str(), "online", true);
      // Subscribe voor toekomstige commands
             String subTopic = String(base) + "/#";
-            mqttClient.subscribe(subTopic.c_str());
+            //mqttClient.subscribe(subTopic.c_str());
 
 
 
@@ -487,6 +530,16 @@ void mqttReconnect() {
 
 
         				mqttBinarySensor() ;
+
+        				publishHaSensor( 0, "time" );
+        				publishSensor( 0, "time", "02:55");
+        				publishHaSensor( 0, "remaining" );
+        				publishSensor( 0, "remaining", "00:59");
+
+        				publishHaNumber( 0, "runtime" );
+        				publishNumber( 0, "runtime", "666");
+
+        				mqtt_button();
         				/*
 
         				// Construct the topic and payload
@@ -723,10 +776,7 @@ void loop_connected() {
 	mqttClient.publish("kookwekker/remaining", "120", true);
 	*/
 
-	lcnt++ ;
-	if ( lcnt%10 == 0 ) {
-		mqttClient.loop();
-	}
+	mqttClient.loop();
 }
 
 //  iPixelDevice test(BLEAddress("3d:50:0c:1f:6d:ec"));
@@ -748,12 +798,18 @@ String getResetReason() {
 }
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
+
+
+	debugPrintf("Topic: <%s>", topic );
+
+
 	String msg;
 	for (int i = 0; i < length; i++) msg += (char)payload[i];
 
 	String t = String(topic);
-
+	debugPrintf("====================================================\n");
 	debugPrintf("MQTT ontvangen: %s = %s\n", t.c_str(), msg.c_str());
+	debugPrintf("====================================================\n");
 
 	if (numdisplays == 0) return;
 	iPixelDevice* dev = displays[0].device;

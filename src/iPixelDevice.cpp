@@ -227,6 +227,10 @@ void iPixelDevice::handleTimerLogic() {
 					lastnu = nu;
 					showClock( ti.tm_hour, ti.tm_min, ti.tm_sec  ) ;
 					publish_time( 0,    ti.tm_min, ti.tm_sec);
+
+					char tstr[10] ;
+					snprintf( tstr, 10, "%02d:%02d", timer/60, timer%60 );
+					publishSensor( 0, "remaining", tstr );
 				}
 			}
 
@@ -240,6 +244,13 @@ void iPixelDevice::handleTimerLogic() {
 			break;
 
 		case RUNNING: {
+
+
+			char tstr[10] ;
+			snprintf( tstr, 10, "%02d:%02d", timer/60, timer%60 );
+			publishSensor( 0, "remaining", tstr );
+
+
 
 			bool bstart = btnStart.check() ;
 			if (bstart) {
