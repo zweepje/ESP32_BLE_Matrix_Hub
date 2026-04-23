@@ -882,7 +882,7 @@ blemeter.start() ;
         }
     }
 	blemeter.end() ;
-	delay( 200 );
+	delay( 20 );
 	ws.text(lastNodeRedID, "READY");
     debugPrintf("\n");
 }
