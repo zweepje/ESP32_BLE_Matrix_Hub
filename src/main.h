@@ -66,7 +66,7 @@ struct TouchButton {
 				return true ;
 			} else {
 				if ( ! repeat ) {
-					if ( millis()-firstPress > 1000 ) {
+					if ( millis()-firstPress > 700 ) {
 						repeat = true ;
 						interval = millis() ;
 						isOn = true ;
