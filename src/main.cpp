@@ -828,8 +828,11 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 	dev = displays[id].device;
 	if ( dev==nullptr ) return;
 
-	if ( action == "set" ) {
 
+	//
+	// set
+	//
+	if ( action == "set" ) {
 
 		String msg;
 		msg.reserve(length);
@@ -848,6 +851,19 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 		debugPrintf("+++++++++++++++++++++++++++++++++++++++++++++++++++\n");
 
 
+	}
+
+	//
+	// start
+	//
+	if ( action == "command" ) {
+
+		debugPrintf("+++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+		debugPrintf(" Start commando ontvangen\n") ;
+		debugPrintf("+++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+		debugPrintf("+++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+
+		dev->startKookwekker();
 	}
 
 	//if (t == "kookwekker/start") dev->startTimer();

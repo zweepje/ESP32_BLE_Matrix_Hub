@@ -356,6 +356,14 @@ void iPixelDevice::update() {
     }
 }
 
+void iPixelDevice::startKookwekker() {
+	if ( timer>0 ) {
+		_kookwekkkerState = RUNNING ;
+		starttimertime = millis() ;
+		timersettime = timer ;
+		debugPrintf("timer is started %d\n", (int)timer  );
+	}
+}
 
 void iPixelDevice::handleButtons() {
 
@@ -387,12 +395,7 @@ void iPixelDevice::handleButtons() {
 
 	if ( bstart ) {
 
-		if ( timer>0 ) {
-			_kookwekkkerState = RUNNING ;
-			starttimertime = millis() ;
-			timersettime = timer ;
-			debugPrintf("timer is started %d\n", (int)timer  );
-		}
+		startKookwekker();
 		return ;
 	}
 
