@@ -7,6 +7,7 @@
 #include "Constants.h"
 #include <cstdint>
 #include <map>
+#include <mutex>
 #include <queue>
 #include <string>
 #include <vector>
@@ -83,7 +84,12 @@ public:
 
     void update(); // Deze roep je aan in de hoofd-loop
     //Queue
-    std::vector<std::vector<uint8_t>> queue;
+	std::queue<std::vector<uint8_t>> queue;
+	std::mutex queueMutex;
+
+
+
+//    std::vector<std::vector<uint8_t>> queue;
     void queueTick();
     void queuePush(std::vector<uint8_t> command);
 

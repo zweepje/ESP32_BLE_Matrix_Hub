@@ -18,6 +18,9 @@
 
 extern AudioPlayer audio ;
 
+
+
+
 NimBLEUUID serviceUUID("000000fa-0000-1000-8000-00805f9b34fb");
 NimBLEUUID charUUID("0000fa02-0000-1000-8000-00805f9b34fb");
 
@@ -781,9 +784,90 @@ void iPixelDevice::postconnect() {
 
 }
 
+
 //
 // hier wordt de BLE queue verwerkt
 //
+void iPixelDevice::queueTick() {
+    std::vector<uint8_t> command;
+
+    // 🔒 Pak veilig een command uit de queue
+    {
+        std::lock_guard<std::mutex> lock(queueMutex);
+
+        if (queue.empty()) {
+            return;
+        }
+
+        if (!connected) {
+            Serial.println("BLE not connected");
+            queue.pop(); // gooi eerste item weg
+            return;
+        }
+
+        // Move i.p.v. copy (sneller!)
+        command = std::move(queue.front());
+        queue.pop();
+    }
+
+    blemeter.start();
+    Serial.printf("\n%s - Processing BLE queue\n", getLocalTimestamp().c_str());
+
+    while (!command.empty()) {
+
+        size_t chunks = std::min((int)this->chunkSize - 20, (int)command.size());
+        Serial.printf("Chunk is %d", chunks);
+
+        if (this->client != nullptr && client->isConnected()) {
+
+            bool success = characteristic->writeValue(command.data(), chunks, true);
+
+            if (success) {
+                // verwijder verzonden bytes
+                command.erase(command.begin(), command.begin() + chunks);
+
+                delay(5);
+            } else {
+                Serial.println("BLE Write failed, retrying next loop...");
+                delay(20);
+
+                // 🔁 Zet command terug in de queue voor retry
+                std::lock_guard<std::mutex> lock(queueMutex);
+                queue.push(std::move(command));
+
+                break;
+            }
+
+        } else {
+            if (this->connected) {
+                Serial.printf(
+                    "Matrix %s: Queue niet verwerkt. Client (0x%p) verbonden: %s\n",
+                    address.toString().c_str(),
+                    this->client,
+                    (this->client && this->client->isConnected() ? "JA" : "NEE")
+                );
+            }
+
+            this->connected = false;
+
+            if (this->client) {
+                this->client->disconnect();
+            }
+
+            // ❌ Niet terugzetten → command wordt gedropt
+            break;
+        }
+    }
+
+    blemeter.end();
+
+    delay(20);
+    ws.text(lastNodeRedID, "READY");
+    debugPrintf("\n");
+}
+
+
+#if 0
 void iPixelDevice::queueTick() {
     if (queue.empty()) {
         //Serial.println( "BLE queue is empty");
@@ -886,6 +970,14 @@ blemeter.start() ;
 	ws.text(lastNodeRedID, "READY");
     debugPrintf("\n");
 }
+#endif
+
+void iPixelDevice::queuePush(std::vector<uint8_t> command) {
+	std::lock_guard<std::mutex> lock(queueMutex);
+	queue.push(std::move(command));
+}
+
+#if 0
 void iPixelDevice::queuePush(std::vector<uint8_t> command) {
     queue.push_back(command);
 //    printPrefix();
@@ -894,6 +986,7 @@ void iPixelDevice::queuePush(std::vector<uint8_t> command) {
 //    Serial.print(" bytes to queue at ");
 //    Serial.println(queue.size() - 1);
 }
+#endif
 
 void iPixelDevice::sendImage() {
     std::vector<uint8_t> command = iPixelCommands::sendImage();

@@ -588,6 +588,8 @@ void mqttReconnect() {
 
 
 
+void bleQueueHandler(void * pvParameters) ;	// forward declaration
+
 void noloop() {}
 void setup() {
 
@@ -628,19 +630,32 @@ void setup() {
 
 
   initTime();
-  //
-  // Maak de achtergrond-taak aan
-  //
+	//
+	// Background task to check for ble connections
+	//
+	xTaskCreatePinnedToCore(
+		connectionTask,   // Functie die uitgevoerd moet worden
+		"ConnManager",    // Naam van de taak
+		4096,             // Stack size in bytes
+		NULL,             // Parameter die je meegeeft
+		1,                // Prioriteit (1 is laag, prima voor dit doel)
+		NULL,             // Task handle
+		0                 // Pin de taak aan Core 0 (Wi-Fi/BT core)
+	);
 
-  xTaskCreatePinnedToCore(
-      connectionTask,   // Functie die uitgevoerd moet worden
-      "ConnManager",    // Naam van de taak
-      4096,             // Stack size in bytes
-      NULL,             // Parameter die je meegeeft
-      1,                // Prioriteit (1 is laag, prima voor dit doel)
-      NULL,             // Task handle
-      0                 // Pin de taak aan Core 0 (Wi-Fi/BT core)
-  );
+	//
+	// Background task to handle BLE queue
+	//
+	xTaskCreatePinnedToCore(
+		bleQueueHandler,   // Functie die uitgevoerd moet worden
+		"BLE QueueHandler",    // Naam van de taak
+		4096,             // Stack size in bytes
+		NULL,             // Parameter die je meegeeft
+		1,                // Prioriteit (1 is laag, prima voor dit doel)
+		NULL,             // Task handle
+		1                 // Pin de taak aan Core 0 (Wi-Fi/BT core)
+		// moet deze niet aan core 1 komen?
+	);
 
 
 
@@ -741,7 +756,7 @@ int lcnt=0 ;
 void loop_connected() {
 
     ws.cleanupClients();
-	delay(500);
+	//delay(500);
 	for (int i = 0; i < numdisplays; i++) {
 
 	    iPixelDevice *dev = displays[i].device;
@@ -760,7 +775,7 @@ void loop_connected() {
 					dev->handleWekker() ;
 			}
 			dev->update();
-			dev->queueTick();
+			//dev->queueTick();
 	    }
 	}
 
@@ -768,16 +783,45 @@ void loop_connected() {
 		mqttReconnect();
 	}
 
-	/*
-	mqttClient.publish("kookwekker/status", "online", true);
-	mqttClient.publish("kookwekker/poes", "miauw", true);
-
-
-	mqttClient.publish("kookwekker/remaining", "120", true);
-	*/
-
 	mqttClient.loop();
 }
+
+//
+// BLE queue tick handler in separate queue
+//
+void bleQueueHandler(void * pvParameters) {
+
+	debugPrintf("Inside BLEQueueTick\n");
+	/*
+	 * Do forever
+	 */
+	while (true) {
+
+		for (int i = 0; i < numdisplays; i++) {
+
+			iPixelDevice *dev = displays[i].device;
+
+			if ( dev != nullptr ) {
+
+				dev->queueTick();
+			}
+		}
+
+		vTaskDelay(pdMS_TO_TICKS(200));
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 //  iPixelDevice test(BLEAddress("3d:50:0c:1f:6d:ec"));
 //2F:9F:9C:9C:51:AC
