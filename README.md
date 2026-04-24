@@ -5,6 +5,16 @@ This project is a configurable ESP32-based device that combines **three core fun
 The firmware is designed to run on multiple ESP32 variants and provides audio output, a display interface, and a web-based configuration system.
 
 ---
+## Todo:
+- Pressing stop stops ringing but timer starts again
+- investigate if OTA is possible
+- alarm should stop after amount of time
+- adjust time display of kookwekker  99:99 is more clear!
+- clock display rework ( center, pixel 1 larger?)
+- on/off display kookwekker
+- investigate standby mode, wakeup bij internet
+- 
+
 
 ## Creating a Release.
 - Make sure everything is checked in.
