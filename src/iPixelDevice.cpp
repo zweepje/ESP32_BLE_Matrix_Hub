@@ -861,116 +861,18 @@ void iPixelDevice::queueTick() {
 
     blemeter.end();
 
-    delay(20);
+	//
+	// delay a little after sending complete ble package
+	// makes it slower
+	//
+    delay(100);
+
+
+
     ws.text(lastNodeRedID, "READY");
     debugPrintf("\n");
 }
 
-
-#if 0
-void iPixelDevice::queueTick() {
-    if (queue.empty()) {
-        //Serial.println( "BLE queue is empty");
-        return;
-    }
-
-    if ( !connected ) {
-
-        Serial.println("BLE not connected");
-        // remove all from queue
-        queue.erase(queue.begin());
-        return ;
-    }
-
-
-    //Get command from queue
-    std::vector<uint8_t> &command = queue.front();
-blemeter.start() ;
-    Serial.printf("\n%s - Processing BLE queue\n", getLocalTimestamp().c_str() ) ;
-
-
-
-    while ( command.size() > 0 ) {
-
-        //Take bytes from command
-        size_t chunks = min((int)this->chunkSize-20, (int)command.size());
-        Serial.printf("Chunk is %d", chunks ) ;
-
-        if ( this->client != nullptr && client->isConnected()) {
-
-            bool success = characteristic->writeValue(command.data(), chunks, true);
-            if (success) {
-                // 2. Alleen verwijderen als het ECHT is aangekomen
-                command.erase(command.begin(), command.begin() + chunks);
-
-                if (command.empty()) {
-                    queue.erase(queue.begin());
-                }
-
-                // Omdat 'true' wacht op de overkant, heb je vaak minder delay nodig
-                // Maar een kleine pauze (bijv. 5-10ms) houdt de CPU koel
-                delay(5);
-            } else {
-                // 3. Foutafhandeling: Niet wissen!
-                // Bij de volgende loop probeert hij ditzelfde pakketje gewoon opnieuw.
-                Serial.println("BLE Write failed, retrying next loop...");
-
-                // Geef de verbinding even rust om te herstellen van de hik
-                delay(20);
-            	break ;		// leave the while loop, retry the whole!
-            }
-
-
-
-            /*
-
-
-                //Write bytes from command
-                characteristic->writeValue(command.data(), chunks, false);
-
-                //Remove bytes from command
-                command.erase(command.begin(), command.begin() + chunks);
-
-                    //Remove command if empty
-                if (command.empty()) queue.erase(queue.begin());
-
-                //Do not overload BLE
-                //delay(100);
-                */
-        } else {
-            // Foutopsporing: print welke Matrix niet verbonden is
-        	// print only oncde
-        	if ( this->connected ) {
-        		Serial.printf("Matrix %s: Queue niet verwerkt. Client (0x%p) verbonden: %s\n",
-							  address.toString().c_str(),
-							  this->client,
-							  (this->client && this->client->isConnected() ? "JA" : "NEE"));
-        	}
-        	//
-        	// mark as unconnected so we can retry
-        	this->connected = false;
-        	this->client->disconnect();
-        	// en gooi het commando weg
-        	queue.erase(queue.begin());
-
-        	break ; // leave
-
-            /*
-            if ( !this->client->isConnected() ) {
-                this->connected =false;
-                Serial.printf("===> Matrix %s: retrying connection\n",address.toString().c_str());
-                this->client->disconnect();
-                this->connectAsync();
-            }
-            */
-        }
-    }
-	blemeter.end() ;
-	delay( 20 );
-	ws.text(lastNodeRedID, "READY");
-    debugPrintf("\n");
-}
-#endif
 
 void iPixelDevice::queuePush(std::vector<uint8_t> command) {
 	std::lock_guard<std::mutex> lock(queueMutex);
