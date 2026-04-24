@@ -21,6 +21,7 @@ The firmware is designed to run on multiple ESP32 variants and provides audio ou
 - on/off display kookwekker
 - investigate standby mode, wakeup bij internet
 - investigate ota, three devices to update!
+    - we use 8M and 4M flash devices ( image is too big now!)
 
 
 ## Creating a Release.
@@ -83,6 +84,13 @@ A classic alarm clock function:
 - x.x.x.x/wekker  - Alarm settings
 - x.x.x.x/scan-ble  - Scan BLE devices
 
+### MQTT interface
+- each board has a status:   ESP_NAME/online
+  - for the kookwekker we have on ESP_NAME/matrix/n
+    - status
+    - remaining
+    - command: set [time]
+    - command: start   - to start the timer.
 
 
 ## Configuration

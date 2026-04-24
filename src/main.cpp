@@ -130,7 +130,7 @@ void scanBLEDevices() {
 void setup_devicename() {
 
 	preferences.begin("DeviceInfo", false);
-	preferences.putString( "devname", "ESP32_Lichtkrant");
+	preferences.putString( "devname", "ESP32_Unknown");
 	preferences.end() ;
 
 }
