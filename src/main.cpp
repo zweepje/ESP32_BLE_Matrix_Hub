@@ -44,7 +44,7 @@ const char* mqtt_server = "192.168.100.29"; // jouw HA IP
 const char* mqtt_user = "mqtt_esp32";
 const char* mqtt_pass = "trombone";
 
-const char* devicename = "ESP32_KEUKEN";
+const char* devicename ;
 
 
 // Globale map om de status van alle verbonden PC's bij te houden
@@ -124,6 +124,24 @@ void scanBLEDevices() {
 }
 
 
+//
+// run one time to setup device
+//
+void setup_devicename() {
+
+	preferences.begin("DeviceInfo", false);
+	preferences.putString( "devname", "ESP32_Lichtkrant");
+	preferences.end() ;
+
+}
+
+void read_devicename() {
+
+	preferences.begin("DeviceInfo", false);
+	String dname = preferences.getString("devname", "ESP32");
+	devicename = strdup(dname.c_str());
+	preferences.end() ;
+}
 
 
 
@@ -613,6 +631,11 @@ void setup() {
   size_t psram_size = heap_caps_get_free_size(MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
   Serial.printf("Externe PSRAM Heap: %u bytes\n", psram_size);
 
+	//setup_devicename(); // run one time to program device name settings
+	read_devicename();
+
+	debugPrintf("Devicename is <%s>", devicename );
+
 
 	display = new Display();    // can only start after i2c assigned!
 
@@ -779,7 +802,7 @@ void loop_connected() {
 
 	    if ( dev != nullptr ) {
 
-	    	debugPrintf("mode is %d\n", dev->mode );
+	    	//debugPrintf("mode is %d\n", dev->mode );
 
  			if ( dev->mode == MODE_KOOKWEKKER  ) {
 				// als het wekker is:
@@ -800,6 +823,7 @@ void loop_connected() {
 	}
 
 	mqttClient.loop();
+
 }
 
 //

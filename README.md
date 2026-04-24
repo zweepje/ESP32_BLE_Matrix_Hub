@@ -3,8 +3,15 @@
 This project is a configurable ESP32-based device that combines **three core functions** in a single firmware, selectable through configuration rather than separate builds.
 
 The firmware is designed to run on multiple ESP32 variants and provides audio output, a display interface, and a web-based configuration system.
-
 ---
+## Releases
+- 3.0.0 BLE queue handler is now running in a separate thread. loop updates are now much faster
+- 3.0.1 Device name is now in settings ( stupid hack required to set it )
+- 
+---
+## BUGS:
+- MQTT only for kookwekker ( device_id must be dynamic )
+
 ## Todo:
 - Pressing stop stops ringing but timer starts again
 - investigate if OTA is possible
@@ -20,6 +27,7 @@ The firmware is designed to run on multiple ESP32 variants and provides audio ou
 - Make sure everything is checked in.
 - Merge main with dev and push again.
 - Test the workings
+- Version is in platform.ini
 - git tag -a v3.0.0 -m "BLE task in separate thread"
 - git push
 
