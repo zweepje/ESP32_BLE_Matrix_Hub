@@ -11,6 +11,8 @@ The firmware is designed to run on multiple ESP32 variants and provides audio ou
 - Merge main with dev and push again.
 - Test the workings
 - git tag -a v3.0.0 -m "BLE task in separate thread"
+- git push
+
 
 
 
