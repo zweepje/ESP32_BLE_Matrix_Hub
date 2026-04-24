@@ -722,16 +722,32 @@ void updateAlarmCache() {
 
 
 
+unsigned long lastloop = 0 ;
+unsigned long loopduration = 200 ;  // 100ms / loop
+
 void loop() {
+
+	unsigned long currentMillis = millis();
+
+	//
+	// take care that loop is not executed too often
+	//
+	if ( (currentMillis-lastloop)< loopduration ) {
+
+		vTaskDelay(pdMS_TO_TICKS(loopduration - (currentMillis-lastloop)) );
+	}
+	lastloop = currentMillis ;
+
+
+
 
 	if (alarmChanged) {
 		alarmChanged = false;
 		updateAlarmCache();
 	}
 
-
 	// once per minite log......
-  unsigned long currentMillis = millis();
+  currentMillis = millis();
   // Controleer of er 60 seconden zijn verstreken sinds de laatste afdruk
   if (currentMillis - previousMillis >= interval) {
 	  previousMillis = currentMillis;
