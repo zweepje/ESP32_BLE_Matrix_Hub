@@ -20,7 +20,7 @@ The firmware is designed to run on multiple ESP32 variants and provides audio ou
 - clock display rework ( center, pixel 1 larger?)
 - on/off display kookwekker
 - investigate standby mode, wakeup bij internet
-- 
+- investigate ota, three devices to update!
 
 
 ## Creating a Release.
