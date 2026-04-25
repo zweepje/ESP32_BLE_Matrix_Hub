@@ -78,6 +78,10 @@ A classic alarm clock function:
 - Designed to operate autonomously after configuration
 
 ---
+### development help
+- create a branch: git switch -c my-branch   
+- delete a branch: git branch -D test-branch
+- pio run -t upload ( clean, monitor )
 
 ### WebInterface
 - x.x.x.x/        - configuration for each matrix
