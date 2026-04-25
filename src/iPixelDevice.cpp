@@ -386,6 +386,7 @@ void iPixelDevice::handleButtons() {
 		if ( bmin || bsec || bstart ) {
 			_kookwekkkerState = SETTING ;
 			audio.stop();
+			bstart = false ; // don't start again!
 		}
 	}
 
