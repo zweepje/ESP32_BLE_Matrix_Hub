@@ -143,29 +143,58 @@ void read_devicename() {
 	preferences.end() ;
 }
 
+bool configMode = false;
 
+void startConfigPortal() {
+
+	configMode = true;	// to escape from loop!
+	WiFi.mode(WIFI_AP);
+	WiFi.softAP("ESP32-Setup");
+
+	Serial.println("AP gestart: ESP32-Setup");
+
+	server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+		request->send(200, "text/html",
+			"<form action='/save'>"
+			"SSID: <input name='s'><br>"
+			"PASS: <input name='p'><br>"
+			"<input type='submit'>"
+			"</form>");
+	});
+
+	server.on("/save", HTTP_GET, [](AsyncWebServerRequest *request) {
+
+		String ssid = request->getParam("s")->value();
+		String pass = request->getParam("p")->value();
+
+		Preferences prefs;
+		prefs.begin("wifi", false);
+		prefs.putString("ssid", ssid);
+		prefs.putString("pass", pass);
+		prefs.end();
+
+		request->send(200, "text/html", "Saved! Rebooting...");
+
+		delay(1000);
+		ESP.restart();
+	});
+
+	server.begin();
+}
 
 void setup_wifi_post() {
 	//
- /*
-  preferences.begin("wifi", false);
-  preferences.putString( "ssid", "Palamedes_ExtraWiFi2G");
-  preferences.putString( "pass", "Poetiniseenlul");
-  preferences.end() ;
+	debugPrintf("Reading wifi credentials\n");
 
-  preferences.begin("wifi", true); // read-only
-  String ssid = preferences.getString("ssid", "");
-  String pass = preferences.getString("pass", "");
-  preferences.end();
-  if(ssid.equals("")) {
-    DBG_PRINTF( DEBUG_WIFI,"[WiFi] No credentials set! Not connecting!");
-    return;
-  }
-*/
-
-  String ssid = "Palamedes_ExtraWiFi2G" ;
-  String pass = "Poetiniseenlul" ;
-
+	preferences.begin("wifi", true); // read-only
+ 	String ssid = preferences.getString("ssid", "");
+	String pass = preferences.getString("pass", "");
+	preferences.end();
+	if(ssid.equals("")) {
+		debugPrintf("Reading wifi credentials failed\n");
+  		startConfigPortal();
+		return;
+	}
 
 	WiFi.mode(WIFI_STA);
 	//WiFi.setSleep(false);
@@ -173,7 +202,15 @@ void setup_wifi_post() {
 	esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G);
 	Serial.print("[WiFi] Connecting to SSID: " + ssid);
 
-	WiFi.begin(ssid, pass );
+	//WiFi.begin(ssid, pass );
+	WiFi.begin(ssid.c_str(), pass.c_str());
+
+	if (WiFi.waitForConnectResult() != WL_CONNECTED) {
+		startConfigPortal();
+	}
+
+
+
 
 	int counter = 0;
 	while (WiFi.status() != WL_CONNECTED) {
@@ -649,10 +686,11 @@ void setup() {
 	display->SetIp(WiFi.localIP().toString());
 	display->SetStatus("Wifi configured");
 
-	mqttReconnect();
+	if ( !configMode )
+		mqttReconnect();
 
 
-  initTime();
+	initTime();
 	//
 	// Background task to check for ble connections
 	//
@@ -751,6 +789,12 @@ unsigned long loopduration = 200 ;  // 100ms / loop
 void loop() {
 
 	unsigned long currentMillis = millis();
+
+	if ( configMode ) {
+		debugPrintf("Inside configloop");
+		delay( 10 );
+		return;
+	}
 
 	//
 	// take care that loop is not executed too often
